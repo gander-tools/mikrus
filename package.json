@@ -7,6 +7,9 @@
   "bin": {
     "mikrus": "bin/mikrus"
   },
+  "engines": {
+    "node": ">=18.20.8"
+  },
   "scripts": {
     "clean-build": "rimraf -rf ./build",
     "compile": "tsc -p .",
