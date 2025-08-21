@@ -52,7 +52,10 @@
   },
   "jest": {
     "preset": "ts-jest",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/tests"
+    ]
   },
   "prettier": {
     "semi": false,
