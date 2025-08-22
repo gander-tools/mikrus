@@ -14,16 +14,16 @@
     "clean-build": "rimraf -rf ./build",
     "compile": "tsc -p .",
     "copy-templates": "cpy ./src/templates/* ./build/templates",
-    "build": "yarn clean-build && yarn compile && yarn copy-templates",
-    "prepublishOnly": "yarn build",
+    "build": "bun run clean-build && bun run compile && bun run copy-templates",
+    "prepublishOnly": "bun run build",
     "format": "biome format --write .",
     "lint": "biome lint .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "test": "jest",
-    "watch": "jest --watch",
-    "snapupdate": "jest --updateSnapshot",
-    "coverage": "jest --coverage"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "files": [
     "build",
@@ -38,20 +38,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.0",
-    "@types/jest": "^30.0.0",
     "@types/node": "^24.3.0",
+    "@vitest/ui": "^3.2.4",
     "cpy-cli": "^6.0.0",
-    "jest": "^30.0.5",
     "lefthook": "^1.12.3",
-    "ts-jest": "^29.4.1",
     "ts-node": "^10.9.2",
-    "typescript": "~5.9.2"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "roots": [
-      "<rootDir>/tests"
-    ]
+    "typescript": "~5.9.2",
+    "vitest": "^3.2.4"
   }
 }
