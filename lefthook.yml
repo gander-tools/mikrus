@@ -1,6 +1,8 @@
+rc: ~/.lefthookrc
+
 pre-commit:
   commands:
     biome:
       glob: "*.{js,ts,json,jsx,tsx}"
-      run: biome check --write --no-errors-on-unmatched {staged_files}
+      run: yarn check --write --no-errors-on-unmatched {staged_files}
       stage_fixed: true
