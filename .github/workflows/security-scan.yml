@@ -93,10 +93,10 @@ jobs:
       - name: Run license scan
         run: |
           echo "📜 Checking license compliance..."
-          npx license-checker --summary
+          bunx license-checker --summary
           
           # Check for problematic licenses (safer approach)
-          problematic_licenses=$(npx license-checker --excludePrivatePackages --json 2>/dev/null | jq -r 'to_entries[] | select(.value.licenses | type == "string" and (contains("GPL") or contains("AGPL") or contains("LGPL") or contains("UNLICENSED"))) | .key + ": " + .value.licenses' 2>/dev/null || echo "")
+          problematic_licenses=$(bunx license-checker --excludePrivatePackages --json 2>/dev/null | jq -r 'to_entries[] | select(.value.licenses | type == "string" and (contains("GPL") or contains("AGPL") or contains("LGPL") or contains("UNLICENSED"))) | .key + ": " + .value.licenses' 2>/dev/null || echo "")
           
           if [ -n "$problematic_licenses" ]; then
             echo "⚠️ Found potentially problematic licenses:"

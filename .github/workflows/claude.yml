@@ -1,0 +1,76 @@
+name: Claude Code
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  claude:
+    if: |
+      (
+        (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && github.event.comment.user.type != 'Bot') ||
+        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude') && github.event.comment.user.type != 'Bot') ||
+        (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude') && github.event.review.user.type != 'Bot') ||
+        (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')) && github.event.issue.user.type != 'Bot')
+      ) && 
+      github.event.sender.login != github.event.repository.owner.login
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # Minimal write access for comments only
+      issues: write # Minimal write access for comments only
+      id-token: write # Required for OIDC
+      actions: read # Required for Claude to read CI results on PRs
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        with:
+          fetch-depth: 1
+          # Security: Prevent token exposure in URLs
+          persist-credentials: false
+
+      - name: Run Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@a47fdbe49f641eadaf74042deb4cd9dfb8a981d5 # Pinned SHA for security
+        timeout-minutes: 10 # Security: Prevent long-running executions
+        env:
+          # Security: Limit environment variable exposure
+          NODE_ENV: production
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          # This is an optional setting that allows Claude to read CI results on PRs
+          additional_permissions: |
+            actions: read
+          
+          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4.1)
+          # model: "claude-opus-4-1-20250805"
+          
+          # Optional: Customize the trigger phrase (default: @claude)
+          # trigger_phrase: "/claude"
+          
+          # Optional: Trigger when specific user is assigned to an issue
+          # assignee_trigger: "claude-bot"
+          
+          # Security: Restrict to read-only operations and safe build commands
+          allowed_tools: "Bash(bun run test),Bash(bun run check),Bash(bun run lint)"
+          
+          # Optional: Add custom instructions for Claude to customize its behavior for your project
+          custom_instructions: |
+            Follow our TypeScript and Biome coding standards
+            Ensure all new code has comprehensive tests using Vitest
+            Use Bun commands (not npm) for all operations
+            Follow TDD methodology - write tests first
+            Check existing CLI patterns in src/commands/ before creating new ones
+            Always run 'bun run check' to validate code quality
+          
+          # Optional: Custom environment variables for Claude
+          # claude_env: |
+          #   NODE_ENV: test
+
