@@ -1,6 +1,6 @@
 # Command Reference for mikrus
 
-This document will contain detailed command reference when the CLI functionality is implemented.
+This document will contain a detailed command reference when the CLI functionality is implemented.
 
 ## Available Commands
 

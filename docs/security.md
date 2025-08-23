@@ -43,7 +43,7 @@ This document outlines the security measures and best practices implemented in t
 ## Threat Model
 
 ### Identified Threats
-1. **Path Traversal**: Malicious file paths could write outside project directory
+1. **Path Traversal**: Malicious file paths could write outside the project directory
 2. **Code Injection**: Template injection through unsanitized inputs  
 3. **Supply Chain**: Vulnerable dependencies could introduce security risks
 4. **Information Disclosure**: Error messages could reveal sensitive information
