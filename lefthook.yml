@@ -4,4 +4,4 @@ pre-commit:
   commands:
     biome:
       glob: "*.{js,ts,json,jsx,tsx}"
-      run: bun run check --no-errors-on-unmatched {staged_files}
+      run: bun run check {staged_files}

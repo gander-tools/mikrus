@@ -23,7 +23,7 @@ jobs:
       - name: Auto-merge patch updates
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
         run: |
-          gh pr merge --auto --squash "$PR_URL"
+          gh pr merge --auto --squash --delete-branch "$PR_URL"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
@@ -31,7 +31,7 @@ jobs:
       - name: Auto-merge minor updates for dev dependencies
         if: steps.metadata.outputs.update-type == 'version-update:semver-minor' && steps.metadata.outputs.dependency-type == 'direct:development'
         run: |
-          gh pr merge --auto --squash "$PR_URL"
+          gh pr merge --auto --squash --delete-branch "$PR_URL"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
