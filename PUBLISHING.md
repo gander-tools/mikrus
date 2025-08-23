@@ -21,22 +21,6 @@ The `mikrus` package is configured as a public NPM package:
 - **Access**: public
 - **Provenance**: enabled for supply chain security
 
-## NPM Token Setup
-
-To publish the package, you need to configure the `NPM_TOKEN` secret in GitHub:
-
-1. Generate an NPM automation token:
-   - Go to https://www.npmjs.com/settings/tokens
-   - Click "Generate New Token"
-   - Select "Automation" token type
-   - Copy the token
-
-2. Add the token to GitHub organization secrets:
-   - Go to https://github.com/organizations/gander-tools/settings/secrets/actions
-   - Click "New repository secret"
-   - Name: `NPM_TOKEN`
-   - Value: your NPM automation token
-
 ## Publishing Process
 
 ### Automatic Publishing (GitHub Actions Only)
@@ -56,18 +40,18 @@ Publishing is handled exclusively through GitHub Actions. **Local publishing is 
    ```
 
 2. The GitHub Actions workflow will automatically:
-   - Build the project
-   - Run tests and quality checks
-   - Create GitHub release with artifacts and checksums
-   - Publish to NPM with provenance
+   - Build the project and create GitHub release with artifacts and checksums
+   - Run comprehensive build and integration tests
+   - Publish to NPM with provenance (only if all tests pass)
    - Verify the published package
 
 ### Publishing Requirements
 
 - Publishing is **only available through GitHub Actions**
 - Tag must follow semantic versioning (e.g., `v1.0.0`)
-- All tests and quality checks must pass
-- NPM_TOKEN must be configured in organization secrets
+- All unit tests, linting, and build must pass
+- Integration tests (CLI help/version commands) must pass
+- NPM publishing only proceeds if all prerequisites are met
 
 ## Security Features
 
@@ -100,7 +84,6 @@ sha256sum -c mikrus-1.0.0.tar.gz.sha256
 ## Requirements
 
 - Node.js 20+
-- NPM automation token with publish permissions
 - Repository must have `id-token: write` permissions for provenance
 - Clean Git history (no uncommitted changes)
 
@@ -108,10 +91,9 @@ sha256sum -c mikrus-1.0.0.tar.gz.sha256
 
 ### Publishing Fails
 
-1. Check NPM token validity
-2. Ensure package version is incremented
-3. Verify repository permissions
-4. Check build process completed successfully
+1. Ensure package version is incremented
+2. Verify repository permissions
+3. Check build process completed successfully
 
 ### Provenance Issues
 
