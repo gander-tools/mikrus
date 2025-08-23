@@ -15,7 +15,7 @@ jobs:
     name: Lint & Format
     runs-on: ubuntu-latest
     env:
-      PATH: ${{ github.workspace }}/node_modules/.bin:${{ env.PATH }}
+      PATH: ${{ github.workspace }}/node_modules/.bin:$PATH
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     env:
-      PATH: ${{ github.workspace }}/node_modules/.bin:${{ env.PATH }}
+      PATH: ${{ github.workspace }}/node_modules/.bin:$PATH
     strategy:
       matrix:
         node-version: [20, 22]
@@ -86,7 +86,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     env:
-      PATH: ${{ github.workspace }}/node_modules/.bin:${{ env.PATH }}
+      PATH: ${{ github.workspace }}/node_modules/.bin:$PATH
     needs: [lint-and-format, test]
     steps:
       - name: Checkout code
