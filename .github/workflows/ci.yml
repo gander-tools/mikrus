@@ -66,8 +66,14 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Dodaj katalog do PATH
+        run: echo "./node_modules/.bin" >> $GITHUB_PATH
+
+      - name: Sprawdź zawartość PATH
+        run: echo "$PATH"
+
       - name: Run tests
-        run: PATH=./node_modules/.bin:$PATH bun run test:coverage
+        run: bun run test:coverage
 
       - name: Upload coverage reports to Codecov
         if: matrix.node-version == 20
