@@ -208,27 +208,6 @@ jobs:
             exit 1
           fi
 
-  # Deployment job (only runs on main branch)
-  deploy:
-    name: Deploy
-    runs-on: ubuntu-latest
-    needs: [build, integration-test, security-scan]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: production
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifacts
-
-      - name: Deploy to NPM (placeholder)
-        run: |
-          echo "Deployment step - would publish to NPM here"
-          echo "Version: $(node -p 'require("./package.json").version')"
-          # npm publish would go here with proper authentication
 
   # Notification job that runs regardless of other job outcomes
   notify:
