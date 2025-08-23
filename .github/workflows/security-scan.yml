@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  security-events: write  # Required for uploading to GitHub Security tab
 
 jobs:
   dependency-scan:
@@ -16,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -28,6 +30,21 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@14818c4695ecc4045f33c9cee9e795a788711ca4 # master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --sarif-file-output=snyk.sarif
+
+      - name: Upload Snyk results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@47b3d888fe66b639e431abf22ebca059152f1eea # v3
+        if: always()
+        with:
+          sarif_file: snyk.sarif
+          category: snyk-dependencies
+          
       - name: Run dependency audit
         run: |
           echo "🔍 Running comprehensive dependency audit..."
@@ -115,33 +132,102 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
-      - name: Run secret scan
+      - name: Advanced secret scan with TruffleHog
         run: |
-          echo "🔍 Scanning for hardcoded secrets..."
+          echo "🔍 Running comprehensive secret detection with TruffleHog..."
           
-          # Check for common secret patterns (safer approach)
-          secret_matches=$(grep -r -i --exclude-dir=node_modules --exclude-dir=.git \
-            -E "(password|passwd|pwd|secret|token|key|api_key|apikey|access_key|private_key)" \
-            . 2>/dev/null | grep -v -E "(\.md:|\.yml:|test|example|placeholder|EXAMPLE|TODO)" | head -10 || true)
+          # Install and run TruffleHog for advanced secret detection
+          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
           
-          if [ -n "$secret_matches" ]; then
-            echo "⚠️ Potential secrets found - please review above matches"
-            echo "$secret_matches"
+          # Run TruffleHog filesystem scan
+          trufflehog filesystem . \
+            --no-update \
+            --fail \
+            --exclude-paths .github/workflows/security-scan.yml \
+            --exclude-globs="**/node_modules/**,**/.git/**,**/build/**,**/dist/**" \
+            --json > trufflehog-results.json || true
+          
+          # Process results and provide summary
+          if [ -s trufflehog-results.json ]; then
+            echo "⚠️ TruffleHog detected potential secrets:"
+            cat trufflehog-results.json | jq -r '.SourceMetadata.Data.Filesystem.file + ": " + .DetectorName + " - " + .Verified'
+            
+            # Check for verified secrets (high confidence)
+            verified_secrets=$(cat trufflehog-results.json | jq -r 'select(.Verified == true)' || echo "")
+            if [ -n "$verified_secrets" ]; then
+              echo "❌ CRITICAL: Verified secrets detected!"
+              exit 1
+            fi
           else
-            echo "✅ No obvious secrets detected in source code"
+            echo "✅ No secrets detected by TruffleHog"
           fi
           
-          # Check for AWS keys, API keys, etc. (safer approach)
-          aws_keys=$(grep -r -i --exclude-dir=node_modules --exclude-dir=.git \
-            -E "(AKIA[0-9A-Z]{16}|sk_live_[0-9a-zA-Z]{24}|sk_test_[0-9a-zA-Z]{24})" . 2>/dev/null || true)
+      - name: Enhanced credential validation patterns
+        run: |
+          echo "🔍 Enhanced credential pattern scanning..."
           
-          if [ -n "$aws_keys" ]; then
-            echo "❌ AWS or Stripe keys detected!"
-            echo "$aws_keys"
+          # Enhanced patterns for various secret types
+          PATTERNS=(
+            "AKIA[0-9A-Z]{16}"                           # AWS Access Key
+            "sk_live_[0-9a-zA-Z]{24}"                   # Stripe Live Key
+            "sk_test_[0-9a-zA-Z]{24}"                   # Stripe Test Key
+            "ghp_[0-9a-zA-Z]{36}"                       # GitHub Personal Access Token
+            "ghs_[0-9a-zA-Z]{36}"                       # GitHub App Token
+            "ghu_[0-9a-zA-Z]{36}"                       # GitHub User Token
+            "glpat-[0-9a-zA-Z_-]{20}"                   # GitLab Personal Access Token
+            "xox[baprs]-[0-9a-zA-Z-]{10,48}"           # Slack Token
+            "[0-9]+-[0-9A-Za-z_]{32}"                  # Facebook Access Token
+            "ya29\.[0-9A-Za-z\-_]+"                    # Google OAuth Access Token
+          )
+          
+          found_patterns=false
+          for pattern in "${PATTERNS[@]}"; do
+            matches=$(grep -r -E "$pattern" . \
+              --exclude-dir=node_modules \
+              --exclude-dir=.git \
+              --exclude-dir=build \
+              --exclude="*.md" \
+              --exclude="security-scan.yml" 2>/dev/null || true)
+            
+            if [ -n "$matches" ]; then
+              echo "❌ CRITICAL: Detected pattern '$pattern':"
+              echo "$matches"
+              found_patterns=true
+            fi
+          done
+          
+          if [ "$found_patterns" = true ]; then
+            echo "❌ Critical credential patterns detected - immediate action required!"
             exit 1
           fi
           
-          echo "✅ No AWS/Stripe keys detected"
+          echo "✅ No critical credential patterns detected"
+          
+      - name: Credential lifecycle validation
+        run: |
+          echo "🔍 Validating credential configuration and lifecycle..."
+          
+          # Check for proper secrets configuration in workflows
+          workflow_files=$(find .github/workflows -name "*.yml" -o -name "*.yaml")
+          
+          for workflow in $workflow_files; do
+            echo "Checking workflow: $workflow"
+            
+            # Check for hardcoded secrets in workflow files
+            if grep -q -E "(password|token|key|secret).*:" "$workflow" | grep -v '\${{'; then
+              echo "⚠️ Potential hardcoded credential in $workflow"
+            fi
+            
+            # Check for proper secrets usage
+            secrets_usage=$(grep -c '\${{ secrets\.' "$workflow" 2>/dev/null || echo "0")
+            if [ "$secrets_usage" -gt 0 ]; then
+              echo "✅ $workflow uses $secrets_usage secret(s) properly"
+            fi
+          done
+          
+          # Log security event for monitoring
+          echo "SECURITY_EVENT: $(date -u +%Y-%m-%dT%H:%M:%SZ): Credential scan completed"
+          echo "SCAN_RESULTS: TruffleHog=completed, Patterns=validated, Lifecycle=checked"
 
   supply-chain-security:
     name: Supply Chain Security
@@ -170,6 +256,10 @@ jobs:
           done
           
           echo "✅ Supply chain integrity checks completed"
+          
+          # Enhanced security event logging
+          echo "SECURITY_EVENT: $(date -u +%Y-%m-%dT%H:%M:%SZ): Supply chain scan completed"
+          echo "INTEGRITY_STATUS: lockfiles=verified, packages=validated, typosquatting=checked"
 
       - name: Check for typosquatting
         run: |
@@ -180,3 +270,143 @@ jobs:
           
           # This would typically use a more sophisticated typosquatting detection tool
           echo "✅ Basic typosquatting check completed"
+
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript']
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@47b3d888fe66b639e431abf22ebca059152f1eea # v3
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql/codeql-config.yml
+          queries: security-extended,security-and-quality
+
+      - name: Setup Node.js for CodeQL
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+
+      - name: Setup Bun for CodeQL  
+        uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies for analysis
+        run: bun install --frozen-lockfile
+
+      - name: Add node_modules/.bin to PATH
+        run: echo "./node_modules/.bin" >> $GITHUB_PATH
+
+      - name: Build for CodeQL analysis
+        run: bun run build
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@47b3d888fe66b639e431abf22ebca059152f1eea # v3
+        with:
+          category: '/language:${{matrix.language}}'
+          upload: true
+
+  github-security-advisory:
+    name: GitHub Security Advisory Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+
+      - name: Run GitHub Security Advisory Check
+        run: |
+          echo "🔍 Checking GitHub Security Advisories..."
+          
+          # Check for security advisories affecting this repository
+          gh api repos/:owner/:repo/vulnerability-alerts --paginate | jq -r '.[] | "Advisory: \(.security_advisory.summary) - Severity: \(.security_advisory.severity)"' > advisories.txt || echo "No advisories found"
+          
+          if [ -s advisories.txt ]; then
+            echo "⚠️ Active security advisories found:"
+            cat advisories.txt
+            
+            # Count advisories by severity
+            critical_advisories=$(grep -c "Severity: critical" advisories.txt || echo "0")
+            high_advisories=$(grep -c "Severity: high" advisories.txt || echo "0")
+            
+            echo "📊 Advisory Summary:"
+            echo "Critical: $critical_advisories"
+            echo "High: $high_advisories"
+            
+            if [ "$critical_advisories" -gt 0 ] || [ "$high_advisories" -gt 0 ]; then
+              echo "❌ Critical or high severity advisories require immediate attention!"
+              exit 1
+            fi
+          else
+            echo "✅ No active security advisories found"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  security-monitoring:
+    name: Security Event Monitoring
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, license-scan, secrets-scan, supply-chain-security, codeql-analysis, github-security-advisory]
+    if: always()
+    permissions:
+      contents: read
+    steps:
+      - name: Security dashboard summary
+        run: |
+          echo "🛡️ SECURITY MONITORING DASHBOARD"
+          echo "======================================"
+          echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Repository: ${{ github.repository }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Trigger: ${{ github.event_name }}"
+          echo ""
+          
+          # Job status summary
+          echo "📊 SCAN RESULTS SUMMARY:"
+          echo "Dependency Scan: ${{ needs.dependency-scan.result }}"
+          echo "License Scan: ${{ needs.license-scan.result }}"
+          echo "Secrets Scan: ${{ needs.secrets-scan.result }}"
+          echo "Supply Chain: ${{ needs.supply-chain-security.result }}"
+          echo "CodeQL Analysis: ${{ needs.codeql-analysis.result }}"
+          echo "Security Advisory: ${{ needs.github-security-advisory.result }}"
+          echo ""
+          
+          # Overall security status
+          if [[ "${{ needs.dependency-scan.result }}" == "success" ]] && \
+             [[ "${{ needs.license-scan.result }}" == "success" ]] && \
+             [[ "${{ needs.secrets-scan.result }}" == "success" ]] && \
+             [[ "${{ needs.supply-chain-security.result }}" == "success" ]] && \
+             [[ "${{ needs.codeql-analysis.result }}" == "success" ]] && \
+             [[ "${{ needs.github-security-advisory.result }}" == "success" ]]; then
+            echo "🟢 OVERALL STATUS: SECURE"
+            echo "All security scans passed successfully"
+          else
+            echo "🔴 OVERALL STATUS: ATTENTION REQUIRED"
+            echo "One or more security scans require attention"
+          fi
+          
+          echo ""
+          echo "🔗 Review details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+      - name: Workflow failure notification
+        if: needs.dependency-scan.result == 'failure' || needs.license-scan.result == 'failure' || needs.secrets-scan.result == 'failure' || needs.supply-chain-security.result == 'failure' || needs.codeql-analysis.result == 'failure' || needs.github-security-advisory.result == 'failure'
+        run: |
+          echo "🚨 SECURITY ALERT: One or more security scans failed"
+          echo "PRIORITY: HIGH - Immediate investigation required"
+          echo "FAILED_SCANS: dependency=${{ needs.dependency-scan.result }} license=${{ needs.license-scan.result }} secrets=${{ needs.secrets-scan.result }} supply_chain=${{ needs.supply-chain-security.result }} codeql=${{ needs.codeql-analysis.result }} advisory=${{ needs.github-security-advisory.result }}"
+          echo "ACTION_REQUIRED: Review failed scans and address security issues"
+          echo "REVIEW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

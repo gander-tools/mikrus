@@ -5,32 +5,85 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   auto-merge:
     name: Auto-merge Dependabot PRs
     runs-on: ubuntu-latest
+    permissions:
+      contents: write          # Only for merging PRs
+      pull-requests: write     # Only for PR operations
+      checks: read            # For CI status verification
     if: github.actor == 'dependabot[bot]'
     steps:
+      - name: Validate Dependabot actor
+        run: |
+          echo "🤖 Validating Dependabot actor: ${{ github.actor }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "PR Author: ${{ github.event.pull_request.user.login }}"
+          echo "PR Author Type: ${{ github.event.pull_request.user.type }}"
+          
+          # Validate this is actually Dependabot
+          if [ "${{ github.actor }}" != "dependabot[bot]" ]; then
+            echo "❌ Unauthorized actor attempting to use Dependabot workflow"
+            exit 1
+          fi
+          
+          if [ "${{ github.event.pull_request.user.type }}" != "Bot" ]; then
+            echo "❌ PR author is not a bot"
+            exit 1
+          fi
+          
+          echo "✅ Dependabot actor validated successfully"
+          echo "✅ This workflow is authorized to run for dependency updates"
+      
       - name: Fetch Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@8348ea7f5d949b08c7f125a44b569c9626b05db3 # v1
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Auto-merge patch updates
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
+      - name: Verify CI status before auto-merge
+        id: ci_status
         run: |
+          echo "🔍 Verifying CI status before auto-merge..."
+          
+          # Get PR status checks
+          pr_number=$(echo "$PR_URL" | grep -o '[0-9]\+$')
+          
+          # Check if all required checks pass
+          gh api repos/:owner/:repo/pulls/$pr_number/reviews \
+            --jq '.[] | select(.state=="APPROVED") | .state' > reviews.txt
+          
+          gh pr checks "$PR_URL" --json state,conclusion \
+            --jq '.[] | select(.conclusion != "success") | .name' > failed_checks.txt
+          
+          if [ -s failed_checks.txt ]; then
+            echo "❌ Some CI checks failed:"
+            cat failed_checks.txt
+            echo "skip_merge=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ All CI checks passed"
+            echo "skip_merge=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+
+      - name: Auto-merge patch updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' && steps.ci_status.outputs.skip_merge == 'false'
+        run: |
+          echo "🤖 Auto-merging patch update after CI verification..."
           gh pr merge --auto --squash --delete-branch "$PR_URL"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
 
       - name: Auto-merge minor updates for dev dependencies
-        if: steps.metadata.outputs.update-type == 'version-update:semver-minor' && steps.metadata.outputs.dependency-type == 'direct:development'
+        if: steps.metadata.outputs.update-type == 'version-update:semver-minor' && steps.metadata.outputs.dependency-type == 'direct:development' && steps.ci_status.outputs.skip_merge == 'false'
         run: |
+          echo "🤖 Auto-merging dev dependency minor update after CI verification..."
           gh pr merge --auto --squash --delete-branch "$PR_URL"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
