@@ -21,6 +21,32 @@ The `mikrus` package is configured as a public NPM package:
 - **Access**: public
 - **Provenance**: enabled for supply chain security
 
+## NPM Token Setup (Required Before First Publishing)
+
+**IMPORTANT**: This setup is required before the first release can be published.
+
+1. **Generate NPM Automation Token**:
+   ```bash
+   # Login to NPM (if not already logged in)
+   npm login --auth-type=web
+   
+   # Generate automation token
+   npm token create --type=automation
+   ```
+
+2. **Configure GitHub Organization Secret**:
+   - Go to: https://github.com/organizations/gander-tools/settings/secrets/actions
+   - Click "New organization secret"
+   - Name: `NPM_TOKEN`
+   - Value: `npm_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX` (token from step 1)
+   - Select repositories: `gander-tools/mikrus`
+
+3. **Verify Token Permissions**:
+   ```bash
+   # Test token (optional)
+   curl -H "Authorization: Bearer npm_XXXXXXXX" https://registry.npmjs.org/-/whoami
+   ```
+
 ## Publishing Process
 
 ### Automatic Publishing (GitHub Actions Only)
