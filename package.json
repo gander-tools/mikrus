@@ -11,19 +11,19 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "clean-build": "rimraf -rf ./build",
-    "compile": "tsc -p .",
-    "copy-templates": "cpy ./src/templates/* ./build/templates",
+    "clean-build": "bunx rimraf -rf ./build",
+    "compile": "bunx tsc -p .",
+    "copy-templates": "bunx cpy ./src/templates/* ./build/templates",
     "build": "bun run clean-build && bun run compile && bun run copy-templates",
     "prepublishOnly": "bun run build",
     "format": "bunx biome format --write .",
     "lint": "bunx biome lint .",
     "check": "bunx biome check .",
     "check:fix": "bunx biome check --write .",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test": "bunx vitest run",
+    "test:watch": "bunx vitest",
+    "test:ui": "bunx vitest --ui",
+    "test:coverage": "bunx vitest run --coverage"
   },
   "files": [
     "build",
