@@ -4,7 +4,7 @@ Plugins allow you to add features to mikrus, such as commands and
 extensions to the `toolbox` object that provides the majority of the functionality
 used by mikrus.
 
-Creating a mikrus plugin is easy. Just create a repo with two folders:
+Creating a mikrus plugin is straightforward. Create a repo with two folders:
 
 ```
 commands/

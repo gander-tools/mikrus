@@ -6,7 +6,7 @@
 [![NPM Downloads](https://img.shields.io/npm/dm/mikrus.svg)](https://www.npmjs.com/package/mikrus)
 [![License](https://img.shields.io/npm/l/mikrus.svg)](https://github.com/gander-tools/mikrus/blob/main/LICENSE)
 
-Command-line interface tool for managing VPS servers on mikr.us platform.
+Command-line interface tool for managing VPS servers on the mikr.us platform.
 
 ## Installation
 
@@ -31,7 +31,7 @@ bun install
 - `bun run test` - Run all tests once
 - `bun run test:watch` - Run tests in watch mode
 - `bun run test:ui` - Run tests with Vitest UI
-- `bun run test:coverage` - Run tests with coverage report
+- `bun run test:coverage` - Run tests with a coverage report
 
 ## Requirements
 

@@ -48,19 +48,19 @@ jobs:
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
             actions: read
-          
+
           # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4.1)
           # model: "claude-opus-4-1-20250805"
-          
+
           # Optional: Customize the trigger phrase (default: @claude)
           # trigger_phrase: "/claude"
-          
-          # Optional: Trigger when specific user is assigned to an issue
+
+          # Optional: Trigger when a specific user is assigned to an issue
           # assignee_trigger: "claude-bot"
-          
+
           # Security: Restrict to read-only operations and safe build commands
           allowed_tools: "Bash(bun run test),Bash(bun run check),Bash(bun run lint)"
-          
+
           # Optional: Add custom instructions for Claude to customize its behavior for your project
           custom_instructions: |
             Follow our TypeScript and Biome coding standards
@@ -69,7 +69,7 @@ jobs:
             Follow TDD methodology - write tests first
             Check existing CLI patterns in src/commands/ before creating new ones
             Always run 'bun run check' to validate code quality
-          
+
           # Optional: Custom environment variables for Claude
           # claude_env: |
           #   NODE_ENV: test

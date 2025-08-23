@@ -3,7 +3,7 @@
 ## Supported Versions
 
 | Version | Supported          |
-| ------- | ------------------ |
+|---------|--------------------|
 | 0.0.x   | :white_check_mark: |
 
 ## Reporting a Vulnerability
@@ -39,7 +39,7 @@ We take the security of mikrus seriously. If you discover a security vulnerabili
 **Out of Scope:**
 - Social engineering attacks
 - Physical attacks
-- Denial of service attacks
+- Denial-of-service attacks
 - Issues requiring physical access to user devices
 
 ### 🏆 **Recognition**
@@ -88,7 +88,7 @@ In case of a security incident:
 Security updates are released as patch versions and are documented in:
 - GitHub Security Advisories
 - Release notes with `[SECURITY]` tag
-- CHANGELOG.md with security section
+- CHANGELOG.md with a security section
 
 ## Contact
 

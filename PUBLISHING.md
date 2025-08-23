@@ -66,7 +66,7 @@ Publishing is handled exclusively through GitHub Actions. **Local publishing is 
    ```
 
 2. The GitHub Actions workflow will automatically:
-   - Build the project and create GitHub release with artifacts and checksums
+   - Build the project and create a GitHub release with artifacts and checksums
    - Run comprehensive build and integration tests
    - Publish to NPM with provenance (only if all tests pass)
    - Verify the published package
@@ -93,7 +93,7 @@ The package is published with NPM provenance enabled, which:
 Each release includes:
 - SHA256 checksums for all release artifacts
 - GitHub Releases with signed commits
-- Build artifacts verification
+- Build artifact verification
 
 ### Verification
 
@@ -117,9 +117,9 @@ sha256sum -c mikrus-1.0.0.tar.gz.sha256
 
 ### Publishing Fails
 
-1. Ensure package version is incremented
+1. Ensure the package version is incremented
 2. Verify repository permissions
-3. Check build process completed successfully
+3. Check a build process completed successfully
 
 ### Provenance Issues
 
@@ -130,5 +130,5 @@ sha256sum -c mikrus-1.0.0.tar.gz.sha256
 ### Version Conflicts
 
 - Use `npm view mikrus versions --json` to check existing versions
-- Ensure version follows semantic versioning
+- Ensure the version follows semantic versioning
 - Update package.json version before tagging
