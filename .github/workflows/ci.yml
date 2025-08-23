@@ -39,17 +39,47 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Add node_modules/.bin to PATH
+        run: echo "./node_modules/.bin" >> $GITHUB_PATH
+
       - name: Run Biome checks
         run: bunx @biomejs/biome ci
 
+      - name: Validate pre-commit hooks
+        run: |
+          if [ -f ".lefthook.yml" ] || [ -f "lefthook.yml" ]; then
+            echo "✅ Lefthook configuration found"
+            bunx lefthook install
+            bunx lefthook run pre-commit --all-files || echo "⚠️ Pre-commit hooks failed"
+          else
+            echo "ℹ️ No pre-commit hooks configured"
+          fi
+
+      - name: Cache build outputs
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4
+        with:
+          path: |
+            build/
+            node_modules/.cache/
+          key: ${{ runner.os }}-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-build-
+
   test:
-    name: Test
+    name: Test (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     permissions:
       contents: read
     strategy:
+      fail-fast: false
       matrix:
         node-version: [20, 22]
+        include:
+          # Primary testing with coverage
+          - node-version: 20
+            coverage: true
+          - node-version: 22
+            coverage: false
     steps:
       - name: Checkout code
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -82,7 +112,7 @@ jobs:
         run: bun run test:coverage
 
       - name: Upload coverage reports to Codecov
-        if: matrix.node-version == 20
+        if: matrix.coverage == true
         uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3
         with:
           file: ./coverage/clover.xml
@@ -192,7 +222,7 @@ jobs:
         run: echo "./node_modules/.bin" >> $GITHUB_PATH
 
       - name: Download build artifacts
-        uses: actions/download-artifact@d3f86a1
+        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe # v4
         with:
           name: build-artifacts
 
