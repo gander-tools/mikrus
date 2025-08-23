@@ -278,7 +278,7 @@
 
     "cpy": ["cpy@12.0.1", "", { "dependencies": { "copy-file": "^11.1.0", "globby": "^14.1.0", "junk": "^4.0.1", "micromatch": "^4.0.8", "p-filter": "^4.1.0", "p-map": "^7.0.3" } }, "sha512-hCnNla4AB27lUncMuO7KFjge0u0C5R74iKMBOajKOMB9ONGXcIek314ZTpxg16BuNYRTjPz7UW3tPXgJVLxUww=="],
 
-    "cpy-cli": ["cpy-cli@6.0.0", "", { "dependencies": { "cpy": "^12.0.0", "meow": "^13.2.0" } }, "sha512-q7GUqTDnRymCbScJ4Ph1IUM86wWdKG8JbgrvKLgvvehH4wrbRcVN+jRwOTlxJdwm7ykdXMKSp6IESksFeHa0eA=="],
+    "cpy-cli": ["cpy-cli@6.0.0", "", { "dependencies": { "cpy": "^12.0.0", "meow": "^13.2.0" }, "bin": { "cpy": "cli.js" } }, "sha512-q7GUqTDnRymCbScJ4Ph1IUM86wWdKG8JbgrvKLgvvehH4wrbRcVN+jRwOTlxJdwm7ykdXMKSp6IESksFeHa0eA=="],
 
     "create-require": ["create-require@1.1.1", "", {}, "sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ=="],
 
