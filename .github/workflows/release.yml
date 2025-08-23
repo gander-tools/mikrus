@@ -1,0 +1,117 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Add node_modules/.bin to PATH
+        run: echo "./node_modules/.bin" >> $GITHUB_PATH
+
+      - name: Run tests
+        run: bun run test
+
+      - name: Run linting
+        run: bunx @biomejs/biome ci
+
+      - name: Build project
+        run: bun run build
+
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_OUTPUT
+
+      - name: Create Release Archive
+        run: |
+          mkdir -p release
+          cp -r build/ bin/ package.json README.md release/
+          [ -f LICENSE ] && cp LICENSE release/ || echo "LICENSE file not found, skipping"
+          cd release
+          tar -czf ../mikrus-${{ steps.get_version.outputs.VERSION }}.tar.gz .
+          cd ..
+          zip -r mikrus-${{ steps.get_version.outputs.VERSION }}.zip release/
+
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            echo "Found CHANGELOG.md, extracting notes for version ${{ steps.get_version.outputs.VERSION }}"
+            # Extract release notes from CHANGELOG.md if it exists
+            awk '/^## \[?${{ steps.get_version.outputs.VERSION }}\]?/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md > release_notes.txt || echo "## What's Changed" > release_notes.txt
+          else
+            echo "## What's Changed" > release_notes.txt
+            echo "Release ${{ steps.get_version.outputs.VERSION }}" >> release_notes.txt
+            echo "" >> release_notes.txt
+            echo "### Recent Commits" >> release_notes.txt
+            git log --pretty=format:"- %s" --no-merges $(git describe --tags --abbrev=0 HEAD^)..HEAD >> release_notes.txt || git log --pretty=format:"- %s" --no-merges -10 >> release_notes.txt
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.get_version.outputs.VERSION }}
+          body_path: release_notes.txt
+          draft: false
+          prerelease: ${{ contains(steps.get_version.outputs.VERSION, '-') }}
+          files: |
+            mikrus-${{ steps.get_version.outputs.VERSION }}.tar.gz
+            mikrus-${{ steps.get_version.outputs.VERSION }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Optional: Publish to npm registry (if you want to make it installable via npm)
+  publish-npm:
+    name: Publish to NPM
+    runs-on: ubuntu-latest
+    needs: build-and-release
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Add node_modules/.bin to PATH
+        run: echo "./node_modules/.bin" >> $GITHUB_PATH
+
+      - name: Build project
+        run: bun run build
+
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
