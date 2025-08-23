@@ -1,0 +1,79 @@
+name: Cross-Platform Testing
+
+on:
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run weekly cross-platform tests
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-platform-test:
+    name: Cross-Platform Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+        node-version: [20]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Add node_modules/.bin to PATH (Unix)
+        if: runner.os != 'Windows'
+        run: echo "./node_modules/.bin" >> $GITHUB_PATH
+
+      - name: Add node_modules/.bin to PATH (Windows)
+        if: runner.os == 'Windows' 
+        run: echo "./node_modules/.bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Run basic tests
+        run: bun run test
+
+      - name: Build project
+        run: bun run build
+
+      - name: Test CLI on Unix
+        if: runner.os != 'Windows'
+        run: |
+          chmod +x ./bin/mikrus
+          ./bin/mikrus --compiled-build --version
+          ./bin/mikrus --compiled-build --help
+
+      - name: Test CLI on Windows
+        if: runner.os == 'Windows'
+        run: |
+          node ./bin/mikrus --compiled-build --version
+          node ./bin/mikrus --compiled-build --help
+
+      - name: Test CLI installation simulation
+        run: |
+          echo "📦 Testing package installation simulation..."
+          npm pack
+          # Test if package can be unpacked
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            echo "Windows package test completed"
+          else
+            tar -tzf *.tgz | head -10
+          fi
+        shell: bash

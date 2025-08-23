@@ -1,5 +1,11 @@
 # mikrus CLI
 
+[![CI/CD Pipeline](https://github.com/gander-tools/mikrus/actions/workflows/ci.yml/badge.svg)](https://github.com/gander-tools/mikrus/actions/workflows/ci.yml)
+[![Security Scan](https://github.com/gander-tools/mikrus/actions/workflows/security-scan.yml/badge.svg)](https://github.com/gander-tools/mikrus/actions/workflows/security-scan.yml)
+[![NPM Version](https://img.shields.io/npm/v/mikrus.svg)](https://www.npmjs.com/package/mikrus)
+[![NPM Downloads](https://img.shields.io/npm/dm/mikrus.svg)](https://www.npmjs.com/package/mikrus)
+[![License](https://img.shields.io/npm/l/mikrus.svg)](https://github.com/gander-tools/mikrus/blob/main/LICENSE)
+
 Command-line interface tool for managing VPS servers on mikr.us platform.
 
 ## Installation
