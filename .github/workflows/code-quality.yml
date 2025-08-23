@@ -16,28 +16,33 @@ on:
         description: "Result of code quality checks"
         value: ${{ jobs.quality.outputs.result }}
 
+permissions:
+  contents: read
+
 jobs:
   quality:
     name: Code Quality Checks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       result: ${{ steps.quality-result.outputs.result }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ inputs.node-version }}
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
         with:
           bun-version: ${{ inputs.bun-version }}
 
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
