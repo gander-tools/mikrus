@@ -46,7 +46,8 @@ jobs:
       - name: Create Release Archive
         run: |
           mkdir -p release
-          cp -r build/ bin/ package.json README.md LICENSE release/
+          cp -r build/ bin/ package.json README.md release/
+          [ -f LICENSE ] && cp LICENSE release/ || echo "LICENSE file not found, skipping"
           cd release
           tar -czf ../mikrus-${{ steps.get_version.outputs.VERSION }}.tar.gz .
           cd ..
