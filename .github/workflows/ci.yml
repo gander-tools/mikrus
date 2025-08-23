@@ -31,14 +31,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-bun-
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: What in Path
-        run: ls -al ./node_modules/.bin/
-
       - name: Run Biome checks
-        run: ./node_modules/.bin/biome check .
+        run: npx @biomejs/biome ci
 
 
   test:
