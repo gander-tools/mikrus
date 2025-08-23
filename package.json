@@ -11,19 +11,19 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "clean-build": "./node_modules/.bin/rimraf -rf ./build",
-    "compile": "./node_modules/.bin/tsc -p .",
-    "copy-templates": "./node_modules/.bin/cpy 'src/templates/*' build/templates",
+    "clean-build": "rimraf -rf ./build",
+    "compile": "tsc -p .",
+    "copy-templates": "cpy 'src/templates/*' build/templates",
     "build": "bun run clean-build && bun run compile && bun run copy-templates",
     "prepublishOnly": "bun run build",
-    "format": "./node_modules/.bin/biome format --write .",
-    "lint": "./node_modules/.bin/biome lint .",
-    "check": "./node_modules/.bin/biome check .",
-    "check:fix": "./node_modules/.bin/biome check --write .",
-    "test": "./node_modules/.bin/vitest run",
-    "test:watch": "./node_modules/.bin/vitest",
-    "test:ui": "./node_modules/.bin/vitest --ui",
-    "test:coverage": "./node_modules/.bin/vitest run --coverage"
+    "format": "biome format --write .",
+    "lint": "biome lint .",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "files": [
     "build",
