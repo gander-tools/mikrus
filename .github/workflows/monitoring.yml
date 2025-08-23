@@ -1,0 +1,422 @@
+name: Monitoring & Alerting
+
+on:
+  schedule:
+    # Run every 4 hours
+    - cron: '0 */4 * * *'
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  security-events: write
+
+jobs:
+  system-health-check:
+    name: System Health Check
+    runs-on: ubuntu-latest
+    outputs:
+      health_score: ${{ steps.health.outputs.score }}
+      critical_issues: ${{ steps.health.outputs.critical_issues }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Add node_modules/.bin to PATH
+        run: echo "./node_modules/.bin" >> $GITHUB_PATH
+
+      - name: System health assessment
+        id: health
+        run: |
+          echo "🏥 Running comprehensive system health check..."
+          
+          health_score=100
+          critical_issues=0
+          issues=()
+          
+          # Test suite health
+          echo "Testing test suite..."
+          if ! bun run test; then
+            health_score=$((health_score - 30))
+            critical_issues=$((critical_issues + 1))
+            issues+=("Test suite failing")
+          fi
+          
+          # Build health
+          echo "Testing build process..."
+          if ! bun run build; then
+            health_score=$((health_score - 25))
+            critical_issues=$((critical_issues + 1))
+            issues+=("Build process failing")
+          fi
+          
+          # Code quality health
+          echo "Testing code quality..."
+          if ! bunx @biomejs/biome ci; then
+            health_score=$((health_score - 15))
+            issues+=("Code quality issues")
+          fi
+          
+          # Security health
+          echo "Testing security..."
+          audit_output=$(bunx bun audit 2>&1 || true)
+          if echo "$audit_output" | grep -E "(critical|high)" -i; then
+            health_score=$((health_score - 20))
+            critical_issues=$((critical_issues + 1))
+            issues+=("Security vulnerabilities")
+          fi
+          
+          # Dependency health
+          echo "Testing dependency freshness..."
+          outdated_count=$(bun outdated 2>/dev/null | grep -c "outdated" || echo "0")
+          if [ "$outdated_count" -gt 10 ]; then
+            health_score=$((health_score - 10))
+            issues+=("Many outdated dependencies ($outdated_count)")
+          fi
+          
+          echo "Health score: $health_score/100"
+          echo "Critical issues: $critical_issues"
+          echo "Issues found: ${issues[*]}"
+          
+          echo "score=$health_score" >> $GITHUB_OUTPUT
+          echo "critical_issues=$critical_issues" >> $GITHUB_OUTPUT
+
+  performance-monitoring:
+    name: Performance Monitoring
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Add node_modules/.bin to PATH
+        run: echo "./node_modules/.bin" >> $GITHUB_PATH
+
+      - name: Performance benchmarks
+        run: |
+          echo "📊 Running performance benchmarks..."
+          
+          # Measure build time
+          echo "Measuring build performance..."
+          start_time=$(date +%s%N)
+          bun run clean-build
+          bun run build
+          end_time=$(date +%s%N)
+          build_time_ms=$(( (end_time - start_time) / 1000000 ))
+          
+          echo "Build time: ${build_time_ms}ms"
+          
+          # Measure test performance
+          echo "Measuring test performance..."
+          start_time=$(date +%s%N)
+          bun run test
+          end_time=$(date +%s%N)
+          test_time_ms=$(( (end_time - start_time) / 1000000 ))
+          
+          echo "Test time: ${test_time_ms}ms"
+          
+          # CLI startup performance
+          echo "Measuring CLI startup performance..."
+          chmod +x bin/mikrus
+          start_time=$(date +%s%N)
+          ./bin/mikrus --help > /dev/null
+          end_time=$(date +%s%N)
+          cli_startup_ms=$(( (end_time - start_time) / 1000000 ))
+          
+          echo "CLI startup time: ${cli_startup_ms}ms"
+          
+          # Performance thresholds
+          if [ "$build_time_ms" -gt 30000 ]; then
+            echo "⚠️ Build time exceeds threshold (30s)"
+          fi
+          
+          if [ "$test_time_ms" -gt 60000 ]; then
+            echo "⚠️ Test time exceeds threshold (60s)"
+          fi
+          
+          if [ "$cli_startup_ms" -gt 2000 ]; then
+            echo "⚠️ CLI startup time exceeds threshold (2s)"
+          fi
+          
+          echo "✅ Performance monitoring completed"
+
+  dependency-monitoring:
+    name: Dependency Monitoring
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Monitor dependencies
+        run: |
+          echo "📦 Monitoring dependencies..."
+          
+          # Check for outdated dependencies
+          echo "Checking for outdated dependencies..."
+          bun outdated || true
+          
+          # Check for deprecated packages
+          echo "Checking for deprecated packages..."
+          deprecated_packages=$(npm ls --depth=0 --json 2>/dev/null | jq -r '.dependencies | to_entries[] | select(.value.deprecated) | .key' || echo "")
+          
+          if [ -n "$deprecated_packages" ]; then
+            echo "⚠️ Deprecated packages found:"
+            echo "$deprecated_packages"
+          else
+            echo "✅ No deprecated packages found"
+          fi
+          
+          # Check dependency tree health
+          echo "Analyzing dependency tree..."
+          dependency_count=$(npm ls --json 2>/dev/null | jq '.dependencies | keys | length' || echo "0")
+          echo "Total dependencies: $dependency_count"
+          
+          # Check for duplicate dependencies
+          echo "Checking for duplicate dependencies..."
+          npm ls --json 2>/dev/null | jq -r '.dependencies | to_entries[] | select(.value.dependencies) | .key' | sort | uniq -d | head -5 || echo "No obvious duplicates found"
+
+  security-monitoring:
+    name: Security Monitoring
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Security monitoring
+        run: |
+          echo "🔒 Running security monitoring..."
+          
+          # Vulnerability scan
+          echo "Running vulnerability scan..."
+          audit_output=$(bunx bun audit 2>&1 || true)
+          echo "$audit_output"
+          
+          # Count vulnerabilities by severity
+          critical_count=$(echo "$audit_output" | grep -c "critical" || echo "0")
+          high_count=$(echo "$audit_output" | grep -c "high" || echo "0")
+          moderate_count=$(echo "$audit_output" | grep -c "moderate" || echo "0")
+          low_count=$(echo "$audit_output" | grep -c "low" || echo "0")
+          
+          echo "Security Summary:"
+          echo "Critical: $critical_count"
+          echo "High: $high_count"
+          echo "Moderate: $moderate_count"
+          echo "Low: $low_count"
+          
+          # Check for suspicious files
+          echo "Checking for suspicious files..."
+          suspicious_files=$(find . -name "*.suspicious" -o -name "*.malware" -o -name "*.infected" 2>/dev/null || echo "")
+          if [ -n "$suspicious_files" ]; then
+            echo "⚠️ Suspicious files found: $suspicious_files"
+          fi
+          
+          # Check for hardcoded secrets patterns
+          echo "Scanning for potential secrets..."
+          secret_patterns=$(grep -r -i --exclude-dir=node_modules --exclude-dir=.git \
+            -E "(password|passwd|secret|token|key).*[=:][^,\s]+[A-Za-z0-9+/=]{8,}" \
+            . | head -3 | grep -v -E "(\.md:|example|test|TODO)" || echo "")
+          
+          if [ -n "$secret_patterns" ]; then
+            echo "⚠️ Potential secrets found (review carefully):"
+            echo "$secret_patterns"
+          else
+            echo "✅ No obvious secrets found"
+          fi
+
+  code-quality-monitoring:
+    name: Code Quality Monitoring
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Add node_modules/.bin to PATH
+        run: echo "./node_modules/.bin" >> $GITHUB_PATH
+
+      - name: Code quality metrics
+        run: |
+          echo "📈 Analyzing code quality metrics..."
+          
+          # Count lines of code
+          echo "Code statistics:"
+          find src -name "*.ts" -o -name "*.js" | xargs wc -l | tail -1 || echo "Could not count lines"
+          
+          # Count test files and coverage
+          test_files=$(find tests -name "*.test.*" -o -name "*.spec.*" | wc -l)
+          echo "Test files: $test_files"
+          
+          # Run tests with coverage
+          echo "Generating test coverage..."
+          bun run test:coverage || echo "Coverage generation failed"
+          
+          # Check if coverage report exists
+          if [ -f "coverage/coverage-summary.json" ]; then
+            echo "Coverage summary:"
+            node -e "
+              try {
+                const coverage = require('./coverage/coverage-summary.json');
+                const total = coverage.total;
+                console.log('Lines coverage:', total.lines.pct + '%');
+                console.log('Functions coverage:', total.functions.pct + '%');
+                console.log('Branches coverage:', total.branches.pct + '%');
+                console.log('Statements coverage:', total.statements.pct + '%');
+              } catch (e) {
+                console.log('Could not parse coverage summary');
+              }
+            " || echo "Could not read coverage data"
+          fi
+          
+          # Code complexity analysis (basic)
+          echo "Analyzing code complexity..."
+          complex_files=$(grep -r "if\|for\|while\|switch" src --include="*.ts" | wc -l)
+          echo "Complexity indicators (if/for/while/switch): $complex_files"
+
+  alerting:
+    name: Generate Alerts
+    runs-on: ubuntu-latest
+    needs: [system-health-check, performance-monitoring, dependency-monitoring, security-monitoring]
+    if: always()
+    steps:
+      - name: Check for critical issues
+        run: |
+          echo "🚨 Checking for critical issues..."
+          
+          health_score=${{ needs.system-health-check.outputs.health_score || 0 }}
+          critical_issues=${{ needs.system-health-check.outputs.critical_issues || 0 }}
+          
+          echo "System health score: $health_score/100"
+          echo "Critical issues: $critical_issues"
+          
+          # Determine alert level
+          if [ "$health_score" -lt 70 ] || [ "$critical_issues" -gt 0 ]; then
+            echo "🔴 CRITICAL ALERT: System health is degraded!"
+            echo "Immediate attention required."
+          elif [ "$health_score" -lt 85 ]; then
+            echo "🟡 WARNING: System health is below optimal"
+            echo "Review and address issues when possible."
+          else
+            echo "🟢 System health is good"
+          fi
+
+      - name: Create issue for critical problems
+        if: needs.system-health-check.outputs.health_score < 70 && github.event_name != 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 System Health Alert - Score: ${{ needs.system-health-check.outputs.health_score }}/100`;
+            const body = `
+            ## System Health Alert
+            
+            The automated monitoring system has detected critical issues that require attention.
+            
+            **Health Score:** ${{ needs.system-health-check.outputs.health_score }}/100
+            **Critical Issues:** ${{ needs.system-health-check.outputs.critical_issues }}
+            
+            **Monitoring Results:**
+            - System Health: ${{ needs.system-health-check.result }}
+            - Performance: ${{ needs.performance-monitoring.result }}
+            - Dependencies: ${{ needs.dependency-monitoring.result }}
+            - Security: ${{ needs.security-monitoring.result }}
+            
+            Please review the workflow logs for detailed information about the issues detected.
+            
+            **Actions Required:**
+            - [ ] Review failing tests
+            - [ ] Address build issues
+            - [ ] Fix security vulnerabilities
+            - [ ] Update outdated dependencies
+            
+            This issue was automatically created by the monitoring workflow.
+            `;
+            
+            // Check if similar issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['automated-alert', 'system-health']
+            });
+            
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['automated-alert', 'system-health', 'critical']
+              });
+            }
+
+  monitoring-summary:
+    name: Monitoring Summary
+    runs-on: ubuntu-latest
+    needs: [system-health-check, performance-monitoring, dependency-monitoring, security-monitoring, code-quality-monitoring, alerting]
+    if: always()
+    steps:
+      - name: Generate monitoring report
+        run: |
+          echo "📊 Monitoring Summary Report"
+          echo "=========================="
+          echo "Timestamp: $(date -u)"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref }}"
+          echo ""
+          echo "Component Status:"
+          echo "- System Health: ${{ needs.system-health-check.result }}"
+          echo "- Performance: ${{ needs.performance-monitoring.result }}"
+          echo "- Dependencies: ${{ needs.dependency-monitoring.result }}"
+          echo "- Security: ${{ needs.security-monitoring.result }}"
+          echo "- Code Quality: ${{ needs.code-quality-monitoring.result }}"
+          echo "- Alerting: ${{ needs.alerting.result }}"
+          echo ""
+          
+          if [ "${{ needs.system-health-check.outputs.health_score }}" != "" ]; then
+            echo "Health Score: ${{ needs.system-health-check.outputs.health_score }}/100"
+          fi
+          
+          if [ "${{ needs.system-health-check.outputs.critical_issues }}" != "" ]; then
+            echo "Critical Issues: ${{ needs.system-health-check.outputs.critical_issues }}"
+          fi
+          
+          echo ""
+          echo "✅ Monitoring cycle completed"
