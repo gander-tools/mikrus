@@ -13,7 +13,7 @@
   "scripts": {
     "clean-build": "bunx rimraf -rf ./build",
     "compile": "bunx tsc -p .",
-    "copy-templates": "bunx cpy ./src/templates/* ./build/templates",
+    "copy-templates": "bunx cpy 'src/templates/*' build/templates",
     "build": "bun run clean-build && bun run compile && bun run copy-templates",
     "prepublishOnly": "bun run build",
     "format": "bunx biome format --write .",
