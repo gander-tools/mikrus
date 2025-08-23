@@ -65,36 +65,17 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        id: create_release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          name: Release ${{ steps.get_version.outputs.VERSION }}
           body_path: release_notes.txt
           draft: false
           prerelease: ${{ contains(steps.get_version.outputs.VERSION, '-') }}
-
-      - name: Upload Release Assets (tar.gz)
-        uses: actions/upload-release-asset@v1
+          files: |
+            mikrus-${{ steps.get_version.outputs.VERSION }}.tar.gz
+            mikrus-${{ steps.get_version.outputs.VERSION }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./mikrus-${{ steps.get_version.outputs.VERSION }}.tar.gz
-          asset_name: mikrus-${{ steps.get_version.outputs.VERSION }}.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Upload Release Assets (zip)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./mikrus-${{ steps.get_version.outputs.VERSION }}.zip
-          asset_name: mikrus-${{ steps.get_version.outputs.VERSION }}.zip
-          asset_content_type: application/zip
 
   # Optional: Publish to npm registry (if you want to make it installable via npm)
   publish-npm:
