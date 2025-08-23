@@ -32,7 +32,7 @@ jobs:
             ${{ runner.os }}-bun-
 
       - name: Run Biome checks
-        run: npx @biomejs/biome ci
+        run: bunx @biomejs/biome ci
 
 
   test:
