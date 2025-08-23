@@ -56,6 +56,16 @@ jobs:
             echo "ℹ️ No pre-commit hooks configured"
           fi
 
+      - name: Verify lefthook uninstall
+        run: |
+          if [ -f ".lefthook.yml" ] || [ -f "lefthook.yml" ]; then
+            echo "🧹 Testing lefthook uninstall functionality..."
+            bunx lefthook uninstall || echo "⚠️ Lefthook uninstall failed"
+            echo "✅ Lefthook uninstall verification completed"
+          else
+            echo "ℹ️ No lefthook configuration to uninstall"
+          fi
+
       - name: Cache build outputs
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4
         with:

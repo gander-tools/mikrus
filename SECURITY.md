@@ -12,8 +12,7 @@ We take the security of mikrus seriously. If you discover a security vulnerabili
 
 ### 🔒 **Private Disclosure**
 1. **GitHub Security Advisories** (Preferred): https://github.com/gander-tools/mikrus/security/advisories/new
-2. **Email**: security@example.com
-3. **PGP Key**: Available upon request
+2. **Email**: security@gander.tools
 
 ### 📋 **What to Include**
 - Description of the vulnerability
@@ -94,7 +93,7 @@ Security updates are released as patch versions and are documented in:
 ## Contact
 
 For questions about this security policy, contact:
-- **Security Team**: security@example.com
+- **Security Team**: security@gander.tools
 - **Maintainers**: https://github.com/gander-tools/mikrus/graphs/contributors
 
 ---

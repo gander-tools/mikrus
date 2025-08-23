@@ -45,7 +45,17 @@
     }
   ],
   "files": {
-    "includes": ["src/**/*", "tests/**/*", "bin/**/*"],
-    "maxSize": 1048576
+    "includes": [
+      "docs/**/*",
+      "src/**/*",
+      "tests/**/*",
+      "*.md",
+      "*.json",
+      "*.yml",
+      "*.yaml",
+      "*.ts"
+    ],
+    "maxSize": 1048576,
+    "ignoreUnknown": true
   }
 }

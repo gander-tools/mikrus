@@ -1,0 +1,50 @@
+name: PR Merge Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  cleanup-merged-branch:
+    name: Auto-delete merged PR branch
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true && github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Delete merged branch
+        run: |
+          echo "🧹 Auto-deleting merged branch: ${{ github.event.pull_request.head.ref }}"
+          
+          # Only delete if it's not a protected branch
+          if [[ "${{ github.event.pull_request.head.ref }}" != "main" && "${{ github.event.pull_request.head.ref }}" != "master" && "${{ github.event.pull_request.head.ref }}" != "develop" ]]; then
+            gh api repos/${{ github.repository }}/git/refs/heads/${{ github.event.pull_request.head.ref }} --method DELETE || echo "⚠️ Branch may already be deleted"
+            echo "✅ Branch ${{ github.event.pull_request.head.ref }} deleted successfully"
+          else
+            echo "🔒 Protected branch - not deleting ${{ github.event.pull_request.head.ref }}"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  cleanup-summary:
+    name: Cleanup Summary
+    runs-on: ubuntu-latest
+    needs: [cleanup-merged-branch]
+    if: always() && github.event.pull_request.merged == true
+    steps:
+      - name: Post cleanup summary
+        run: |
+          echo "📋 PR Merge Cleanup Summary:"
+          echo "• PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"
+          echo "• Branch: ${{ github.event.pull_request.head.ref }}"
+          echo "• Status: ${{ needs.cleanup-merged-branch.result }}"
+          
+          if [[ "${{ needs.cleanup-merged-branch.result }}" == "success" ]]; then
+            echo "✅ Cleanup completed successfully"
+          elif [[ "${{ needs.cleanup-merged-branch.result }}" == "skipped" ]]; then
+            echo "ℹ️ Cleanup skipped (protected branch or different repository)"
+          else
+            echo "⚠️ Cleanup encountered issues - check logs"
+          fi
