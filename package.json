@@ -2,7 +2,7 @@
   "name": "mikrus",
   "version": "0.0.1",
   "description": "Command-line interface tool for managing VPS servers on mikr.us platform",
-  "private": true,
+  "private": false,
   "types": "build/types/types.d.ts",
   "bin": {
     "mikrus": "bin/mikrus"
@@ -33,6 +33,31 @@
     "bin"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gander-tools/mikrus.git"
+  },
+  "homepage": "https://github.com/gander-tools/mikrus#readme",
+  "bugs": {
+    "url": "https://github.com/gander-tools/mikrus/issues"
+  },
+  "author": {
+    "name": "Adam Gąsowski",
+    "email": "gander@example.com",
+    "url": "https://github.com/gander"
+  },
+  "keywords": [
+    "cli",
+    "vps",
+    "mikr.us",
+    "server-management",
+    "hosting"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "provenance": true
+  },
   "dependencies": {
     "gluegun": "^5.2.0"
   },
