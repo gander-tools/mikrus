@@ -31,14 +31,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-bun-
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Add node_modules/.bin to PATH
-        run: echo "./node_modules/.bin" >> $GITHUB_PATH
-
       - name: Run Biome checks
-        run: bun run check
+        run: npx @biomejs/biome ci
 
 
   test:
