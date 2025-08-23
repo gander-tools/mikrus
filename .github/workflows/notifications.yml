@@ -1,0 +1,46 @@
+name: Pipeline Notifications
+
+on:
+  workflow_run:
+    workflows: ["CI/CD Pipeline", "Release", "Security Scan"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    name: Pipeline Status Notification
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'failure'
+    steps:
+      - name: Notify on pipeline failure
+        run: |
+          echo "🚨 Pipeline failed: $WORKFLOW_NAME"
+          echo "Branch: $BRANCH_NAME"
+          echo "Run URL: $RUN_URL"
+          echo "Author: $COMMIT_AUTHOR"
+        env:
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          BRANCH_NAME: ${{ github.event.workflow_run.head_branch }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          COMMIT_AUTHOR: ${{ github.event.workflow_run.head_commit.author.name }}
+          
+          # Future: Add Slack/Discord/email notifications here
+          # curl -X POST -H 'Content-type: application/json' \
+          #   --data '{"text":"Pipeline failed: ${{ github.event.workflow_run.name }}"}' \
+          #   ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  success-notify:
+    name: Success Notification  
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.name == 'Release'
+    steps:
+      - name: Notify on successful release
+        run: |
+          echo "🎉 Successful release!"
+          echo "Branch: $BRANCH_NAME"
+          echo "Run URL: $RUN_URL"
+        env:
+          BRANCH_NAME: ${{ github.event.workflow_run.head_branch }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
