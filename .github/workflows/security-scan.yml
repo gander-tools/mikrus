@@ -11,10 +11,6 @@ permissions:
   contents: read
 
 jobs:
-  snyk-caller:
-    uses: ./.github/workflows/snyk.yml
-    secrets: inherit
-
   dependency-scan:
     name: Dependency Security Scan
     runs-on: ubuntu-latest
