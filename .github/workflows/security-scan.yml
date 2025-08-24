@@ -31,10 +31,14 @@ jobs:
       - name: Create empty SARIF file
         run: touch ./snyk.sarif
 
+      # 2. Zainstaluj Snyk CLI globalnie
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
       - name: Authenticate Snyk
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk auth
+        run: snyk auth $SNYK_TOKEN
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@14818c4695ecc4045f33c9cee9e795a788711ca4 # master
