@@ -29,6 +29,31 @@ jobs:
         run: bun install --frozen-lockfile
 
       # 2. Zainstaluj Snyk CLI globalnie (tylko jeśli SNYK_TOKEN istnieje)
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: monitor
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
       - name: Install Snyk CLI
         if: env.SNYK_TOKEN != ''
         run: npm install -g snyk
@@ -36,13 +61,13 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Authenticate Snyk
-        if: env.SNYK_TOKEN != ''
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: snyk auth $SNYK_TOKEN --auth-type=token
 
       - name: Run Snyk to check for vulnerabilities
-        if: env.SNYK_TOKEN != ''
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         uses: snyk/actions/node@14818c4695ecc4045f33c9cee9e795a788711ca4 # master
         continue-on-error: true
         env:
@@ -51,7 +76,7 @@ jobs:
           args: --sarif-file-output=./snyk.sarif
 
       - name: Upload Snyk results to GitHub Code Scanning
-        if: env.SNYK_TOKEN != '' && hashFiles('snyk.sarif') != ''
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         uses: github/codeql-action/upload-sarif@47b3d888fe66b639e431abf22ebca059152f1eea # v3
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
