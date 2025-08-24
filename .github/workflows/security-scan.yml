@@ -12,7 +12,7 @@ permissions:
 
 jobs:
 
-  call-snyk-scan:
+  security-scan:
     uses: ./.github/workflows/snyk-scan.yml
     secrets:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
