@@ -1,17 +1,24 @@
 import type { GluegunToolbox } from 'gluegun'
+import type { MikrusToolbox } from '../types'
 
-// add your CLI-specific functionality here, which will then be accessible
-// to your commands
+/**
+ * Extends the Gluegun toolbox with mikrus-specific functionality
+ * @param toolbox - The Gluegun toolbox instance
+ */
 module.exports = (toolbox: GluegunToolbox) => {
-  toolbox.foo = () => {
-    toolbox.print.info('called foo extension')
+  const mikrusToolbox = toolbox as MikrusToolbox
+
+  /**
+   * Utility function for mikrus CLI operations
+   * Can be used by commands for common functionality
+   */
+  mikrusToolbox.foo = () => {
+    mikrusToolbox.print.info('Mikrus CLI utility function called')
   }
 
-  // enable this if you want to read configuration in from
-  // the current folder's package.json (in a "mikrus" property),
-  // mikrus.config.json, etc.
-  // toolbox.config = {
-  //   ...toolbox.config,
-  //   ...toolbox.config.loadConfig("mikrus", process.cwd())
+  // Configuration loading - uncomment and customize if needed
+  // mikrusToolbox.config = {
+  //   ...mikrusToolbox.config,
+  //   ...mikrusToolbox.config.loadConfig("mikrus", process.cwd())
   // }
 }
