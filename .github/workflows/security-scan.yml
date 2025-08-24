@@ -17,6 +17,10 @@ jobs:
   snyk-scan:
     name: Snyk Scan
     uses: ./.github/workflows/snyk-scan.yml
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
     secrets:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
