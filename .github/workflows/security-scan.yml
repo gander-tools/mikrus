@@ -30,21 +30,19 @@ jobs:
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@14818c4695ecc4045f33c9cee9e795a788711ca4 # master
-#        continue-on-error: false
-        if: env.SNYK_TOKEN != ''
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-#        with:
-#          args: --sarif-file-output=snyk.sarif
+        with:
+          args: --sarif-file-output=snyk.sarif
 
-#      - name: Upload Snyk results to GitHub Code Scanning
-#        uses: github/codeql-action/upload-sarif@47b3d888fe66b639e431abf22ebca059152f1eea # v3
-#        if: env.SNYK_TOKEN != '' && always()
-#        env:
-#          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-#        with:
-#          sarif_file: snyk.sarif
-#          category: snyk-dependencies
+      - name: Upload Snyk results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@47b3d888fe66b639e431abf22ebca059152f1eea # v3
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          sarif_file: snyk.sarif
+          category: snyk-dependencies
 
       - name: Run dependency audit
         run: |
