@@ -11,6 +11,12 @@ permissions:
   contents: read
 
 jobs:
+
+  call-snyk-scan:
+    uses: ./.github/workflows/snyk-scan.yml
+    secrets:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
   dependency-scan:
     name: Dependency Security Scan
     runs-on: ubuntu-latest
