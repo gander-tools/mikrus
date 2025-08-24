@@ -40,7 +40,7 @@ jobs:
         if: secrets.SNYK_TOKEN != null && secrets.SNYK_TOKEN != ''
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk config set api=$SNYK_TOKEN
+        run: snyk auth $SNYK_TOKEN --auth-type=token
 
       - name: Run Snyk to check for vulnerabilities
         if: secrets.SNYK_TOKEN != null && secrets.SNYK_TOKEN != ''
