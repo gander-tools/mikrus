@@ -33,17 +33,19 @@ jobs:
 
       # 2. Zainstaluj Snyk CLI globalnie (tylko jeśli SNYK_TOKEN istnieje)
       - name: Install Snyk CLI
-        if: secrets.SNYK_TOKEN != null && secrets.SNYK_TOKEN != ''
+        if: env.SNYK_TOKEN != ''
         run: npm install -g snyk
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Authenticate Snyk
-        if: secrets.SNYK_TOKEN != null && secrets.SNYK_TOKEN != ''
+        if: env.SNYK_TOKEN != ''
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: snyk auth $SNYK_TOKEN --auth-type=token
 
       - name: Run Snyk to check for vulnerabilities
-        if: secrets.SNYK_TOKEN != null && secrets.SNYK_TOKEN != ''
+        if: env.SNYK_TOKEN != ''
         uses: snyk/actions/node@14818c4695ecc4045f33c9cee9e795a788711ca4 # master
         continue-on-error: true
         env:
@@ -52,8 +54,10 @@ jobs:
           args: --sarif-file-output=./snyk.sarif
 
       - name: Upload Snyk results to GitHub Code Scanning
-        if: secrets.SNYK_TOKEN != null && secrets.SNYK_TOKEN != '' && hashFiles('snyk.sarif') != ''
+        if: env.SNYK_TOKEN != '' && hashFiles('snyk.sarif') != ''
         uses: github/codeql-action/upload-sarif@47b3d888fe66b639e431abf22ebca059152f1eea # v3
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           sarif_file: ./snyk.sarif
           category: snyk-dependencies
