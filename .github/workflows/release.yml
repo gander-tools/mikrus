@@ -1,4 +1,8 @@
-name: Release
+name: Production Release & Publishing
+
+# Production release workflow with GitHub Release and NPM publishing
+# Triggers: Git tags matching v*.*.* (semantic versioning)
+# Purpose: CI verification → Build → GitHub Release → NPM publish with provenance
 
 on:
   push:
@@ -9,12 +13,13 @@ permissions:
   contents: write
 
 jobs:
-  # Wait for the CI Pipeline to pass before releasing
   check-ci-status:
-    name: Check CI Pipeline Status
+    name: "🔍 Pre-flight: CI Pipeline Verification"
+    # Ensures CI pipeline passed successfully before allowing release
     runs-on: ubuntu-latest
     steps:
-      - name: Check CI status for this commit
+      - name: "✅ Validation: Verify CI Success for Tag Commit"
+        # Queries GitHub API to confirm CI workflow completed successfully for this commit
         uses: actions/github-script@v7
         with:
           script: |
@@ -40,36 +45,45 @@ jobs:
             console.log('✅ CI Pipeline passed successfully');
 
   build-and-release:
-    name: Build and Release
+    name: "🏗️ GitHub: Build & Create Release"
+    # Creates production build, archives, checksums, and GitHub release
     runs-on: ubuntu-latest
     needs: [check-ci-status]
     steps:
-      - name: Checkout code
+      - name: "📥 Repository: Full History Checkout"
+        # Downloads complete git history for changelog and version extraction
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
         with:
           fetch-depth: 0
 
-      - name: Setup Bun
+      - name: "⚡ Runtime: Setup Bun Environment"
+        # Configures Bun runtime for fast dependency installation and building
         uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
         with:
           bun-version: latest
 
-      - name: Install dependencies
+      - name: "📦 Dependencies: Install Frozen Lockfile"
+        # Installs exact dependencies from lockfile for reproducible builds
         run: bun install --frozen-lockfile
 
-      - name: Add node_modules/.bin to PATH
+      - name: "🛣️ Environment: Add CLI Tools to PATH"
+        # Makes node_modules/.bin tools available in subsequent steps
         run: echo "./node_modules/.bin" >> $GITHUB_PATH
 
-      - name: Run tests
+      - name: "🧪 Quality: Execute Test Suite"
+        # Runs complete test suite to ensure release quality
         run: bun run test
 
-      - name: Run linting
+      - name: "✨ Code Quality: Lint & Format Check"
+        # Validates code style and formatting before release
         run: bunx @biomejs/biome ci
 
-      - name: Build project
+      - name: "🔨 Build: Compile Production Release"
+        # Compiles TypeScript and creates production build artifacts
         run: bun run build
 
-      - name: Extract version from tag
+      - name: "🏷️ Version: Extract & Validate from Git Tag"
+        # Extracts semantic version from git tag with security validation
         id: get_version
         run: |
           VERSION="${GITHUB_REF/refs\/tags\/v/}"
@@ -80,7 +94,8 @@ jobs:
           fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Create Release Archive
+      - name: "📦 Archive: Create Release Packages"
+        # Creates tar.gz and zip archives with all necessary release files
         run: |
           mkdir -p release
           cp -r build/ bin/ package.json README.md release/
@@ -92,7 +107,8 @@ jobs:
         env:
           VERSION: ${{ steps.get_version.outputs.VERSION }}
 
-      - name: Generate Release Notes
+      - name: "📝 Documentation: Generate Release Notes"
+        # Creates release notes from CHANGELOG.md or git history
         id: release_notes
         run: |
           if [ -f CHANGELOG.md ]; then
@@ -110,7 +126,8 @@ jobs:
         env:
           VERSION: ${{ steps.get_version.outputs.VERSION }}
 
-      - name: Generate checksums
+      - name: "🔐 Security: Generate SHA256 Checksums"
+        # Creates cryptographic checksums for download integrity verification
         run: |
           sha256sum "mikrus-$VERSION.tar.gz" > "mikrus-$VERSION.tar.gz.sha256"
           sha256sum "mikrus-$VERSION.zip" > "mikrus-$VERSION.zip.sha256"
@@ -120,7 +137,8 @@ jobs:
         env:
           VERSION: ${{ steps.get_version.outputs.VERSION }}
 
-      - name: Create GitHub Release
+      - name: "🚀 GitHub: Publish Release"
+        # Creates GitHub release with archives and checksums
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
           name: Release ${{ steps.get_version.outputs.VERSION }}
@@ -135,49 +153,59 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Build and integration tests (required for publishing)
   build-and-test:
-    name: Build and Integration Tests
+    name: "🧪 Integration: CLI End-to-End Validation"
+    # Comprehensive build and integration testing before NPM publication
     runs-on: ubuntu-latest
     needs: [check-ci-status]
     permissions:
       contents: read
     steps:
-      - name: Checkout code
+      - name: "📥 Repository: Checkout Release Code"
+        # Downloads repository for integration testing
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
-      - name: Setup Node.js
+      - name: "🟢 Runtime: Setup Node.js LTS"
+        # Configures Node.js for NPM compatibility testing
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 20
 
-      - name: Setup Bun
+      - name: "⚡ Runtime: Setup Bun Environment"
+        # Configures Bun runtime for build and testing
         uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
         with:
           bun-version: latest
 
-      - name: Cache dependencies
+      - name: "💾 Cache: Restore Dependencies"
+        # Caches dependencies for faster builds
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
 
-      - name: Install dependencies
+      - name: "📦 Dependencies: Install Frozen Lockfile"
+        # Installs exact dependencies for consistent builds
         run: bun install --frozen-lockfile
 
-      - name: Add node_modules/.bin to PATH
+      - name: "🛣️ Environment: Add CLI Tools to PATH"
+        # Makes CLI tools available for testing
         run: echo "./node_modules/.bin" >> $GITHUB_PATH
 
-      - name: Run tests
+      - name: "🧪 Quality: Execute Test Suite"
+        # Runs all tests to ensure functionality
         run: bun run test
 
-      - name: Run linting
+      - name: "✨ Code Quality: Lint & Format Validation"
+        # Ensures code quality before publication
         run: bunx @biomejs/biome ci
 
-      - name: Build project
+      - name: "🔨 Build: Create Production Binary"
+        # Compiles final production build
         run: bun run build
 
-      - name: Integration test - CLI help command
+      - name: "🔍 Integration: CLI Help Command Test"
+        # Tests compiled CLI help functionality
         run: |
           output=$(./bin/mikrus --compiled-build --help)
           echo "$output"
@@ -186,7 +214,8 @@ jobs:
             exit 1
           fi
 
-      - name: Integration test - CLI version command
+      - name: "📋 Integration: CLI Version Command Test"
+        # Validates CLI version output format
         run: |
           output=$(./bin/mikrus --compiled-build --version)
           echo "Version output: $output"
@@ -195,9 +224,9 @@ jobs:
             exit 1
           fi
 
-  # NPM publication with provenance and signing
   publish-npm:
-    name: Publish to NPM
+    name: "📦 NPM: Publish with Provenance"
+    # NPM publication with cryptographic provenance and integrity verification
     runs-on: ubuntu-latest
     needs: [build-and-release, build-and-test]
     if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-')
@@ -205,30 +234,37 @@ jobs:
       contents: read
       id-token: write  # Required for npm provenance
     steps:
-      - name: Checkout code
+      - name: "📥 Repository: Checkout for Publishing"
+        # Downloads repository for NPM package preparation
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
-      - name: Setup Node.js
+      - name: "🟢 Runtime: Setup Node.js with NPM Registry"
+        # Configures Node.js with NPM registry authentication
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
 
-      - name: Setup Bun
+      - name: "⚡ Runtime: Setup Bun Environment"
+        # Configures Bun for build and publishing
         uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
         with:
           bun-version: latest
 
-      - name: Install dependencies
+      - name: "📦 Dependencies: Install for Publishing"
+        # Installs dependencies needed for package building
         run: bun install --frozen-lockfile
 
-      - name: Add node_modules/.bin to PATH
+      - name: "🛣️ Environment: Add CLI Tools to PATH"
+        # Makes build tools available
         run: echo "./node_modules/.bin" >> $GITHUB_PATH
 
-      - name: Build project
+      - name: "🔨 Build: Create NPM Package"
+        # Creates final NPM package build
         run: bun run build
 
-      - name: Check NPM token configuration
+      - name: "🔑 Security: Verify NPM Token Configuration"
+        # Validates NPM authentication is properly configured
         run: |
           if [ -z "$NODE_AUTH_TOKEN" ]; then
             echo "❌ ERROR: NPM_TOKEN not configured in GitHub secrets"
@@ -241,23 +277,25 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Verify package integrity
+      - name: "🔍 Quality: Verify Package Integrity"
+        # Pre-publication integrity and content verification
         run: |
           echo "Verifying package contents..."
           npm pack --dry-run
           echo "Package size check:"
           du -sh .
 
-      - name: Publish to NPM with provenance
+      - name: "🚀 NPM: Publish with Cryptographic Provenance"
+        # Publishes to NPM with provenance for supply chain security
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Verify published package
+      - name: "✅ Verification: Confirm NPM Publication"
+        # Verifies successful publication and package availability
         run: |
           echo "Waiting for package to propagate..."
           sleep 30
           # Extract version from tag safely
           VERSION="${GITHUB_REF/refs\/tags\/v/}"
           npm view "mikrus@$VERSION" --json
-

@@ -1,4 +1,8 @@
-name: PR Merge Cleanup
+name: Repository Maintenance (PR Cleanup)
+
+# Automatic repository cleanup after pull request merges
+# Triggers: PR closed (merged)
+# Purpose: Removes merged feature branches and provides cleanup summary
 
 on:
   pull_request:
@@ -10,11 +14,13 @@ permissions:
 
 jobs:
   cleanup-merged-branch:
-    name: Auto-delete merged PR branch
+    name: "🧹 Cleanup: Delete Merged Feature Branch"
+    # Automatically removes merged feature branches (protects main/master/develop)
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true && github.event.pull_request.head.repo.full_name == github.repository
     steps:
-      - name: Delete merged branch
+      - name: "🗋 Branch Removal: Safe Deletion Logic"
+        # Deletes merged branch with protection for main/master/develop branches
         run: |
           echo "🧹 Auto-deleting merged branch: ${{ github.event.pull_request.head.ref }}"
           
@@ -29,12 +35,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   cleanup-summary:
-    name: Cleanup Summary
+    name: "📊 Summary: Cleanup Results Report"
+    # Provides detailed summary of cleanup operations and their outcomes
     runs-on: ubuntu-latest
     needs: [cleanup-merged-branch]
     if: always() && github.event.pull_request.merged == true
     steps:
-      - name: Post cleanup summary
+      - name: "📝 Report: Generate Cleanup Summary"
+        # Creates comprehensive report of cleanup operations and results
         run: |
           echo "📋 PR Merge Cleanup Summary:"
           echo "• PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"

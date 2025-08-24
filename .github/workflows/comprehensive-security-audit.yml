@@ -1,4 +1,8 @@
-name: Security Scan
+name: Comprehensive Security Audit
+
+# This workflow performs comprehensive security auditing across multiple dimensions
+# Triggers: Daily at 2 AM UTC + can be called by CI workflow + manual dispatch
+# Contains 4 specialized security jobs: dependencies, licenses, secrets, supply-chain
 
 on:
   schedule:
@@ -12,7 +16,9 @@ permissions:
 
 jobs:
   dependency-scan:
-    name: Dependency Security Scan
+    name: "🔍 Dependencies: Vulnerability & Audit Checks"
+    # Runs bun audit and better-npm-audit to detect vulnerable dependencies
+    # Fails on critical/high severity issues, allows moderate/low
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -74,7 +80,9 @@ jobs:
         continue-on-error: true
 
   license-scan:
-    name: License Compliance Scan
+    name: "📋 Licenses: Compliance & Legal Review"
+    # Scans all dependency licenses to identify GPL/AGPL/proprietary issues
+    # Warns about potentially problematic licenses for commercial use
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -107,7 +115,9 @@ jobs:
           fi
 
   secrets-scan:
-    name: Secrets and Sensitive Data Scan
+    name: "🔐 Secrets: Hardcoded Credentials Detection"
+    # Searches source code for hardcoded passwords, API keys, AWS keys
+    # Uses grep patterns to detect common secret formats
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -144,7 +154,9 @@ jobs:
           echo "✅ No AWS/Stripe keys detected"
 
   supply-chain-security:
-    name: Supply Chain Security
+    name: "🔗 Supply Chain: Package Integrity & Trust"
+    # Verifies package integrity, checks for suspicious packages and typosquatting
+    # Validates lockfile consistency and package authenticity
     runs-on: ubuntu-latest
     permissions:
       contents: read

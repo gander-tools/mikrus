@@ -1,4 +1,8 @@
-name: Claude Code Review
+name: Automated Code Review (Claude)
+
+# Automated pull request reviews using Claude AI
+# Triggers: PR opened/synchronized (new commits pushed)
+# Purpose: Provides AI-powered code quality analysis, security checks, and best practices review
 
 on:
   pull_request:
@@ -11,7 +15,9 @@ on:
     #   - "src/**/*.jsx"
 
 jobs:
-  claude-review:
+  automated-pr-review:
+    name: "🔍 Claude AI: Pull Request Code Review"
+    # Automatically reviews PRs for code quality, security, testing, and TypeScript/CLI best practices
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||
@@ -26,14 +32,16 @@ jobs:
       id-token: write
     
     steps:
-      - name: Checkout repository
+      - name: "📥 Repository: Checkout PR Code"
+        # Downloads PR changes for comprehensive code analysis
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
         with:
           fetch-depth: 1
           # Security: Prevent token exposure in URLs
           persist-credentials: false
 
-      - name: Run Claude Code Review
+      - name: "🧠 Claude AI: Analyze Code Changes"
+        # Performs automated code review using Claude AI with TypeScript CLI focus
         id: claude-review
         uses: anthropics/claude-code-action@a47fdbe49f641eadaf74042deb4cd9dfb8a981d5 # Pinned SHA for security
         timeout-minutes: 15 # Security: Prevent long-running executions

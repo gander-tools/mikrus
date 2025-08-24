@@ -1,4 +1,8 @@
-name: Claude Code
+name: Claude Code Integration
+
+# AI-powered code reviews and assistance using Claude Code
+# Triggers: @claude mentions in issues, PR comments, PR reviews + issue assignments
+# Purpose: Automated code review, suggestions, and development assistance
 
 on:
   issue_comment:
@@ -11,7 +15,9 @@ on:
     types: [submitted]
 
 jobs:
-  claude:
+  claude-ai-assistant:
+    name: "🤖 Claude AI: Code Review & Assistance"
+    # Responds to @claude mentions in issues/PRs with AI-powered code analysis
     if: |
       (
         (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && github.event.comment.user.type != 'Bot') ||
@@ -28,14 +34,16 @@ jobs:
       id-token: write # Required for OIDC
       actions: read # Required for Claude to read CI results on PRs
     steps:
-      - name: Checkout repository
+      - name: "📥 Repository: Checkout Code"
+        # Downloads repository content for Claude to analyze
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
         with:
           fetch-depth: 1
           # Security: Prevent token exposure in URLs
           persist-credentials: false
 
-      - name: Run Claude Code
+      - name: "🧠 Claude AI: Execute Code Analysis"
+        # Runs Claude Code action with project-specific configuration and security restrictions
         id: claude
         uses: anthropics/claude-code-action@a47fdbe49f641eadaf74042deb4cd9dfb8a981d5 # Pinned SHA for security
         timeout-minutes: 10 # Security: Prevent long-running executions

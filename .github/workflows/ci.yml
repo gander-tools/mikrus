@@ -1,5 +1,9 @@
 name: CI/CD Pipeline
 
+# Main continuous integration workflow for code quality and testing
+# Triggers: Push/PR to main+develop branches + manual dispatch
+# Jobs: lint-and-format → test → build → [security-audits] → integration-test → notify
+
 on:
   push:
     branches: [ main, develop ]
@@ -16,7 +20,8 @@ permissions:
 
 jobs:
   lint-and-format:
-    name: Lint & Format
+    name: "✨ Code Quality: Lint & Format"
+    # Runs Biome checks, validates pre-commit hooks (lefthook), caches build outputs
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -37,13 +42,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-bun-
 
-      - name: Install dependencies
+      - name: "📦 Dependencies: Install Frozen Lockfile"
+        # Installs exact dependencies from lockfile for reproducible builds
         run: bun install --frozen-lockfile
 
-      - name: Add node_modules/.bin to PATH
+      - name: "🛷️ Environment: Add CLI Tools to PATH"
+        # Makes node_modules/.bin tools available for subsequent steps
         run: echo "./node_modules/.bin" >> $GITHUB_PATH
 
-      - name: Run Biome checks
+      - name: "✨ Code Quality: Biome Lint & Format Check"
+        # Validates code style, formatting, and linting rules using Biome
         run: bunx @biomejs/biome ci
 
       - name: Validate pre-commit hooks
@@ -77,7 +85,8 @@ jobs:
             ${{ runner.os }}-build-
 
   test:
-    name: Test (Node ${{ matrix.node-version }})
+    name: "🧪 Test Suite: Node ${{ matrix.node-version }}"
+    # Runs Vitest tests across Node.js 20+22, generates coverage for Node 20
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -130,7 +139,8 @@ jobs:
           fail_ci_if_error: false
 
   build:
-    name: Build
+    name: "🛠️ Build: TypeScript Compilation"
+    # Compiles TypeScript, creates build artifacts, uploads for integration testing
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -170,15 +180,17 @@ jobs:
             bin/
           retention-days: 7
 
-  security-scan:
-    name: Security Scan
-    uses: ./.github/workflows/security-scan.yml
+  comprehensive-security-audit:
+    name: "🔒 Comprehensive Security Audit"
+    # Calls comprehensive-security-audit.yml (4 security jobs: dependencies, licenses, secrets, supply-chain)
+    uses: ./.github/workflows/comprehensive-security-audit.yml
     permissions:
       contents: read
 
-  snyk-scan:
-    name: Snyk Scan
-    uses: ./.github/workflows/snyk-scan.yml
+  vulnerability-scanning-snyk:
+    name: "🐛 Vulnerability Scanning (Snyk)"
+    # Calls vulnerability-scanning-snyk.yml (Snyk-specific vulnerability detection + SARIF upload)
+    uses: ./.github/workflows/vulnerability-scanning-snyk.yml
     permissions:
       contents: read
       security-events: write
@@ -186,9 +198,9 @@ jobs:
     secrets:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-  # Integration test job that runs the built CLI
   integration-test:
-    name: Integration Test
+    name: "🔌 Integration: CLI End-to-End Tests"
+    # Downloads build artifacts, tests compiled CLI binary (help, version commands)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -244,13 +256,13 @@ jobs:
           fi
 
 
-  # Notification job that runs regardless of other job outcomes
   notify:
-    name: Notify
+    name: "📢 Results: Pipeline Status Notification"
+    # Runs after all jobs complete (success/failure), provides final status summary
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [lint-and-format, test, build, snyk-scan, security-scan, integration-test]
+    needs: [lint-and-format, test, build, vulnerability-scanning-snyk, comprehensive-security-audit, integration-test]
     if: always()
     steps:
       - name: Notify on success
