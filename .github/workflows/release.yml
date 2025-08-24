@@ -6,13 +6,14 @@ on:
       - 'v*.*.*'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   # Wait for the CI Pipeline to pass before releasing
   check-ci-status:
     name: Check CI Pipeline Status
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Check CI status for this commit
         uses: actions/github-script@v7
@@ -42,7 +43,7 @@ jobs:
   build-and-release:
     name: Build and Release
     runs-on: ubuntu-latest
-    needs: [check-ci-status]
+    needs: [ check-ci-status ]
     steps:
       - name: Checkout code
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -139,7 +140,8 @@ jobs:
   build-and-test:
     name: Build and Integration Tests
     runs-on: ubuntu-latest
-    needs: [check-ci-status]
+    timeout-minutes: 20
+    needs: [ check-ci-status ]
     permissions:
       contents: read
     steps:
@@ -160,7 +162,7 @@ jobs:
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          key: ${{ runner.os }}-bun-release-${{ hashFiles('**/bun.lock') }}
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -199,7 +201,7 @@ jobs:
   publish-npm:
     name: Publish to NPM
     runs-on: ubuntu-latest
-    needs: [build-and-release, build-and-test]
+    needs: [ build-and-release, build-and-test ]
     if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-')
     permissions:
       contents: read
@@ -227,19 +229,6 @@ jobs:
 
       - name: Build project
         run: bun run build
-
-      - name: Check NPM token configuration
-        run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "❌ ERROR: NPM_TOKEN not configured in GitHub secrets"
-            echo "Please configure NPM_TOKEN in organization secrets:"
-            echo "https://github.com/organizations/gander-tools/settings/secrets/actions"
-            exit 1
-          else
-            echo "✅ NPM token is configured"
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Verify package integrity
         run: |

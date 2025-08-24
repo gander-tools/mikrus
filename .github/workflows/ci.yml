@@ -18,6 +18,7 @@ jobs:
   lint-and-format:
     name: Lint & Format
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
@@ -33,7 +34,7 @@ jobs:
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          key: ${{ runner.os }}-bun-lint-format-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
@@ -79,12 +80,13 @@ jobs:
   test:
     name: Test (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20, 22]
+        node-version: [ 20, 22 ]
         include:
           # Primary testing with coverage
           - node-version: 20
@@ -109,7 +111,7 @@ jobs:
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          key: ${{ runner.os }}-bun-test-node${{ matrix.node-version }}-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
@@ -132,9 +134,10 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
-    needs: [lint-and-format, test]
+    needs: [ lint-and-format, test ]
     steps:
       - name: Checkout code
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -148,7 +151,7 @@ jobs:
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          key: ${{ runner.os }}-bun-build-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
@@ -175,14 +178,16 @@ jobs:
     uses: ./.github/workflows/security-scan.yml
     permissions:
       contents: read
+      security-events: write
 
   # Integration test job that runs the built CLI
   integration-test:
     name: Integration Test
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
-    needs: [build]
+    needs: [ build ]
     steps:
       - name: Checkout code
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -238,9 +243,10 @@ jobs:
   notify:
     name: Notify
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: read
-    needs: [lint-and-format, test, build, security-scan, integration-test]
+    needs: [ lint-and-format, test, build, security-scan, integration-test ]
     if: always()
     steps:
       - name: Notify on success
