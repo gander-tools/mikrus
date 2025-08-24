@@ -9,6 +9,8 @@ on:
 
 permissions:
   contents: read
+  security-events: write  # DODAJ TO
+  actions: read
 
 jobs:
 
