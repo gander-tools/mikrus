@@ -61,6 +61,9 @@ jobs:
           # Security: Restrict to read-only operations and safe build commands
           allowed_tools: "Bash(bun run test),Bash(bun run check),Bash(bun run lint)"
 
+          # Allow Dependabot to trigger Claude reviews for dependency updates
+          allowed_bots: "dependabot"
+
           # Optional: Add custom instructions for Claude to customize its behavior for your project
           custom_instructions: |
             Follow our TypeScript and Biome coding standards
