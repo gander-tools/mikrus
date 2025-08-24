@@ -11,6 +11,10 @@ permissions:
   contents: read
 
 jobs:
+  snyk-caller:
+    uses: ./.github/workflows/snyk.yml
+    secrets: inherit
+
   dependency-scan:
     name: Dependency Security Scan
     runs-on: ubuntu-latest
@@ -27,11 +31,6 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
-
-      - name: snyc inner
-        uses: ./.github/workflows/snyk.yml
-        secrets:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Run dependency audit
         run: |
