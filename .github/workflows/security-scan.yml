@@ -38,7 +38,7 @@ jobs:
       - name: Authenticate Snyk
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk auth $SNYK_TOKEN
+        run: snyk config set api=$SNYK_TOKEN
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@14818c4695ecc4045f33c9cee9e795a788711ca4 # master
