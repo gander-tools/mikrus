@@ -176,6 +176,16 @@ jobs:
     permissions:
       contents: read
 
+  snyk-scan:
+    name: Snyk Scan
+    uses: ./.github/workflows/snyk-scan.yml
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    secrets:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
   # Integration test job that runs the built CLI
   integration-test:
     name: Integration Test
@@ -240,7 +250,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [lint-and-format, test, build, security-scan, integration-test]
+    needs: [lint-and-format, test, build, snyk-scan, security-scan, integration-test]
     if: always()
     steps:
       - name: Notify on success
