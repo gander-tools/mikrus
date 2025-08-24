@@ -1,4 +1,4 @@
-name: Automated Code Review (Claude)
+name: "🔍 Automated Code Review (Claude)"
 
 # Automated pull request reviews using Claude AI
 # Triggers: PR opened/synchronized (new commits pushed)

@@ -1,4 +1,4 @@
-name: Repository Maintenance (PR Cleanup)
+name: "🧹 Repository Maintenance (PR Cleanup)"
 
 # Automatic repository cleanup after pull request merges
 # Triggers: PR closed (merged)

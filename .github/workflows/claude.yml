@@ -1,4 +1,4 @@
-name: Claude Code Integration
+name: "🤖 Claude Code Integration"
 
 # AI-powered code reviews and assistance using Claude Code
 # Triggers: @claude mentions in issues, PR comments, PR reviews + issue assignments
