@@ -93,7 +93,9 @@ module.exports = {
 
       info(`Generated file at models/${name}-model.ts`)
     } catch (err) {
-      error(`Security validation failed: ${err.message}`)
+      const errorMessage =
+        err instanceof Error ? err.message : 'Unknown error occurred'
+      error(`Security validation failed: ${errorMessage}`)
       process.exit(1)
     }
   },
