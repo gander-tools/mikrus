@@ -1,15 +1,19 @@
 name: snyk.yml
+permissions:
+  contents: read
+
 on:
   workflow_call:
-    secrets:
-      SNYK_TOKEN:
-        required: true
+  workflow_dispatch:
+
 
 jobs:
   snyk:
     runs-on: ubuntu-latest
-    if: ${{ secrets.SNYK_TOKEN }}
+    if: ${{ secrets.SNYK_TOKEN != '' }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
