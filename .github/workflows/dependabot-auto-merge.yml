@@ -11,6 +11,7 @@ jobs:
   auto-merge:
     name: Auto-merge Dependabot PRs
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write          # Only for merging PRs
       pull-requests: write     # Only for PR operations
