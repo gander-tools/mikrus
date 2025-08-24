@@ -31,6 +31,11 @@ jobs:
       - name: Create empty SARIF file
         run: touch ./snyk.sarif
 
+      - name: Authenticate Snyk
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk auth
+
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@14818c4695ecc4045f33c9cee9e795a788711ca4 # master
         continue-on-error: true
