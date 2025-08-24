@@ -217,7 +217,7 @@ jobs:
             echo "Checking workflow: $workflow"
             
             # Check for hardcoded secrets in workflow files
-            if grep -q -E "(password|token|key|secret).*:" "$workflow" | grep -v '\${{'; then
+            if grep -q -E "(password|token|key|secret).*:" "$workflow" | grep -v '\${{.*}}'; then
               echo "⚠️ Potential hardcoded credential in $workflow"
             fi
             
