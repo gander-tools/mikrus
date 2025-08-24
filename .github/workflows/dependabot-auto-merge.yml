@@ -1,4 +1,8 @@
-name: Dependabot Auto-merge
+name: "🤖 Dependabot Automation"
+
+# Automated dependency management with intelligent merge policies
+# Triggers: Dependabot PR opened/updated/reopened
+# Purpose: Auto-merge safe updates (patch + dev minor), alert on major updates
 
 on:
   pull_request:
@@ -9,18 +13,21 @@ permissions:
   pull-requests: write
 
 jobs:
-  auto-merge:
-    name: Auto-merge Dependabot PRs
+  dependabot-automation:
+    name: "🤖 Dependabot: Smart Dependency Management"
+    # Automatically handles dependency updates with safety checks and merge policies
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
-      - name: Fetch Dependabot metadata
+      - name: "📊 Metadata: Extract Update Information"
+        # Retrieves dependency update details (type, version change, dependency scope)
         id: metadata
         uses: dependabot/fetch-metadata@08eff52bf64351f401fb50d4972fa95b9f2c2d1b # v1
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Auto-merge patch updates
+      - name: "✅ Auto-merge: Patch Updates (Safe)"
+        # Automatically merges patch version updates (bug fixes) as they are low-risk
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
         run: |
           gh pr merge --auto --squash --delete-branch "$PR_URL"
@@ -28,7 +35,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
 
-      - name: Auto-merge minor updates for dev dependencies
+      - name: "🔄 Auto-merge: Dev Dependencies Minor Updates"
+        # Auto-merges minor updates for development dependencies (tooling, testing)
         if: steps.metadata.outputs.update-type == 'version-update:semver-minor' && steps.metadata.outputs.dependency-type == 'direct:development'
         run: |
           gh pr merge --auto --squash --delete-branch "$PR_URL"
@@ -36,7 +44,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
 
-      - name: Comment on major updates
+      - name: "🚨 Alert: Major Version Update Detected"
+        # Flags major updates for manual review as they may contain breaking changes
         if: steps.metadata.outputs.update-type == 'version-update:semver-major'
         run: |
           gh pr comment "$PR_URL" --body "🚨 Major version update detected. Please review manually before merging."
