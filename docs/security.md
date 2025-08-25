@@ -28,11 +28,14 @@ This document outlines the security measures and best practices implemented in t
 
 ### CI/CD Security
 - **Minimal Attack Surface**: Simplified 4-workflow architecture reduces potential attack vectors
+- **Workflow Architecture**: Main CI pipeline + comprehensive security audit + release + dependabot automation
 - **Native GitHub Integration**: Leverages GitHub's native branch auto-deletion for better security
 - **Workflow Isolation**: Each workflow has minimal, specific permissions and dependencies
+- **Daily Security Scanning**: Automated security audit runs daily at 2:00 UTC
 - **Resource Protection**: Reduced workflow complexity prevents resource exhaustion attacks
-- **Security-First Releases**: All releases require successful security validation before publishing
+- **Security-First Releases**: All releases require successful CI and security validation before publishing
 - **Provenance Verification**: NPM packages published with cryptographic provenance for supply chain integrity
+- **Branch Protection**: 7 required status checks including comprehensive security validation
 
 ## Security Best Practices
 
@@ -79,12 +82,13 @@ This document outlines the security measures and best practices implemented in t
 ## Security Testing
 
 ### Automated Testing
-- Dependency vulnerability scanning
-- Secret detection in source code  
-- License compliance checking
-- Supply chain security validation
-- CI/CD workflow security validation
-- Branch protection rule compliance
+- Dependency vulnerability scanning (daily via comprehensive-security-audit.yml)
+- Secret detection in source code (integrated with GitHub native secret scanning)  
+- License compliance checking (validates all dependencies and licenses)
+- Supply chain security validation (package integrity verification)
+- CI/CD workflow security validation (all workflows use SHA-pinned actions)
+- Branch protection rule compliance (7 required status checks on main branch)
+- Snyk vulnerability scanning (integrated into comprehensive security audit)
 
 ### Manual Testing
 - Input validation testing
@@ -110,3 +114,8 @@ For security questions or concerns:
 - GitHub Issues: https://github.com/gander-tools/mikrus/issues
 - Security Advisories: https://github.com/gander-tools/mikrus/security/advisories
 - Maintainers: Via GitHub discussions
+
+---
+
+**Last Updated**: 2025-08-25  
+**Repository**: https://github.com/gander-tools/mikrus
