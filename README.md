@@ -33,6 +33,33 @@ bun install
 - `bun run test:ui` - Run tests with Vitest UI
 - `bun run test:coverage` - Run tests with a coverage report
 
+## CI/CD Architecture
+
+This project uses a **minimal 4-workflow architecture** optimized for efficiency and reliability:
+
+### Core Workflows
+1. **CI Pipeline** (`ci.yml`) - Main validation workflow
+   - Triggers: Push/PR to main/develop branches
+   - Includes: Lint, test, build, security scan, integration tests
+   
+2. **Security Scan** (`security-scan.yml`) - Comprehensive security analysis
+   - Triggers: Daily schedule (2:00 UTC) + called by CI Pipeline
+   - Includes: Dependency scan, license compliance, secrets detection, supply chain security
+
+3. **Release** (`release.yml`) - Automated release and publishing
+   - Triggers: Git tags matching `v*.*.*`
+   - Includes: GitHub Release creation, NPM publishing with provenance
+
+4. **Dependabot Auto-merge** (`dependabot-auto-merge.yml`) - Dependency automation
+   - Triggers: Dependabot PRs
+   - Includes: Automatic merging of minor/patch updates after CI success
+
+### Workflow Features
+- **GitHub Native Integration**: Uses GitHub's native branch auto-deletion instead of custom workflows
+- **Resource Optimization**: Minimal workflow count reduces GitHub Actions minutes consumption
+- **Security-First**: All releases require successful CI and security validation
+- **Provenance**: NPM packages published with cryptographic provenance for supply chain security
+
 ## Requirements
 
 - Node.js 20.0.0 or higher
