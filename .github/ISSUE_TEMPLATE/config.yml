@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/gander-tools/mikrus/blob/main/README.md
+    about: Check the project documentation for usage instructions
+  - name: 🔒 Security Issue
+    url: https://github.com/gander-tools/mikrus/security/advisories/new
+    about: Report security vulnerabilities privately through Security Advisories
+  - name: 💬 Discussion
+    url: https://github.com/gander-tools/mikrus/discussions
+    about: Ask questions or discuss ideas with the community
