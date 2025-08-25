@@ -22,7 +22,7 @@ jobs:
       - name: "📊 Metadata: Extract Update Information"
         # Retrieves dependency update details (type, version change, dependency scope)
         id: metadata
-        uses: dependabot/fetch-metadata@08eff52bf64351f401fb50d4972fa95b9f2c2d1b # v1
+        uses: dependabot/fetch-metadata@dbb158d5c31b2b8bd1617a99da8524c8b2ebe5cb # v2.4.0
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
