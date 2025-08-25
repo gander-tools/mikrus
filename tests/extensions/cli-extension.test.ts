@@ -1,19 +1,14 @@
-import path from 'node:path'
 import type { GluegunToolbox } from 'gluegun'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { MikrusToolbox } from '../../src/types'
-
-// Import the compiled extension function
-const cliExtension = require(
-  path.join(process.cwd(), 'build', 'extensions', 'cli-extension.js')
-)
 
 describe('CLI Extension', () => {
   let mockToolbox: GluegunToolbox
   let mikrusToolbox: MikrusToolbox
   let exitSpy: any
+  let cliExtension: any
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Create mock Gluegun toolbox
     mockToolbox = {
       print: {
@@ -23,6 +18,10 @@ describe('CLI Extension', () => {
         info: vi.fn(),
       },
     } as any
+
+    // Dynamic import for CommonJS module
+    const extensionModule = await import('../../src/extensions/cli-extension')
+    cliExtension = extensionModule.default || extensionModule
 
     // Apply our extension to the mock toolbox
     cliExtension(mockToolbox)
