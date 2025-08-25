@@ -65,17 +65,24 @@ Publishing is handled exclusively through GitHub Actions. **Local publishing is 
    git push origin v1.0.0
    ```
 
-2. The GitHub Actions workflow will automatically:
-   - Build the project and create a GitHub release with artifacts and checksums
-   - Run comprehensive build and integration tests
-   - Publish to NPM with provenance (only if all tests pass)
-   - Verify the published package
+2. The GitHub Actions release workflow will automatically:
+   - Verify all CI pipeline requirements have passed
+   - Build the project and create comprehensive build artifacts
+   - Run full test suite including integration tests
+   - Create GitHub release with checksums and artifacts
+   - Publish to NPM with cryptographic provenance (only if all prerequisites pass)
+   - Verify published package integrity
 
 ### Publishing Requirements
 
 - Publishing is **only available through GitHub Actions**
 - Tag must follow semantic versioning (e.g., `v1.0.0`)
-- All unit tests, linting, and build must pass
+- All 7 required CI status checks must pass:
+  - Lint & Format (Biome code quality checks)
+  - Test (full test suite with 18 tests)
+  - Build (TypeScript compilation)
+  - Integration Test (CLI functionality validation)
+  - Security Audit (comprehensive security scanning)
 - Integration tests (CLI help/version commands) must pass
 - NPM publishing only proceeds if all prerequisites are met
 
@@ -132,3 +139,8 @@ sha256sum -c mikrus-1.0.0.tar.gz.sha256
 - Use `npm view mikrus versions --json` to check existing versions
 - Ensure the version follows semantic versioning
 - Update package.json version before tagging
+
+---
+
+**Last Updated**: 2025-08-25  
+**Repository**: https://github.com/gander-tools/mikrus

@@ -45,3 +45,8 @@ This is then accessible in your plugin's commands as `toolbox.bar`.
 To load a particular plugin (which has to start with `mikrus-*`),
 install it to your project using `npm install --save-dev mikrus-PLUGINNAME`,
 and mikrus will pick it up automatically.
+
+---
+
+**Last Updated**: 2025-08-25  
+**Repository**: https://github.com/gander-tools/mikrus

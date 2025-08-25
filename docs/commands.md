@@ -185,3 +185,8 @@ mikrus generate ProductData              # CamelCase names ✅
 mikrus generate model123                 # Numbers allowed ✅
 mikrus generate a                        # Single character ✅
 ```
+
+---
+
+**Last Updated**: 2025-08-25  
+**Repository**: https://github.com/gander-tools/mikrus
