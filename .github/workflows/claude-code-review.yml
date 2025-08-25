@@ -43,7 +43,7 @@ jobs:
       - name: "🧠 Claude AI: Analyze Code Changes"
         # Performs automated code review using Claude AI with TypeScript CLI focus
         id: claude-review
-        uses: anthropics/claude-code-action@a47fdbe49f641eadaf74042deb4cd9dfb8a981d5 # Pinned SHA for security
+        uses: anthropics/claude-code-action@88be3fe6f5bf8d7307245835b5e13044898f8e02 # Pinned SHA for security
         timeout-minutes: 15 # Security: Prevent long-running executions
         env:
           # Security: Limit environment variable exposure
