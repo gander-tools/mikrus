@@ -167,6 +167,33 @@ jobs:
           
           echo "✅ No AWS/Stripe keys detected"
 
+      - name: "🔐 VPS CLI Security: Credential Safety Check"
+        # VPS management CLI specific security validation
+        run: |
+          echo "🔍 Checking VPS CLI security practices..."
+          
+          # Check for hardcoded VPS endpoints
+          if grep -r "mikr\.us" src/ --exclude="*.test.*" --exclude="*.md" --exclude-dir=node_modules 2>/dev/null; then
+            echo "⚠️ Hardcoded mikr.us endpoints found - use environment variables"
+          else
+            echo "✅ No hardcoded VPS endpoints detected"
+          fi
+          
+          # Verify no API tokens in CLI code
+          if grep -r -i "token\|key\|password\|secret" src/commands/ --exclude="*.test.*" --exclude="*.md" 2>/dev/null | grep -v -E "(description|help|example|validate)"; then
+            echo "❌ Potential credentials found in CLI commands"
+            exit 1
+          else
+            echo "✅ No credentials detected in CLI commands"
+          fi
+          
+          # Check CLI input validation patterns
+          if ! grep -r "validate\|sanitiz" src/commands/ 2>/dev/null; then
+            echo "⚠️ Limited input validation detected in CLI commands"
+          else
+            echo "✅ Input validation patterns found in CLI"
+          fi
+
   supply-chain-security:
     name: "🔗 Supply Chain: Package Integrity & Trust"
     # Verifies package integrity, checks for suspicious packages and typosquatting
@@ -210,6 +237,67 @@ jobs:
           # This would typically use a more sophisticated typosquatting detection tool
           echo "✅ Basic typosquatting check completed"
 
+  cli-quality-validation:
+    name: "🔧 CLI Quality: TypeScript & Code Standards"
+    # Validates CLI-specific quality standards including TypeScript compilation and code style
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: "📥 Repository: Checkout Code"
+        # Downloads repository content for CLI quality validation
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+
+      - name: "⚡ Runtime: Setup Bun Environment"
+        # Configures Bun runtime for CLI quality checks
+        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
+        with:
+          bun-version: latest
+
+      - name: "💾 Cache: Restore Dependencies"
+        # Caches Bun dependencies for faster execution
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: "📦 Dependencies: Install Frozen Lockfile"
+        # Installs exact dependencies from lockfile for consistent quality checks
+        run: bun install --frozen-lockfile
+
+      - name: "🛣️ Environment: Add CLI Tools to PATH"
+        # Makes CLI tools available for quality validation
+        run: echo "./node_modules/.bin" >> $GITHUB_PATH
+
+      - name: "✨ Code Quality: Biome Lint & Format Check"
+        # Validates code style and formatting using Biome
+        run: |
+          echo "🔍 Running Biome quality checks..."
+          bun run lint
+          bun run check
+
+      - name: "🔧 TypeScript: Compilation Check"
+        # Ensures TypeScript code compiles without errors
+        run: |
+          echo "🔍 Checking TypeScript compilation..."
+          bun run build
+
+      - name: "🧪 TDD Compliance: Test Coverage Check"
+        # Validates TDD methodology compliance and test coverage
+        run: |
+          echo "🔍 Running TDD compliance checks..."
+          bun run test:coverage
+          echo "✅ TDD compliance verified"
+
+      - name: "🚀 CLI Integration: Smoke Test"
+        # Tests basic CLI functionality to ensure it works
+        run: |
+          echo "🔍 Testing CLI functionality..."
+          ./bin/mikrus --help
+          ./bin/mikrus generate --help
+
   snyk-vulnerability-scan:
     name: "🐛 Snyk: Dependency Vulnerability Detection"
     # Scans dependencies for known vulnerabilities using Snyk database and uploads SARIF results
@@ -246,17 +334,31 @@ jobs:
         # Makes node_modules/.bin tools available for subsequent steps
         run: echo "./node_modules/.bin" >> $GITHUB_PATH
 
+      - name: "🔐 Security: Snyk Token Validation"
+        # Validates Snyk token availability before running security scans
+        id: snyk-check
+        run: |
+          if [ -z "${{ secrets.SNYK_TOKEN }}" ]; then
+            echo "::notice::SNYK_TOKEN not available - skipping Snyk scans"
+            echo "snyk_available=false" >> $GITHUB_OUTPUT
+            exit 0
+          else
+            echo "::notice::SNYK_TOKEN available - proceeding with scans"
+            echo "snyk_available=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: "📊 Snyk: Monitor Dependencies"
         # Monitors dependencies for new vulnerabilities in Snyk dashboard
+        if: steps.snyk-check.outputs.snyk_available == 'true'
         uses: snyk/actions/node@14818c4695ecc4045f33c9cee9e795a788711ca4
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: monitor
-        continue-on-error: true
 
       - name: "🔍 Snyk: Vulnerability Detection"
         # Scans dependencies for known vulnerabilities and generates SARIF report
+        if: steps.snyk-check.outputs.snyk_available == 'true'
         uses: snyk/actions/node@14818c4695ecc4045f33c9cee9e795a788711ca4
         continue-on-error: true
         id: snyk-test
