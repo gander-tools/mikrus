@@ -352,7 +352,7 @@ jobs:
       - name: "📊 Snyk: Monitor Dependencies"
         # Monitors dependencies for new vulnerabilities in Snyk dashboard
         if: steps.snyk-check.outputs.snyk_available == 'true'
-        uses: snyk/actions/node@2f3c869154a3036de8e53db79251b67d10cfb91f
+        uses: snyk/actions/node@2f3c869154a3036de8e53db79251b67d10cfb91f # 2025-08-22 (verified commit)
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -361,7 +361,7 @@ jobs:
       - name: "🔍 Snyk: Vulnerability Detection"
         # Scans dependencies for known vulnerabilities and generates SARIF report
         if: steps.snyk-check.outputs.snyk_available == 'true'
-        uses: snyk/actions/node@2f3c869154a3036de8e53db79251b67d10cfb91f
+        uses: snyk/actions/node@2f3c869154a3036de8e53db79251b67d10cfb91f # 2025-08-22 (verified commit)
         continue-on-error: true
         id: snyk-test
         env:
