@@ -12,7 +12,7 @@ We take the security of mikrus seriously. If you discover a security vulnerabili
 
 ### 🔒 **Private Disclosure**
 1. **GitHub Security Advisories** (Preferred): https://github.com/gander-tools/mikrus/security/advisories/new
-2. **Email**: security@gander.tools
+2. **Security Issue**: https://github.com/gander-tools/mikrus/issues/new?labels=security&template=security_report.md
 
 ### 📋 **What to Include**
 - Description of the vulnerability
@@ -93,10 +93,11 @@ Security updates are released as patch versions and are documented in:
 ## Contact
 
 For questions about this security policy, contact:
-- **Security Team**: security@gander.tools
+- **Security Advisories**: https://github.com/gander-tools/mikrus/security/advisories/new
+- **Security Issues**: https://github.com/gander-tools/mikrus/issues/new?labels=security&template=security_report.md
 - **Maintainers**: https://github.com/gander-tools/mikrus/graphs/contributors
 
 ---
 
-**Last Updated**: 2024-01-01  
-**Policy Version**: 1.0
+**Last Updated**: 2025-08-25  
+**Policy Version**: 2.0

@@ -1,8 +1,8 @@
 name: "🔍 Automated Code Review (Claude)"
 
 # Automated pull request reviews using Claude AI
-# Triggers: PR opened/synchronized (new commits pushed)
-# Purpose: Provides AI-powered code quality analysis, security checks, and best practices review
+# Triggers: ONLY PR opened/synchronized (automatic, no @claude needed)
+# Purpose: Comprehensive automated code quality analysis and security review
 
 on:
   pull_request:
@@ -16,8 +16,8 @@ on:
 
 jobs:
   automated-pr-review:
-    name: "🔍 Claude AI: Pull Request Code Review"
-    # Automatically reviews PRs for code quality, security, testing, and TypeScript/CLI best practices
+    name: "🔍 Claude AI: Automated Pull Request Review"
+    # Comprehensive automated review for code quality, security, and best practices
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||
@@ -54,17 +54,87 @@ jobs:
           # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4.1)
           # model: "claude-opus-4-1-20250805"
 
-          # Direct prompt for automated review (no @claude mention needed)
+          # MAXIMUM EFFECTIVENESS: Production-Grade Automated Review
           direct_prompt: |
-            Please review this TypeScript CLI pull request focusing on:
-            - Code quality using our Biome and TypeScript standards
-            - Gluegun CLI framework best practices
-            - Test coverage with Vitest
-            - Security concerns for CLI tools
-            - Performance and Node.js 20+ compatibility
-            - TDD methodology compliance
+            🔍 COMPREHENSIVE PRODUCTION-GRADE CODE REVIEW
+            You are a senior TypeScript/CLI security expert. Perform RIGOROUS analysis.
             
-            Reference existing patterns in src/commands/ and use Bun commands. Be constructive and specific.
+            🚨 CRITICAL SECURITY AUDIT (FAIL ON ANY VIOLATION):
+            ❌ Command injection vulnerabilities (process.exec, child_process)
+            ❌ Path traversal attacks (../../, resolve() without validation)
+            ❌ Unsafe user input processing (eval, Function constructor)
+            ❌ Hardcoded secrets/credentials/API keys
+            ❌ Insecure file permissions (777, world-writable)
+            ❌ SQL injection patterns (if database operations)
+            ❌ Prototype pollution vulnerabilities
+            
+            🔒 CLI SECURITY CHECKLIST:
+            ✅ Input sanitization on ALL user arguments
+            ✅ File path validation (stay within project bounds)
+            ✅ Error messages don't leak sensitive info
+            ✅ Proper exit codes (0 success, 1+ errors)
+            ✅ Resource cleanup (streams, processes, temp files)
+            
+            📋 CODE QUALITY ENFORCEMENT (ZERO TOLERANCE):
+            ❌ TypeScript `any` usage (must use proper types)
+            ❌ Missing error handling (try/catch, .catch())
+            ❌ Unused imports/variables/functions
+            ❌ Console.log in production code
+            ❌ Hardcoded values (use constants/config)
+            ❌ Biome rule violations
+            ❌ Missing JSDoc for public APIs
+            
+            🧪 TESTING REQUIREMENTS (MANDATORY):
+            ✅ Unit tests for ALL new functions
+            ✅ Integration tests for CLI commands
+            ✅ Edge case testing (empty inputs, invalid paths)
+            ✅ Error scenario testing
+            ✅ Mock external dependencies
+            ✅ Test coverage >80% for new code
+            
+            ⚡ PERFORMANCE OPTIMIZATION:
+            ❌ Synchronous file operations (use async)
+            ❌ Memory leaks (unclosed streams/handlers)
+            ❌ Inefficient loops (O(n²) when O(n) possible)
+            ❌ Large bundle size increases
+            ❌ Blocking operations on main thread
+            
+            🏗️ ARCHITECTURE COMPLIANCE:
+            ✅ Follow Gluegun CLI conventions
+            ✅ Proper command structure in src/commands/
+            ✅ Consistent toolbox usage
+            ✅ Template usage for code generation
+            ✅ Extension patterns for new features
+            
+            📦 DEPENDENCY SECURITY:
+            ❌ Known vulnerable package versions
+            ❌ Unnecessary dependency additions
+            ❌ Dev dependencies in production
+            ❌ Packages without version pinning
+            
+            🎯 REVIEW OUTPUT FORMAT:
+            Use this EXACT structure:
+            
+            ## 🚨 CRITICAL ISSUES (MUST FIX BEFORE MERGE)
+            [List blocking security/quality issues]
+            
+            ## ⚠️ MAJOR ISSUES (FIX RECOMMENDED)  
+            [List important improvements needed]
+            
+            ## 💡 MINOR IMPROVEMENTS (OPTIONAL)
+            [List nice-to-have optimizations]
+            
+            ## ✅ POSITIVE OBSERVATIONS
+            [Highlight good practices found]
+            
+            ## 📊 REVIEW SUMMARY
+            - Security Score: X/10
+            - Quality Score: X/10  
+            - Test Coverage: X%
+            - Performance Impact: [LOW/MEDIUM/HIGH]
+            - Recommendation: [APPROVE/CHANGES_NEEDED/REJECT]
+            
+            Be RUTHLESS but CONSTRUCTIVE. Include code examples and specific line references.
 
           # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
           # use_sticky_comment: true
