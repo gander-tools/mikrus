@@ -1,0 +1,177 @@
+name: "🐛 [BUG] Bug Report"
+description: Report a bug or issue with mikrus CLI
+title: "[BUG] "
+labels: []
+projects: []
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🐛 Bug Report
+        Thank you for taking the time to report a bug! Please fill out the information below to help us reproduce and fix the issue.
+        
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: "📝 Bug Description"
+      description: "Provide a clear and detailed description of the bug"
+      placeholder: "Describe what's happening..."
+      value: ""
+    validations:
+      required: true
+      
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: "🔄 Steps to Reproduce"
+      description: "Provide step-by-step instructions to reproduce the bug"
+      placeholder: |
+        1. Run command `mikrus ...`
+        2. Enter input `...`
+        3. See error `...`
+      value: ""
+    validations:
+      required: true
+      
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: "✅ Expected Behavior"
+      description: "What did you expect to happen?"
+      placeholder: "I expected..."
+      value: ""
+    validations:
+      required: true
+      
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: "❌ Actual Behavior"
+      description: "What actually happened?"
+      placeholder: "Instead, what happened was..."
+      value: ""
+    validations:
+      required: true
+      
+  - type: textarea
+    id: error-output
+    attributes:
+      label: "🚨 Error Output/Stack Trace"
+      description: "Include any error messages, stack traces, or console output"
+      render: bash
+      placeholder: |
+        Error: Something went wrong
+        at Function.name (file.js:123:45)
+        at ...
+      value: ""
+    validations:
+      required: false
+      
+  - type: textarea
+    id: environment-info
+    attributes:
+      label: "🖥️ Environment Information"
+      description: "Please provide details about your environment"
+      placeholder: |
+        - OS: (e.g., Windows 11, macOS 14, Ubuntu 22.04)
+        - Node.js version: (run `node --version`)
+        - mikrus version: (run `mikrus --version`)
+        - Bun version: (run `bun --version`) 
+        - Terminal: (e.g., Terminal.app, iTerm2, Windows Terminal, etc.)
+      value: |
+        - OS: 
+        - Node.js version: 
+        - mikrus version: 
+        - Bun version: 
+        - Terminal: 
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: bug-severity
+    attributes:
+      label: "⚡ Bug Severity"
+      description: "How severe is this bug?"
+      options:
+        - "Low - Minor inconvenience"
+        - "Medium - Affects functionality but has workaround"
+        - "High - Significantly impacts usage"
+        - "Critical - Completely blocks usage"
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: bug-frequency
+    attributes:
+      label: "🔁 Bug Frequency"
+      description: "How often does this bug occur?"
+      options:
+        - "Always - Happens every time"
+        - "Often - Happens frequently"
+        - "Sometimes - Happens occasionally"
+        - "Rarely - Happened once or twice"
+    validations:
+      required: true
+      
+  - type: textarea
+    id: minimal-reproduction
+    attributes:
+      label: "🧪 Minimal Reproduction Case"
+      description: "Provide the smallest possible code/command example that reproduces the bug"
+      render: bash
+      placeholder: |
+        # Minimal command that triggers the bug
+        $ mikrus generate model --name User
+        # Error occurs here...
+      value: ""
+    validations:
+      required: false
+      
+  - type: textarea
+    id: workaround
+    attributes:
+      label: "🔧 Workaround (if any)"
+      description: "Have you found any temporary workaround for this issue?"
+      placeholder: "As a workaround, I can..."
+      value: ""
+    validations:
+      required: false
+      
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: "📚 Additional Context"
+      description: "Add any other context, screenshots, logs, or relevant information"
+      placeholder: "Additional information that might be helpful..."
+      value: ""
+    validations:
+      required: false
+      
+  - type: textarea
+    id: relevant-logs
+    attributes:
+      label: "📋 Relevant Log Files"
+      description: "Include any relevant log files or debug output"
+      render: text
+      placeholder: "Paste log content here..."
+      value: ""
+    validations:
+      required: false
+      
+  - type: checkboxes
+    id: bug-checklist
+    attributes:
+      label: "✅ Bug Report Checklist"
+      description: "Please confirm the following:"
+      options:
+        - label: "I have searched existing issues to ensure this bug hasn't been reported before"
+          required: true
+        - label: "This issue is related to the mikrus CLI tool"
+          required: true
+        - label: "I have provided enough information to reproduce the bug"
+          required: true
+        - label: "I have included the actual error message/output (if any)"
+          required: true
+        - label: "I am using a supported version of Node.js (20+)"
+          required: true
