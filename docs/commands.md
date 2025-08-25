@@ -34,10 +34,12 @@ mikrus g <model-name>
 - `<model-name>` - Name for the generated model (required)
 
 **Security Validations:**
+- **Input Sanitization**: Trims whitespace and validates non-empty strings
 - **Path Traversal Protection**: Blocks `../`, `..\\`, and `..` sequences
-- **Command Injection Prevention**: Removes dangerous shell metacharacters (`;`, `|`, `&`, `$`, etc.)
-- **Absolute Path Blocking**: Prevents paths starting with `/` or Windows drives (`C:\\`)
-- **Character Validation**: Only allows letters, numbers, hyphens, and underscores
+- **Absolute Path Blocking**: Prevents paths starting with `/`, `\`, or Windows drives (`C:`)
+- **Command Injection Prevention**: Blocks dangerous shell metacharacters: `;` `|` `&` `$` `` ` `` `<` `>` `'` `"` `\`
+- **File System Protection**: Prevents reserved file system characters: `<` `>` `:` `"` `/` `|` `?` `*`
+- **Character Validation**: Only allows letters, numbers, hyphens, and underscores (`^[a-zA-Z0-9_-]+$`)
 - **Length Validation**: Maximum 100 characters
 
 **Examples:**
@@ -56,9 +58,12 @@ mikrus generate user_data       # ✅ Valid
 mikrus generate UserModel       # ✅ Valid
 
 # Invalid examples (will fail with security errors)
-mikrus generate ../malicious    # ❌ Path traversal detected
-mikrus generate "file; rm -rf"  # ❌ Invalid characters detected  
-mikrus generate /absolute/path  # ❌ Absolute paths not allowed
+mikrus generate ../malicious      # ❌ Path traversal detected
+mikrus generate "file; rm -rf"    # ❌ Command injection characters detected  
+mikrus generate /absolute/path    # ❌ Absolute paths not allowed
+mikrus generate "file with spaces" # ❌ Spaces not allowed
+mikrus generate ""                # ❌ Empty name not allowed
+mikrus generate C:\\windows\\file  # ❌ Windows absolute path blocked
 ```
 
 **Generated Files:**
@@ -68,9 +73,20 @@ mikrus generate /absolute/path  # ❌ Absolute paths not allowed
 
 **Error Handling:**
 All validation failures result in:
-- Clear error message describing the issue
+- Clear error message describing the specific security issue
 - Process exit with code 1
-- No file generation
+- No file generation or side effects
+- Error messages are safe and don't expose sensitive system information
+
+**Common Error Messages:**
+- `Name parameter is required and must be a string`
+- `Name parameter cannot be empty`
+- `Path traversal detected. Name parameter cannot contain ".." sequences`
+- `Absolute paths are not allowed. Name parameter must be a relative filename`
+- `Invalid characters detected. Name parameter cannot contain: ; | & $ ` < > ' " \`
+- `Name parameter contains reserved file system characters`
+- `Name parameter is too long. Maximum length is 100 characters`
+- `Name parameter must contain only letters, numbers, hyphens, and underscores`
 
 ---
 
@@ -156,11 +172,16 @@ mikrus --help
 ```bash
 # These will be blocked for security:
 mikrus generate "../../../etc/passwd"     # Path traversal
-mikrus generate "model; cat /etc/passwd"  # Command injection
+mikrus generate "model; cat /etc/passwd"  # Command injection  
 mikrus generate "/tmp/malicious"          # Absolute path
+mikrus generate "model name"              # Spaces not allowed
+mikrus generate "model*file"              # Reserved characters
+mikrus generate "C:\\temp\\model"         # Windows absolute path
 
 # These are safe and allowed:
-mikrus generate my-model                  # Valid
-mikrus generate user_profile             # Valid  
-mikrus generate ProductData              # Valid
+mikrus generate my-model                  # Hyphenated names ✅
+mikrus generate user_profile             # Underscored names ✅  
+mikrus generate ProductData              # CamelCase names ✅
+mikrus generate model123                 # Numbers allowed ✅
+mikrus generate a                        # Single character ✅
 ```
