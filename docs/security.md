@@ -26,6 +26,14 @@ This document outlines the security measures and best practices implemented in t
 - License compliance checking
 - Automated security scanning for all dependencies
 
+### CI/CD Security
+- **Minimal Attack Surface**: Simplified 4-workflow architecture reduces potential attack vectors
+- **Native GitHub Integration**: Leverages GitHub's native branch auto-deletion for better security
+- **Workflow Isolation**: Each workflow has minimal, specific permissions and dependencies
+- **Resource Protection**: Reduced workflow complexity prevents resource exhaustion attacks
+- **Security-First Releases**: All releases require successful security validation before publishing
+- **Provenance Verification**: NPM packages published with cryptographic provenance for supply chain integrity
+
 ## Security Best Practices
 
 ### For Users
@@ -75,6 +83,8 @@ This document outlines the security measures and best practices implemented in t
 - Secret detection in source code  
 - License compliance checking
 - Supply chain security validation
+- CI/CD workflow security validation
+- Branch protection rule compliance
 
 ### Manual Testing
 - Input validation testing
