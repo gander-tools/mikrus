@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: "⚡ Runtime: Setup Bun Environment"
-        uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
+        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
         with:
           bun-version: latest
 
@@ -110,7 +110,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: "⚡ Runtime: Setup Bun Environment"
-        uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
+        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
         with:
           bun-version: latest
 
@@ -150,7 +150,7 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: "⚡ Runtime: Setup Bun Environment"
-        uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
+        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
         with:
           bun-version: latest
 
@@ -180,179 +180,18 @@ jobs:
             bin/
           retention-days: 7
 
-  # Individual security jobs to satisfy branch protection requirements
-  dependency-scan:
-    name: "🔍 Dependencies: Vulnerability & Audit Checks" 
-    # Runs bun audit and better-npm-audit to detect vulnerable dependencies
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: "📥 Repository: Checkout Code"
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
-
-      - name: "⚡ Runtime: Setup Bun Environment"
-        uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
-        with:
-          bun-version: latest
-
-      - name: "📦 Dependencies: Install Frozen Lockfile"
-        run: bun install --frozen-lockfile
-
-      - name: "🔍 Security: Run Dependency Audit"
-        run: |
-          echo "🔍 Running comprehensive dependency audit..."
-          audit_output=$(bunx bun audit 2>&1 || true)
-          echo "$audit_output"
-          
-          # Count vulnerabilities by severity using structured parsing
-          if command -v jq >/dev/null 2>&1 && echo "$audit_output" | jq empty >/dev/null 2>&1; then
-            # Use JSON parsing if output is valid JSON
-            critical_count=$(echo "$audit_output" | jq -r '[.vulnerabilities // {} | to_entries[] | select(.value.severity == "critical")] | length' 2>/dev/null || echo "0")
-            high_count=$(echo "$audit_output" | jq -r '[.vulnerabilities // {} | to_entries[] | select(.value.severity == "high")] | length' 2>/dev/null || echo "0")
-            moderate_count=$(echo "$audit_output" | jq -r '[.vulnerabilities // {} | to_entries[] | select(.value.severity == "moderate")] | length' 2>/dev/null || echo "0")
-          else
-            # Fallback to grep-based counting for non-JSON output
-            critical_count=$(echo "$audit_output" | grep -c "critical" || echo "0")
-            high_count=$(echo "$audit_output" | grep -c "high" || echo "0") 
-            moderate_count=$(echo "$audit_output" | grep -c "moderate" || echo "0")
-          fi
-          
-          echo "📊 Security Audit Summary:"
-          echo "Critical: $critical_count"
-          echo "High: $high_count"  
-          echo "Moderate: $moderate_count"
-          
-          # Fail on critical or high vulnerabilities
-          if [ "$critical_count" -gt 0 ] || [ "$high_count" -gt 0 ]; then
-            echo "❌ Critical or high severity vulnerabilities found!"
-            echo "Please review and fix security issues before proceeding."
-            exit 1
-          fi
-          
-          echo "✅ No critical or high severity vulnerabilities found."
-
-  license-scan:
-    name: "📋 Licenses: Compliance & Legal Review"
-    # Scans all dependency licenses to identify GPL/AGPL/proprietary issues
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: "📥 Repository: Checkout Code"
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
-
-      - name: "⚡ Runtime: Setup Bun Environment"
-        uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
-        with:
-          bun-version: latest
-
-      - name: "📦 Dependencies: Install Frozen Lockfile"
-        run: bun install --frozen-lockfile
-
-      - name: "📋 Legal: License Compliance Check"
-        run: |
-          echo "📜 Checking license compliance..."
-          bunx license-checker --summary
-          
-          # Check for problematic licenses (safer approach)
-          problematic_licenses=$(bunx license-checker --excludePrivatePackages --json 2>/dev/null | jq -r 'to_entries[] | select(.value.licenses | type == "string" and (contains("GPL") or contains("AGPL") or contains("LGPL") or contains("UNLICENSED"))) | .key + ": " + .value.licenses' 2>/dev/null || echo "")
-          
-          if [ -n "$problematic_licenses" ]; then
-            echo "⚠️ Found potentially problematic licenses:"
-            echo "$problematic_licenses"
-            echo "Please review license compatibility for commercial use."
-          else
-            echo "✅ No problematic licenses detected."
-          fi
-
-  secrets-scan:
-    name: "🔐 Secrets: Hardcoded Credentials Detection"
-    # Searches source code for hardcoded passwords, API keys, AWS keys
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: "📥 Repository: Checkout Code"
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
-
-      - name: "🔍 Security: Scan for Hardcoded Secrets"
-        run: |
-          echo "🔍 Scanning for hardcoded secrets..."
-          
-          # Check for common secret patterns (safer approach)
-          secret_matches=$(grep -r -i --exclude-dir=node_modules --exclude-dir=.git \
-            -E "(password|passwd|pwd|secret|token|key|api_key|apikey|access_key|private_key)" \
-            . 2>/dev/null | grep -v -E "(\.md:|\.yml:|test|example|placeholder|EXAMPLE|TODO)" | head -10 || true)
-          
-          if [ -n "$secret_matches" ]; then
-            echo "⚠️ Potential secrets found - please review above matches"
-            echo "$secret_matches"
-          else
-            echo "✅ No obvious secrets detected in source code"
-          fi
-          
-          # Check for AWS keys, API keys, etc. (safer approach)
-          aws_keys=$(grep -r -i --exclude-dir=node_modules --exclude-dir=.git \
-            -E "(AKIA[0-9A-Z]{16}|sk_live_[0-9a-zA-Z]{24}|sk_test_[0-9a-zA-Z]{24})" . 2>/dev/null || true)
-          
-          if [ -n "$aws_keys" ]; then
-            echo "❌ AWS or Stripe keys detected!"
-            echo "$aws_keys"
-            exit 1
-          fi
-          
-          echo "✅ No AWS/Stripe keys detected"
-
-  supply-chain-security:
-    name: "🔗 Supply Chain: Package Integrity & Trust"
-    # Verifies package integrity, checks for suspicious packages and typosquatting
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: "📥 Repository: Checkout Code"
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
-
-      - name: "🔍 Security: Package Integrity Verification"
-        run: |
-          echo "🔍 Verifying package integrity..."
-          
-          # Check for package-lock.json and bun.lock consistency
-          if [ -f "package-lock.json" ] && [ -f "bun.lock" ]; then
-            echo "⚠️ Both package-lock.json and bun.lock found - choose one"
-          fi
-          
-          # Verify no suspicious packages (safer approach)
-          suspicious_packages=("bitcoinjs-lib" "coinhive" "event-stream" "rc" "flatmap-stream")
-          for package in "${suspicious_packages[@]}"; do
-            if grep -q "\"$package\"" package.json 2>/dev/null; then
-              echo "⚠️ Suspicious package detected: $package"
-            fi
-          done
-          
-          echo "✅ Supply chain integrity checks completed"
-
-      - name: "🔍 Security: Typosquatting Detection"
-        run: |
-          echo "🔍 Checking for potential typosquatting packages..."
-          
-          # List of legitimate packages to check against
-          common_packages=("express" "lodash" "react" "axios" "typescript" "webpack")
-          
-          # This would typically use a more sophisticated typosquatting detection tool
-          echo "✅ Basic typosquatting check completed"
-
-  vulnerability-scanning-snyk:
-    name: "🐛 Vulnerability Scanning (Snyk)"
-    # Calls vulnerability-scanning-snyk.yml (Snyk-specific vulnerability detection + SARIF upload)
-    uses: ./.github/workflows/vulnerability-scanning-snyk.yml
+  security-scan:
+    name: "🔒 Security: Comprehensive Audit"
+    # Calls dedicated security workflow for comprehensive vulnerability and compliance scanning
+    uses: ./.github/workflows/comprehensive-security-audit.yml
+    needs: [build]
     permissions:
       contents: read
       security-events: write
       actions: read
     secrets:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
 
   integration-test:
     name: "🔌 Integration: CLI End-to-End Tests"
@@ -371,7 +210,7 @@ jobs:
           node-version: 20
 
       - name: "⚡ Runtime: Setup Bun Environment"
-        uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
+        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
         with:
           bun-version: latest
 
@@ -418,7 +257,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [lint-and-format, test, build, dependency-scan, license-scan, secrets-scan, supply-chain-security, vulnerability-scanning-snyk, integration-test]
+    needs: [lint-and-format, test, build, security-scan, integration-test]
     if: always()
     steps:
       - name: "✅ Notification: Success Status Report"
