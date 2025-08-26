@@ -7,3 +7,8 @@ dist
 build
 .vscode
 .idea
+
+# CRITICAL: Never commit Claude Code memory files
+CLAUDE.md
+CLAUDE.local.md
+.claude/
