@@ -1,15 +1,9 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": false,
+    "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
-    "lib": [
-      "es2015",
-      "scripthost",
-      "es2015.promise",
-      "es2015.generator",
-      "es2015.iterable",
-      "dom"
-    ],
+    "esModuleInterop": true,
+    "lib": ["es2020"],
     "module": "commonjs",
     "moduleResolution": "node",
     "noImplicitAny": true,
@@ -21,7 +15,7 @@
     "sourceMap": true,
     "outDir": "build",
     "strict": true,
-    "target": "es5",
+    "target": "es2020",
     "declaration": true,
     "declarationDir": "build/types",
     "forceConsistentCasingInFileNames": true,

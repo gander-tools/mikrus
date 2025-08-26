@@ -23,7 +23,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "security:audit": "bunx bun audit --json > security-report.json",
+    "security:check": "bunx bun audit 2>&1 | grep -E '(critical|high)' || echo 'No critical/high vulnerabilities'",
+    "security:monitor": "bunx bun audit | grep -E '(critical|high)' && exit 1 || echo 'Security check passed'"
   },
   "files": [
     "build",
@@ -80,6 +83,8 @@
     "semver": "^7.6.3",
     "axios": "^1.7.9",
     "ejs": "^3.1.10",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "lodash.trim": "npm:lodash@^4.17.21",
+    "lodash.trimend": "npm:lodash@^4.17.21"
   }
 }
