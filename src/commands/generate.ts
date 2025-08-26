@@ -1,6 +1,6 @@
 import { Command } from "@cliffy/command";
 import { ensureDir } from "@std/fs";
-import { dirname, fromFileUrl, join } from "@std/path";
+import { dirname } from "@std/path";
 import { utils, validateAndSanitizeInput } from "../utils.ts";
 
 // Embedded template content for compiled binary compatibility
