@@ -1,4 +1,4 @@
-name: "🔍 Automated Code Review (Claude)"
+name: "⚡ Node Automated Code Review (Claude)"
 
 # Automated pull request reviews using Claude AI
 # Triggers: ONLY PR opened/synchronized (automatic, no @claude needed)
@@ -15,8 +15,8 @@ on:
     #   - "src/**/*.jsx"
 
 jobs:
-  automated-pr-review:
-    name: "🔍 Claude AI: Automated Pull Request Review"
+  node-automated-pr-review:
+    name: "⚡ Node Claude AI: Automated Pull Request Review"
     # Comprehensive automated review for code quality, security, and best practices
     # Optional: Filter by PR author
     # if: |

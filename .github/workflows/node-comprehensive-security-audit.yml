@@ -1,4 +1,4 @@
-name: "🔒 Node Comprehensive Security Audit"
+name: "⚡ Node Comprehensive Security Audit"
 
 # This workflow performs comprehensive security auditing across multiple dimensions
 # Triggers: Daily at 2 AM UTC + can be called by CI workflow + manual dispatch
@@ -18,8 +18,8 @@ permissions:
   contents: read
 
 jobs:
-  dependency-scan:
-    name: "🔍 Dependencies: Vulnerability & Audit Checks"
+  node-dependency-scan:
+    name: "⚡ Node Dependencies: Vulnerability & Audit Checks"
     # Runs bun audit and better-npm-audit to detect vulnerable dependencies
     # Fails on critical/high severity issues, allows moderate/low
     runs-on: ubuntu-latest
@@ -87,8 +87,8 @@ jobs:
             echo "::warning::better-npm-audit detected moderate security issues"
           fi
 
-  license-scan:
-    name: "📋 Licenses: Compliance & Legal Review"
+  node-license-scan:
+    name: "⚡ Node Licenses: Compliance & Legal Review"
     # Scans all dependency licenses to identify GPL/AGPL/proprietary issues
     # Warns about potentially problematic licenses for commercial use
     runs-on: ubuntu-latest
@@ -126,8 +126,8 @@ jobs:
             echo "✅ No problematic licenses detected."
           fi
 
-  secrets-scan:
-    name: "🔐 Secrets: Hardcoded Credentials Detection"
+  node-secrets-scan:
+    name: "⚡ Node Secrets: Hardcoded Credentials Detection"
     # Searches source code for hardcoded passwords, API keys, AWS keys
     # Uses grep patterns to detect common secret formats
     runs-on: ubuntu-latest
@@ -194,8 +194,8 @@ jobs:
             echo "✅ Input validation patterns found in CLI"
           fi
 
-  supply-chain-security:
-    name: "🔗 Supply Chain: Package Integrity & Trust"
+  node-supply-chain-security:
+    name: "⚡ Node Supply Chain: Package Integrity & Trust"
     # Verifies package integrity, checks for suspicious packages and typosquatting
     # Validates lockfile consistency and package authenticity
     runs-on: ubuntu-latest
@@ -237,8 +237,8 @@ jobs:
           # This would typically use a more sophisticated typosquatting detection tool
           echo "✅ Basic typosquatting check completed"
 
-  cli-quality-validation:
-    name: "🔧 CLI Quality: TypeScript & Code Standards"
+  node-cli-quality-validation:
+    name: "⚡ Node CLI Quality: TypeScript & Code Standards"
     # Validates CLI-specific quality standards including TypeScript compilation and code style
     runs-on: ubuntu-latest
     permissions:
@@ -300,8 +300,8 @@ jobs:
           echo "🔍 Testing generate command help (with required parameter)..."
           ./bin/mikrus generate test-model --help || echo "Generate help requires parameters - this is expected behavior"
 
-  snyk-vulnerability-scan:
-    name: "🐛 Snyk: Dependency Vulnerability Detection"
+  node-snyk-vulnerability-scan:
+    name: "⚡ Node Snyk: Dependency Vulnerability Detection"
     # Scans dependencies for known vulnerabilities using Snyk database and uploads SARIF results
     runs-on: ubuntu-latest
     permissions:
