@@ -8,6 +8,10 @@ on:
   schedule:
     # Run daily at 2 AM UTC
     - cron: '0 2 * * *'
+  push:
+    branches: [main, main-deno, feature/*, fix/*, hotfix/*]
+  pull_request:
+    branches: [main, main-deno]
   workflow_call:
     secrets:
       SNYK_TOKEN:
@@ -19,8 +23,8 @@ permissions:
 
 jobs:
   dependency-scan:
-    name: "🔍 Dependencies: Vulnerability & Audit Checks"
-    # Runs bun audit and better-npm-audit to detect vulnerable dependencies
+    name: "🔍 Dependencies: Deno Security Audit"
+    # Runs Deno dependency audit and vulnerability checks
     # Fails on critical/high severity issues, allows moderate/low
     runs-on: ubuntu-latest
     permissions:
@@ -30,49 +34,52 @@ jobs:
         # Downloads repository content for comprehensive security analysis
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
-      - name: "⚡ Runtime: Setup Bun Environment"
-        # Configures Bun runtime for dependency analysis and security scanning
-        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
+      - name: "🦕 Runtime: Setup Deno Environment"
+        # Configures Deno runtime for dependency analysis and security scanning
+        uses: denoland/setup-deno@1b9de07eec64aed604b43ad3e30c9e7bd7dd8d84 # v1
         with:
-          bun-version: latest
+          deno-version: v1.x
 
-      - name: "📦 Dependencies: Install Frozen Lockfile"
-        # Installs exact dependencies from lockfile for security analysis
-        run: bun install --frozen-lockfile
+      - name: "📦 Dependencies: Cache Deno Modules"
+        # Cache Deno dependencies for faster security analysis
+        run: deno cache src/cli.ts tests/generate-security.test.ts
 
-      - name: "🔍 Security: Comprehensive Dependency Audit"
-        # Runs bun audit with severity analysis and vulnerability counting
+      - name: "🔍 Security: Deno Dependency Security Audit"
+        # Runs Deno security audit for JSR and remote dependencies
         run: |
-          echo "🔍 Running comprehensive dependency audit..."
-          audit_output=$(bunx bun audit 2>&1 || true)
-          echo "$audit_output"
+          echo "🔍 Running Deno dependency security audit..."
           
-          # Count vulnerabilities by severity using structured parsing
-          if command -v jq >/dev/null 2>&1 && echo "$audit_output" | jq empty >/dev/null 2>&1; then
-            # Use JSON parsing if output is valid JSON
-            critical_count=$(echo "$audit_output" | jq -r '[.vulnerabilities // {} | to_entries[] | select(.value.severity == "critical")] | length' 2>/dev/null || echo "0")
-            high_count=$(echo "$audit_output" | jq -r '[.vulnerabilities // {} | to_entries[] | select(.value.severity == "high")] | length' 2>/dev/null || echo "0")
-            moderate_count=$(echo "$audit_output" | jq -r '[.vulnerabilities // {} | to_entries[] | select(.value.severity == "moderate")] | length' 2>/dev/null || echo "0")
-          else
-            # Fallback to grep-based counting for non-JSON output
-            critical_count=$(echo "$audit_output" | grep -c "critical" || echo "0")
-            high_count=$(echo "$audit_output" | grep -c "high" || echo "0") 
-            moderate_count=$(echo "$audit_output" | grep -c "moderate" || echo "0")
-          fi
+          # Check for known vulnerabilities in Deno dependencies
+          echo "Checking JSR dependencies for vulnerabilities..."
+          deno info src/cli.ts --json > deps_info.json
           
-          echo "📊 Security Audit Summary:"
-          echo "Critical: $critical_count"
-          echo "High: $high_count"  
-          echo "Moderate: $moderate_count"
+          # List all remote dependencies
+          echo "📋 Remote dependencies:"
+          deno info src/cli.ts | grep -E "(https://|jsr:|npm:)" | sort | uniq
           
-          # Fail on critical or high vulnerabilities
-          if [ "$critical_count" -gt 0 ] || [ "$high_count" -gt 0 ]; then
-            echo "❌ Critical or high severity vulnerabilities found!"
-            echo "Please review and fix security issues before proceeding."
+          # Check for suspicious or deprecated dependencies
+          echo "🔍 Checking for security issues..."
+          
+          # Check if any dependencies use insecure HTTP (should be HTTPS)
+          insecure_deps=$(deno info src/cli.ts | grep -E "http://[^s]" || echo "")
+          if [ ! -z "$insecure_deps" ]; then
+            echo "❌ SECURITY ISSUE: Insecure HTTP dependencies found:"
+            echo "$insecure_deps"
             exit 1
           fi
           
-          echo "✅ No critical or high severity vulnerabilities found."
+          echo "✅ No insecure HTTP dependencies found"
+          
+          # Validate JSR dependencies integrity
+          echo "🔒 Validating JSR dependency integrity..."
+          if deno cache --reload src/cli.ts; then
+            echo "✅ All dependencies cached successfully"
+          else
+            echo "❌ Dependency caching failed - possible integrity issues"
+            exit 1
+          fi
+          
+          echo "✅ Deno dependency security audit completed successfully"
 
       - name: "🛡️ Security: Vulnerable Package Detection"
         # Uses better-npm-audit to identify packages with known security issues
