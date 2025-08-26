@@ -85,7 +85,7 @@ jobs:
             ${{ runner.os }}-build-
 
   node-test:
-    name: "⚡ Test Suite: Node ${{ matrix.node-version }}"
+    name: "⚡ Node Test Suite: Node ${{ matrix.node-version }}"
     # Runs Vitest tests across Node.js 20+22, generates coverage for Node 20
     runs-on: ubuntu-latest
     permissions:
