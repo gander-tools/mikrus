@@ -6,14 +6,14 @@ name: "🦕 Deno CI/CD Pipeline"
 
 on:
   push:
-    branches: [ feature/deno-cliffy-experiment ]
+    branches: [ main-deno ]
   pull_request:
-    branches: [ main ]
+    branches: [ main-deno ]
     paths:
       - 'deno.json'
       - 'src/**'
       - 'tests/**'
-      - '.github/workflows/deno-ci.yml'
+      - '.github/workflows/ci.yml'
   workflow_dispatch:
 
 concurrency:

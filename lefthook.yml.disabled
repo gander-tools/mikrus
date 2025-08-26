@@ -1,7 +1,0 @@
-rc: ~/.lefthookrc
-
-pre-commit:
-  commands:
-    biome:
-      glob: "*.{js,ts,json,jsx,tsx}"
-      run: bun run check {staged_files}

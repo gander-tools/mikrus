@@ -29,7 +29,6 @@
     "compile:macos": "deno compile --allow-read --allow-write --allow-net --target=x86_64-apple-darwin --output=./build/mikrus-macos src/cli.ts"
   },
   "exclude": [
-    "node_modules/",
     "build/",
     "coverage/",
     "tests/cli-integration.test.ts",
