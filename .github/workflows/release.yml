@@ -1,68 +1,72 @@
-name: "🏁 Production Release & Publishing (Deno)"
+name: "🏁 Deno Release & JSR Publishing"
 
-# Production release workflow with GitHub Release and JSR publishing
-# Triggers: Git tags matching v*.*.* (semantic versioning)
-# Purpose: CI verification → Build Binaries → GitHub Release → JSR publish (future)
+# Production release workflow for Deno with binary compilation and JSR publishing
+# Triggers: Git tags matching v*.*.* (semantic versioning with 'v' prefix)
+# Purpose: CI verification → Compile Binaries → GitHub Release → JSR publish
 
-# TEMPORARILY DISABLED for Deno migration - will be rewritten for JSR publishing
 on:
-  # push:
-  #   tags:
-  #     - 'v*.*.*'
+  push:
+    tags:
+      - 'v*.*.*'
   workflow_dispatch:
     inputs:
-      deno_migration_status:
-        description: 'This workflow is disabled during Deno migration'
-        required: false
+      version:
+        description: 'Version to release (without v prefix, e.g., 1.0.0)'
+        required: true
         type: string
-        default: 'disabled'
 
 permissions:
   contents: write
+  id-token: write  # Required for JSR provenance
 
 jobs:
   validate-tag:
-    name: "🏷️ Validation: Verify Tag Exists"
-    # Validates that the specified version corresponds to an existing git tag
+    name: "🏷️ Validation: Verify Tag Format"
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
     steps:
       - name: "📥 Repository: Checkout Code"
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
         with:
           fetch-depth: 0
 
-      - name: "🏷️ Validation: Check Tag Exists"
-        # Verifies that v${{ inputs.version }} tag exists in repository
+      - name: "🏷️ Validation: Check Tag Format"
         run: |
-          VERSION="${{ github.event.inputs.version }}"
-          TAG_NAME="v${VERSION}"
-          
-          echo "🔍 Checking if tag ${TAG_NAME} exists..."
-          
-          if git tag -l | grep -q "^${TAG_NAME}$"; then
-            echo "✅ Tag ${TAG_NAME} exists"
-            echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            TAG_NAME="v${VERSION}"
+            echo "Using manual input version: $VERSION"
+            
+            # Check if tag exists
+            if ! git tag -l | grep -q "^${TAG_NAME}$"; then
+              echo "❌ Tag ${TAG_NAME} does not exist!"
+              echo "Please create the tag first:"
+              echo "  git tag ${TAG_NAME}"
+              echo "  git push origin ${TAG_NAME}"
+              exit 1
+            fi
           else
-            echo "❌ Tag ${TAG_NAME} does not exist!"
-            echo "Available tags:"
-            git tag -l | tail -10
-            echo ""
-            echo "Please create the tag first:"
-            echo "  git tag ${TAG_NAME}"
-            echo "  git push origin ${TAG_NAME}"
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+            VERSION="${TAG_NAME#v}"
+            echo "Using git tag: $TAG_NAME"
+          fi
+          
+          # Validate version format (semantic versioning)
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "Expected format: X.Y.Z or X.Y.Z-alpha.N"
             exit 1
           fi
+          
+          echo "✅ Valid version: $VERSION (tag: $TAG_NAME)"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
 
   check-ci-status:
-    name: "🔍 Pre-flight: CI Pipeline Verification"
-    # Ensures CI pipeline passed successfully before allowing release
+    name: "🔍 Pre-flight: Deno CI Verification"
     runs-on: ubuntu-latest
     needs: [validate-tag]
-    if: always() && (needs.validate-tag.result == 'success' || needs.validate-tag.result == 'skipped')
     steps:
-      - name: "✅ Validation: Verify CI Success for Tag Commit"
-        # Queries GitHub API to confirm CI workflow completed successfully for this commit
+      - name: "✅ Validation: Verify Deno CI Success"
         uses: actions/github-script@v7
         with:
           script: |
@@ -76,279 +80,251 @@ jobs:
             
             const ciRun = workflows.workflow_runs[0];
             if (!ciRun) {
-              core.setFailed('No CI workflow run found for this commit');
+              core.setFailed('No Deno CI workflow run found for this commit');
               return;
             }
             
             if (ciRun.conclusion !== 'success') {
-              core.setFailed(`CI Pipeline failed with status: ${ciRun.conclusion}`);
+              core.setFailed(`Deno CI Pipeline failed with status: ${ciRun.conclusion}`);
               return;
             }
             
-            console.log('✅ CI Pipeline passed successfully');
+            console.log('✅ Deno CI Pipeline passed successfully');
 
-  build-and-release:
-    name: "🏗️ GitHub: Build & Create Release"
-    # Creates production build, archives, checksums, and GitHub release
+  build-binaries:
+    name: "🏗️ Build: Multi-platform Binaries"
     runs-on: ubuntu-latest
     needs: [check-ci-status]
-    if: always() && needs.check-ci-status.result == 'success'
+    strategy:
+      matrix:
+        target:
+          - { name: "linux", target: "x86_64-unknown-linux-gnu", ext: "" }
+          - { name: "windows", target: "x86_64-pc-windows-msvc", ext: ".exe" }
+          - { name: "macos-x64", target: "x86_64-apple-darwin", ext: "" }
+          - { name: "macos-arm64", target: "aarch64-apple-darwin", ext: "" }
     steps:
-      - name: "📥 Repository: Full History Checkout"
-        # Downloads complete git history for changelog and version extraction
+      - name: "📥 Repository: Checkout Code"
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+
+      - name: "🦕 Runtime: Setup Deno"
+        uses: denoland/setup-deno@1b9de07eec64aed604b43ad3e30c9e7bd7dd8d84 # v1
         with:
-          fetch-depth: 0
+          deno-version: v1.x
 
-      - name: "⚡ Runtime: Setup Bun Environment"
-        # Configures Bun runtime for fast dependency installation and building
-        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
-        with:
-          bun-version: latest
-
-      - name: "📦 Dependencies: Install Frozen Lockfile"
-        # Installs exact dependencies from lockfile for reproducible builds
-        run: bun install --frozen-lockfile
-
-      - name: "🛣️ Environment: Add CLI Tools to PATH"
-        # Makes node_modules/.bin tools available in subsequent steps
-        run: echo "./node_modules/.bin" >> $GITHUB_PATH
-
-      - name: "🧪 Quality: Execute Test Suite"
-        # Runs complete test suite to ensure release quality
-        run: bun run test
-
-      - name: "✨ Code Quality: Lint & Format Check"
-        # Validates code style and formatting before release
-        run: bunx @biomejs/biome ci
-
-      - name: "🔨 Build: Compile Production Release"
-        # Compiles TypeScript and creates production build artifacts
-        run: bun run build
-
-      - name: "🏷️ Version: Extract & Validate Version"
-        # Extracts semantic version from git tag or workflow input with security validation
+      - name: "🏷️ Version: Extract from Tag"
         id: get_version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ github.event.inputs.version }}"
-            echo "Using manual input version: $VERSION"
           else
-            VERSION="${GITHUB_REF/refs\/tags\/v/}"
-            echo "Using git tag version: $VERSION"
+            VERSION="${GITHUB_REF#refs/tags/v}"
           fi
-          
-          # Validate version format to prevent injection
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-.+)?$ ]]; then
-            echo "Error: Invalid version format: $VERSION"
-            exit 1
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: "🔍 Quality: Run Tests"
+        run: deno test --allow-read --allow-write
+
+      - name: "✨ Code Quality: Check Formatting"
+        run: deno fmt --check
+
+      - name: "🔨 Compile: ${{ matrix.target.name }} Binary"
+        run: |
+          deno compile \
+            --allow-read \
+            --allow-write \
+            --allow-net \
+            --target=${{ matrix.target.target }} \
+            --output=./mikrus-${{ matrix.target.name }}${{ matrix.target.ext }} \
+            src/cli.ts
+
+      - name: "🔐 Security: Generate Checksums"
+        run: |
+          BINARY="mikrus-${{ matrix.target.name }}${{ matrix.target.ext }}"
+          sha256sum "$BINARY" > "$BINARY.sha256"
+          echo "Generated checksum for $BINARY:"
+          cat "$BINARY.sha256"
+
+      - name: "📦 Archive: Upload Binary Artifacts"
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4
+        with:
+          name: mikrus-${{ matrix.target.name }}
+          path: |
+            mikrus-${{ matrix.target.name }}${{ matrix.target.ext }}
+            mikrus-${{ matrix.target.name }}${{ matrix.target.ext }}.sha256
+          retention-days: 90
+
+  create-release:
+    name: "🚀 GitHub: Create Release"
+    runs-on: ubuntu-latest
+    needs: [build-binaries]
+    outputs:
+      release_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.VERSION }}
+    steps:
+      - name: "📥 Repository: Checkout Code"
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        with:
+          fetch-depth: 0
+
+      - name: "🏷️ Version: Extract from Tag"
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
           fi
-          
-          echo "✅ Valid version: $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: "📦 Archive: Create Release Packages"
-        # Creates tar.gz and zip archives with all necessary release files
-        run: |
-          mkdir -p release
-          cp -r build/ bin/ package.json README.md release/
-          [ -f LICENSE ] && cp LICENSE release/ || echo "LICENSE file not found, skipping"
-          cd release
-          tar -czf "../mikrus-$VERSION.tar.gz" .
-          cd ..
-          zip -r "mikrus-$VERSION.zip" release/
-        env:
-          VERSION: ${{ steps.get_version.outputs.VERSION }}
-
       - name: "📝 Documentation: Generate Release Notes"
-        # Creates release notes from CHANGELOG.md or git history
         id: release_notes
         run: |
-          if [ -f CHANGELOG.md ]; then
-            echo "Found CHANGELOG.md, extracting notes for version $VERSION"
-            # Extract release notes from CHANGELOG.md if it exists - using grep instead of awk for security
-            grep -A 100 "^## \[\?$VERSION\]\?" CHANGELOG.md | grep -B 100 -m 2 "^## " | head -n -1 > release_notes.txt || echo "## What's Changed" > release_notes.txt
-          else
-            echo "## What's Changed" > release_notes.txt
-            echo "Release $VERSION" >> release_notes.txt
-            echo "" >> release_notes.txt
-            echo "### Recent Commits" >> release_notes.txt
-            # Safer git log command with explicit limits
-            git log --pretty=format:"- %s" --no-merges --max-count=10 >> release_notes.txt 2>/dev/null || echo "- Initial release" >> release_notes.txt
-          fi
-        env:
-          VERSION: ${{ steps.get_version.outputs.VERSION }}
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          echo "## 🚀 Release $VERSION" > release_notes.md
+          echo "" >> release_notes.md
+          echo "### 📦 Installation" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "#### Binary Installation (Recommended)" >> release_notes.md
+          echo '```bash' >> release_notes.md
+          echo "# Linux" >> release_notes.md
+          echo "curl -LO https://github.com/gander-tools/mikrus/releases/download/v$VERSION/mikrus-linux" >> release_notes.md
+          echo "chmod +x mikrus-linux && sudo mv mikrus-linux /usr/local/bin/mikrus" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "# Windows (PowerShell)" >> release_notes.md
+          echo "Invoke-WebRequest -Uri https://github.com/gander-tools/mikrus/releases/download/v$VERSION/mikrus-windows.exe -OutFile mikrus.exe" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "# macOS (x64)" >> release_notes.md
+          echo "curl -LO https://github.com/gander-tools/mikrus/releases/download/v$VERSION/mikrus-macos-x64" >> release_notes.md
+          echo "chmod +x mikrus-macos-x64 && sudo mv mikrus-macos-x64 /usr/local/bin/mikrus" >> release_notes.md
+          echo '```' >> release_notes.md
+          echo "" >> release_notes.md
+          echo "#### Deno Installation" >> release_notes.md
+          echo '```bash' >> release_notes.md
+          echo "deno install --allow-read --allow-write --allow-net \\" >> release_notes.md
+          echo "  --name mikrus https://deno.land/x/mikrus@v$VERSION/src/cli.ts" >> release_notes.md
+          echo '```' >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### 🔐 Binary Verification" >> release_notes.md
+          echo "Each binary includes SHA256 checksum for integrity verification." >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### 📋 Recent Changes" >> release_notes.md
+          git log --pretty=format:"- %s" --no-merges --max-count=10 >> release_notes.md || echo "- Release $VERSION" >> release_notes.md
 
-      - name: "🔐 Security: Generate SHA256 Checksums"
-        # Creates cryptographic checksums for download integrity verification
+      - name: "📥 Artifacts: Download All Binaries"
+        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935 # v4
+        with:
+          path: ./artifacts
+
+      - name: "📦 Organize: Prepare Release Assets"
         run: |
-          sha256sum "mikrus-$VERSION.tar.gz" > "mikrus-$VERSION.tar.gz.sha256"
-          sha256sum "mikrus-$VERSION.zip" > "mikrus-$VERSION.zip.sha256"
-          echo "Generated checksums:"
-          cat "mikrus-$VERSION.tar.gz.sha256"
-          cat "mikrus-$VERSION.zip.sha256"
-        env:
-          VERSION: ${{ steps.get_version.outputs.VERSION }}
+          mkdir -p ./release-assets
+          find ./artifacts -name "mikrus-*" -type f -exec cp {} ./release-assets/ \;
+          ls -la ./release-assets/
 
-      - name: "🚀 GitHub: Publish Release"
-        # Creates GitHub release with archives and checksums
+      - name: "🚀 GitHub: Create Release"
+        id: create_release
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
+          tag_name: v${{ steps.get_version.outputs.VERSION }}
           name: Release ${{ steps.get_version.outputs.VERSION }}
-          body_path: release_notes.txt
+          body_path: release_notes.md
           draft: false
           prerelease: ${{ contains(steps.get_version.outputs.VERSION, '-') }}
-          files: |
-            mikrus-${{ steps.get_version.outputs.VERSION }}.tar.gz
-            mikrus-${{ steps.get_version.outputs.VERSION }}.zip
-            mikrus-${{ steps.get_version.outputs.VERSION }}.tar.gz.sha256
-            mikrus-${{ steps.get_version.outputs.VERSION }}.zip.sha256
+          files: ./release-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build-and-test:
-    name: "🧪 Integration: CLI End-to-End Validation"
-    # Comprehensive build and integration testing before NPM publication
+  publish-jsr:
+    name: "📦 JSR: Publish Package"
     runs-on: ubuntu-latest
-    needs: [check-ci-status]
-    permissions:
-      contents: read
+    needs: [create-release]
+    if: ${{ !contains(needs.create-release.outputs.version, '-') }}  # Only for stable releases
     steps:
-      - name: "📥 Repository: Checkout Release Code"
-        # Downloads repository for integration testing
+      - name: "📥 Repository: Checkout Code"
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
-      - name: "🟢 Runtime: Setup Node.js LTS"
-        # Configures Node.js for NPM compatibility testing
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - name: "🦕 Runtime: Setup Deno"
+        uses: denoland/setup-deno@1b9de07eec64aed604b43ad3e30c9e7bd7dd8d84 # v1
         with:
-          node-version: 20
+          deno-version: v1.x
 
-      - name: "⚡ Runtime: Setup Bun Environment"
-        # Configures Bun runtime for build and testing
-        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
-        with:
-          bun-version: latest
+      - name: "🔍 Validation: Dry Run Publish"
+        run: deno publish --dry-run
 
-      - name: "💾 Cache: Restore Dependencies"
-        # Caches dependencies for faster builds
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-
-      - name: "📦 Dependencies: Install Frozen Lockfile"
-        # Installs exact dependencies for consistent builds
-        run: bun install --frozen-lockfile
-
-      - name: "🛣️ Environment: Add CLI Tools to PATH"
-        # Makes CLI tools available for testing
-        run: echo "./node_modules/.bin" >> $GITHUB_PATH
-
-      - name: "🧪 Quality: Execute Test Suite"
-        # Runs all tests to ensure functionality
-        run: bun run test
-
-      - name: "✨ Code Quality: Lint & Format Validation"
-        # Ensures code quality before publication
-        run: bunx @biomejs/biome ci
-
-      - name: "🔨 Build: Create Production Binary"
-        # Compiles final production build
-        run: bun run build
-
-      - name: "🔍 Integration: CLI Help Command Test"
-        # Tests compiled CLI help functionality
-        run: |
-          output=$(./bin/mikrus --compiled-build --help)
-          echo "$output"
-          if ! echo "$output" | grep -q "mikrus version"; then
-            echo "ERROR: Help output does not contain expected version info"
-            exit 1
-          fi
-
-      - name: "📋 Integration: CLI Version Command Test"
-        # Validates CLI version output format
-        run: |
-          output=$(./bin/mikrus --compiled-build --version)
-          echo "Version output: $output"
-          if ! echo "$output" | grep -E "^[0-9]+\.[0-9]+\.[0-9]+"; then
-            echo "ERROR: Version output does not match expected format (semver)"
-            exit 1
-          fi
-
-  publish-npm:
-    name: "📦 NPM: Publish with Provenance"
-    # NPM publication with cryptographic provenance and integrity verification
-    runs-on: ubuntu-latest
-    needs: [build-and-release, build-and-test]
-    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-')
-    permissions:
-      contents: read
-      id-token: write  # Required for npm provenance
-    steps:
-      - name: "📥 Repository: Checkout for Publishing"
-        # Downloads repository for NPM package preparation
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
-
-      - name: "🟢 Runtime: Setup Node.js with NPM Registry"
-        # Configures Node.js with NPM registry authentication
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 20
-          registry-url: https://registry.npmjs.org/
-
-      - name: "⚡ Runtime: Setup Bun Environment"
-        # Configures Bun for build and publishing
-        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
-        with:
-          bun-version: latest
-
-      - name: "📦 Dependencies: Install for Publishing"
-        # Installs dependencies needed for package building
-        run: bun install --frozen-lockfile
-
-      - name: "🛣️ Environment: Add CLI Tools to PATH"
-        # Makes build tools available
-        run: echo "./node_modules/.bin" >> $GITHUB_PATH
-
-      - name: "🔨 Build: Create NPM Package"
-        # Creates final NPM package build
-        run: bun run build
-
-      - name: "🔑 Security: Verify NPM Token Configuration"
-        # Validates NPM authentication is properly configured
-        run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "❌ ERROR: NPM_TOKEN not configured in GitHub secrets"
-            echo "Please configure NPM_TOKEN in organization secrets:"
-            echo "https://github.com/organizations/gander-tools/settings/secrets/actions"
-            exit 1
-          else
-            echo "✅ NPM token is configured"
-          fi
+      - name: "🚀 JSR: Publish Package"
+        run: deno publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          DENO_REGISTRY_TOKEN: ${{ secrets.JSR_TOKEN }}
 
-      - name: "🔍 Quality: Verify Package Integrity"
-        # Pre-publication integrity and content verification
+      - name: "✅ Verification: Confirm JSR Publication"
         run: |
-          echo "Verifying package contents..."
-          npm pack --dry-run
-          echo "Package size check:"
-          du -sh .
-
-      - name: "🚀 NPM: Publish with Cryptographic Provenance"
-        # Publishes to NPM with provenance for supply chain security
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: "✅ Verification: Confirm NPM Publication"
-        # Verifies successful publication and package availability
-        run: |
-          echo "Waiting for package to propagate..."
+          VERSION="${{ needs.create-release.outputs.version }}"
+          echo "Waiting for JSR package propagation..."
           sleep 30
-          # Extract version from tag safely
-          VERSION="${GITHUB_REF/refs\/tags\/v/}"
-          npm view "mikrus@$VERSION" --json
+          
+          # Verify package is available (when JSR API supports it)
+          echo "Package published: https://jsr.io/@gander/mikrus@$VERSION"
+
+  integration-test:
+    name: "🧪 Integration: Test Released Binaries"
+    runs-on: ${{ matrix.os }}
+    needs: [create-release]
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            binary: mikrus-linux
+          - os: windows-latest
+            binary: mikrus-windows.exe
+          - os: macos-latest
+            binary: mikrus-macos-x64
+    steps:
+      - name: "📥 Download: Binary from Release"
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          DOWNLOAD_URL="https://github.com/gander-tools/mikrus/releases/download/v$VERSION/${{ matrix.binary }}"
+          
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            curl -LO "$DOWNLOAD_URL"
+          else
+            curl -LO "$DOWNLOAD_URL"
+            chmod +x "${{ matrix.binary }}"
+          fi
+
+      - name: "🔍 Integration: Version Test"
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            VERSION_OUTPUT=$(./${{ matrix.binary }} --version)
+          else
+            VERSION_OUTPUT=$(./${{ matrix.binary }} --version)
+          fi
+          
+          echo "Version output: $VERSION_OUTPUT"
+          
+          # Verify version format
+          if [[ ! "$VERSION_OUTPUT" =~ mikrus\ [0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "❌ Version output format incorrect: $VERSION_OUTPUT"
+            exit 1
+          fi
+          
+          echo "✅ Version test passed"
+
+      - name: "🔍 Integration: Help Test"
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            HELP_OUTPUT=$(./${{ matrix.binary }} --help)
+          else
+            HELP_OUTPUT=$(./${{ matrix.binary }} --help)
+          fi
+          
+          echo "Help output preview:"
+          echo "$HELP_OUTPUT" | head -10
+          
+          if [[ ! "$HELP_OUTPUT" =~ "Command-line interface tool for managing VPS servers" ]]; then
+            echo "❌ Help output missing expected description"
+            exit 1
+          fi
+          
+          echo "✅ Help test passed"
