@@ -1,4 +1,4 @@
-name: "🤖 Dependabot Automation"
+name: "⚡ Node Dependabot Automation"
 
 # Automated dependency management with intelligent merge policies
 # Triggers: Dependabot PR opened/updated/reopened
@@ -13,8 +13,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  dependabot-automation:
-    name: "🤖 Dependabot: Smart Dependency Management"
+  node-dependabot-automation:
+    name: "⚡ Node Dependabot: Smart Dependency Management"
     # Automatically handles dependency updates with safety checks and merge policies
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' }}

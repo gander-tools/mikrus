@@ -1,4 +1,4 @@
-name: "🏷️ AI Issue Auto-Tagger"
+name: "⚡ Node AI Issue Auto-Tagger"
 
 on:
   issues:
@@ -9,8 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  auto-tag-issues:
-    name: "🤖 Analyze and Tag Issues"
+  node-auto-tag-issues:
+    name: "⚡ Node Analyze and Tag Issues"
     runs-on: ubuntu-latest
     if: github.repository == 'gander-tools/mikrus'
     
