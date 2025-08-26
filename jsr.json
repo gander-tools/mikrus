@@ -1,0 +1,48 @@
+{
+  "name": "@gander/mikrus",
+  "version": "0.0.1",
+  "description": "Command-line interface tool for managing VPS servers on mikr.us platform (Deno + Cliffy)",
+  "keywords": [
+    "cli",
+    "vps", 
+    "mikr.us",
+    "server-management",
+    "hosting",
+    "deno",
+    "cliffy"
+  ],
+  "author": {
+    "name": "Adam Gąsowski",
+    "url": "https://github.com/gander"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gander-tools/mikrus.git"
+  },
+  "homepage": "https://github.com/gander-tools/mikrus#readme",
+  "bugs": {
+    "url": "https://github.com/gander-tools/mikrus/issues"
+  },
+  "exports": {
+    ".": "./src/cli.ts",
+    "./utils": "./src/utils.ts",
+    "./types": "./src/types.ts"
+  },
+  "publish": {
+    "include": [
+      "src/",
+      "tests/",
+      "README.md",
+      "LICENSE",
+      "DENO-WORKFLOW.md"
+    ],
+    "exclude": [
+      "tests/**/*.test.ts",
+      ".github/",
+      "build/",
+      "docs/",
+      "models/"
+    ]
+  }
+}

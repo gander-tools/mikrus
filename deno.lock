@@ -196,25 +196,5 @@
     "https://deno.land/x/cliffy@v1.0.0-rc.4/table/deps.ts": "cbb896e8d7a6b5e3c2b9dda7d16638c202d9b46eb738c2dae1fa9480d8091486",
     "https://deno.land/x/cliffy@v1.0.0-rc.4/table/row.ts": "79eb1468aafdd951e5963898cdafe0752d4ab4c519d5f847f3d8ecb8fe857d4f",
     "https://deno.land/x/cliffy@v1.0.0-rc.4/table/table.ts": "298671e72e61f1ab18b42ae36643181993f79e29b39dc411fdc6ffd53aa04684"
-  },
-  "workspace": {
-    "packageJson": {
-      "dependencies": [
-        "npm:@biomejs/biome@^2.2.2",
-        "npm:@types/js-yaml@^4.0.9",
-        "npm:@types/node@^24.3.0",
-        "npm:@vitest/coverage-v8@^3.2.4",
-        "npm:@vitest/ui@^3.2.4",
-        "npm:cpy-cli@6",
-        "npm:gluegun@^5.2.0",
-        "npm:js-yaml@^4.1.0",
-        "npm:lefthook@^1.12.3",
-        "npm:rimraf@^6.0.1",
-        "npm:tdd-guard-vitest@~0.1.3",
-        "npm:ts-node@^10.9.2",
-        "npm:typescript@~5.9.2",
-        "npm:vitest@^3.2.4"
-      ]
-    }
   }
 }
