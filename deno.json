@@ -14,11 +14,31 @@
   "tasks": {
     "dev": "deno run --allow-read --allow-write --allow-net src/cli.ts",
     "compile": "deno compile --allow-read --allow-write --allow-net --output=./build/mikrus src/cli.ts",
-    "test": "deno test --allow-read --allow-write"
+    "test": "deno test --allow-read --allow-write",
+    "test:coverage": "deno test --allow-read --allow-write --coverage",
+    "coverage": "deno coverage coverage/ --lcov --output=coverage.lcov",
+    "coverage:html": "deno coverage coverage/ --html",
+    "lint": "deno lint src/ tests/",
+    "fmt": "deno fmt src/ tests/",
+    "fmt:check": "deno fmt --check src/ tests/",
+    "check": "deno check src/cli.ts tests/generate-security.test.ts",
+    "cache": "deno cache src/cli.ts tests/generate-security.test.ts",
+    "info": "deno info src/cli.ts",
+    "compile:all": "deno task compile:linux && deno task compile:windows && deno task compile:macos",
+    "compile:linux": "deno compile --allow-read --allow-write --allow-net --target=x86_64-unknown-linux-gnu --output=./build/mikrus-linux src/cli.ts",
+    "compile:windows": "deno compile --allow-read --allow-write --allow-net --target=x86_64-pc-windows-msvc --output=./build/mikrus-windows.exe src/cli.ts",
+    "compile:macos": "deno compile --allow-read --allow-write --allow-net --target=x86_64-apple-darwin --output=./build/mikrus-macos src/cli.ts"
   },
   "exclude": [
     "node_modules/",
     "build/",
-    "coverage/"
+    "coverage/",
+    "tests/cli-integration.test.ts",
+    "tests/security-basic.test.ts",
+    "tests/commands-unit.test.ts",
+    "tests/cli-unit.test.ts",
+    "tests/extensions/",
+    "src/commands/mikrus.ts",
+    "src/extensions/"
   ]
 }

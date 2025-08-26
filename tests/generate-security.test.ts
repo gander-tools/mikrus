@@ -1,30 +1,31 @@
 import { assertEquals, assertThrows } from "@std/testing/asserts";
-import { validateAndSanitizeInput, utils } from "../src/utils.ts";
+import { utils, validateAndSanitizeInput } from "../src/utils.ts";
 
 Deno.test("Generate Command Security Tests", async (t) => {
-  
   await t.step("Input Validation Edge Cases", async (t) => {
     await t.step("should reject empty string input", () => {
       assertThrows(
         () => validateAndSanitizeInput("   "), // Only whitespace
         Error,
-        "Name parameter cannot be empty"
+        "Name parameter cannot be empty",
       );
     });
 
     await t.step("should reject null input", () => {
       assertThrows(
+        // deno-lint-ignore no-explicit-any
         () => validateAndSanitizeInput(null as any),
         Error,
-        "Name parameter is required and must be a string"
+        "Name parameter is required and must be a string",
       );
     });
 
     await t.step("should reject non-string input", () => {
       assertThrows(
+        // deno-lint-ignore no-explicit-any
         () => validateAndSanitizeInput(123 as any),
         Error,
-        "Name parameter is required and must be a string"
+        "Name parameter is required and must be a string",
       );
     });
   });
@@ -34,7 +35,7 @@ Deno.test("Generate Command Security Tests", async (t) => {
       assertThrows(
         () => validateAndSanitizeInput("../malicious-file"),
         Error,
-        "Path traversal detected"
+        "Path traversal detected",
       );
     });
 
@@ -42,7 +43,7 @@ Deno.test("Generate Command Security Tests", async (t) => {
       assertThrows(
         () => validateAndSanitizeInput("..\\malicious-file"),
         Error,
-        "Path traversal detected"
+        "Path traversal detected",
       );
     });
 
@@ -50,7 +51,7 @@ Deno.test("Generate Command Security Tests", async (t) => {
       assertThrows(
         () => validateAndSanitizeInput("some..sequence"),
         Error,
-        "Path traversal detected"
+        "Path traversal detected",
       );
     });
   });
@@ -60,7 +61,7 @@ Deno.test("Generate Command Security Tests", async (t) => {
       assertThrows(
         () => validateAndSanitizeInput("/etc/passwd"),
         Error,
-        "Absolute paths are not allowed"
+        "Absolute paths are not allowed",
       );
     });
 
@@ -68,7 +69,7 @@ Deno.test("Generate Command Security Tests", async (t) => {
       assertThrows(
         () => validateAndSanitizeInput("C:\\Windows\\System32\\evil.exe"),
         Error,
-        "Absolute paths are not allowed"
+        "Absolute paths are not allowed",
       );
     });
 
@@ -76,16 +77,16 @@ Deno.test("Generate Command Security Tests", async (t) => {
       assertThrows(
         () => validateAndSanitizeInput("\\malicious\\path"),
         Error,
-        "Absolute paths are not allowed"
+        "Absolute paths are not allowed",
       );
     });
   });
 
   await t.step("Command Injection Protection", async (t) => {
-    await t.step("should reject shell metacharacters", async () => {
+    await t.step("should reject shell metacharacters", () => {
       const dangerousInputs = [
         "file; rm -rf /",
-        "file | cat /etc/passwd", 
+        "file | cat /etc/passwd",
         "file && evil-command",
         "file$(malicious)",
         "file`malicious`",
@@ -99,18 +100,18 @@ Deno.test("Generate Command Security Tests", async (t) => {
         assertThrows(
           () => validateAndSanitizeInput(input),
           Error,
-          "Invalid characters detected"
+          "Invalid characters detected",
         );
       }
     });
   });
 
   await t.step("File System Reserved Characters", async (t) => {
-    await t.step("should reject reserved filesystem characters", async () => {
+    await t.step("should reject reserved filesystem characters", () => {
       // These characters are caught by command injection protection first
       const shellMetaChars = [
         "file<name",
-        "file>name", 
+        "file>name",
         'file"name',
         "file|name",
       ];
@@ -119,7 +120,7 @@ Deno.test("Generate Command Security Tests", async (t) => {
         assertThrows(
           () => validateAndSanitizeInput(input),
           Error,
-          "Invalid characters detected"
+          "Invalid characters detected",
         );
       }
 
@@ -127,7 +128,7 @@ Deno.test("Generate Command Security Tests", async (t) => {
       const fsReservedChars = [
         "file:name",
         "file/name",
-        "file?name", 
+        "file?name",
         "file*name",
       ];
 
@@ -135,7 +136,7 @@ Deno.test("Generate Command Security Tests", async (t) => {
         assertThrows(
           () => validateAndSanitizeInput(input),
           Error,
-          "reserved file system characters"
+          "reserved file system characters",
         );
       }
     });
@@ -147,7 +148,7 @@ Deno.test("Generate Command Security Tests", async (t) => {
       assertThrows(
         () => validateAndSanitizeInput(longInput),
         Error,
-        "Name parameter is too long"
+        "Name parameter is too long",
       );
     });
 
@@ -159,7 +160,7 @@ Deno.test("Generate Command Security Tests", async (t) => {
   });
 
   await t.step("Valid Pattern Enforcement", async (t) => {
-    await t.step("should reject invalid characters in filename", async () => {
+    await t.step("should reject invalid characters in filename", () => {
       const invalidInputs = [
         "file with spaces",
         "file@symbol",
@@ -175,15 +176,15 @@ Deno.test("Generate Command Security Tests", async (t) => {
         assertThrows(
           () => validateAndSanitizeInput(input),
           Error,
-          "must contain only letters, numbers, hyphens, and underscores"
+          "must contain only letters, numbers, hyphens, and underscores",
         );
       }
     });
 
-    await t.step("should accept valid filename patterns", async () => {
+    await t.step("should accept valid filename patterns", () => {
       const validInputs = [
         "simple-file",
-        "file_with_underscores", 
+        "file_with_underscores",
         "CamelCaseFile",
         "file123",
         "a",
@@ -220,7 +221,9 @@ Deno.test("Utility Functions", async (t) => {
     });
 
     await t.step("should return false for non-string input", () => {
+      // deno-lint-ignore no-explicit-any
       assertEquals(utils.validateIdentifier(null as any), false);
+      // deno-lint-ignore no-explicit-any
       assertEquals(utils.validateIdentifier(123 as any), false);
     });
   });

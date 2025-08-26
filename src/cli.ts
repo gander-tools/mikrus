@@ -18,7 +18,9 @@ async function run(args: string[] = Deno.args): Promise<void> {
   const cli = new Command()
     .name("mikrus")
     .version("0.0.1")
-    .description("Command-line interface tool for managing VPS servers on mikr.us platform")
+    .description(
+      "Command-line interface tool for managing VPS servers on mikr.us platform",
+    )
     // Register generate command
     .command("generate", generateCommand);
 

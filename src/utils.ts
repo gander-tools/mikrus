@@ -24,7 +24,7 @@ export function validateAndSanitizeInput(input: string | undefined): string {
     trimmed.includes("..")
   ) {
     throw new Error(
-      "Path traversal detected. Name parameter cannot contain \"..\" sequences",
+      'Path traversal detected. Name parameter cannot contain ".." sequences',
     );
   }
 
@@ -119,10 +119,14 @@ export const utils: MikrusUtils = {
         headers: { "User-Agent": "mikrus-cli/1.0.0" },
         signal: AbortSignal.timeout(5000), // 5 second timeout
       });
-      
+
       return response.status >= 200 && response.status < 400;
     } catch (error) {
-      console.debug(`API connectivity check failed: ${error instanceof Error ? error.message : String(error)}`);
+      console.debug(
+        `API connectivity check failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
       return false;
     }
   },

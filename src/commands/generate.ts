@@ -1,7 +1,7 @@
 import { Command } from "@cliffy/command";
 import { ensureDir } from "@std/fs";
-import { join, dirname } from "@std/path";
-import { validateAndSanitizeInput, utils } from "../utils.ts";
+import { dirname, join } from "@std/path";
+import { utils, validateAndSanitizeInput } from "../utils.ts";
 
 /**
  * Template generation function using Deno APIs
@@ -15,21 +15,25 @@ async function generateFromTemplate(props: {
     // Read template file
     const templatePath = join("src", "templates", props.template);
     const templateContent = await Deno.readTextFile(templatePath);
-    
+
     // Simple template replacement (similar to EJS but basic)
     // Replace <%= name %> with actual name value
     const generatedContent = templateContent.replace(
       /<%=\s*name\s*%>/g,
-      props.name
+      props.name,
     );
-    
+
     // Ensure target directory exists
     await ensureDir(dirname(props.target));
-    
+
     // Write generated file
     await Deno.writeTextFile(props.target, generatedContent);
   } catch (error) {
-    throw new Error(`Template generation failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Template generation failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
   }
 }
 
@@ -57,7 +61,9 @@ export const generateCommand = new Command()
       utils.success(`Generated file at models/${validName}-model.ts`);
     } catch (err) {
       utils.error(
-        `Security validation failed: ${err instanceof Error ? err.message : String(err)}`
+        `Security validation failed: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
       );
     }
   });
