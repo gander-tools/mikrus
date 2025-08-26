@@ -1,4 +1,4 @@
-name: "🚀 CI/CD Pipeline"
+name: "⚡ CI/CD Pipeline"
 
 # Main continuous integration workflow for code quality and testing
 # Triggers: Push/PR to main+develop branches + manual dispatch
@@ -19,8 +19,8 @@ permissions:
   contents: read
 
 jobs:
-  lint-and-format:
-    name: "✨ Code Quality: Lint & Format"
+  node-lint-and-format:
+    name: "⚡ Code Quality: Lint & Format"
     # Runs Biome checks, validates pre-commit hooks (lefthook), caches build outputs
     runs-on: ubuntu-latest
     permissions:
@@ -84,8 +84,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-build-
 
-  test:
-    name: "🧪 Test Suite: Node ${{ matrix.node-version }}"
+  node-test:
+    name: "⚡ Test Suite: Node ${{ matrix.node-version }}"
     # Runs Vitest tests across Node.js 20+22, generates coverage for Node 20
     runs-on: ubuntu-latest
     permissions:
@@ -138,13 +138,13 @@ jobs:
           file: ./coverage/clover.xml
           fail_ci_if_error: false
 
-  build:
-    name: "🛠️ Build: TypeScript Compilation"
+  node-build:
+    name: "⚡ Build: TypeScript Compilation"
     # Compiles TypeScript, creates build artifacts, uploads for integration testing
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [lint-and-format, test]
+    needs: [node-lint-and-format, node-test]
     steps:
       - name: "📥 Repository: Checkout Code"
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -180,11 +180,11 @@ jobs:
             bin/
           retention-days: 7
 
-  security-scan:
-    name: "🔒 Security: Comprehensive Audit"
+  node-security-audit:
+    name: "⚡ Security: Comprehensive Audit"
     # Calls dedicated security workflow for comprehensive vulnerability and compliance scanning
     uses: ./.github/workflows/comprehensive-security-audit.yml
-    needs: [build]
+    needs: [node-build]
     permissions:
       contents: read
       security-events: write
@@ -193,13 +193,13 @@ jobs:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
 
-  integration-test:
-    name: "🔌 Integration: CLI End-to-End Tests"
+  node-integration-test:
+    name: "⚡ Integration: CLI End-to-End Tests"
     # Downloads build artifacts, tests compiled CLI binary (help, version commands)
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [build]
+    needs: [node-build]
     steps:
       - name: "📥 Repository: Checkout Code"
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -251,22 +251,22 @@ jobs:
           fi
 
 
-  notify:
-    name: "📢 Results: Pipeline Status Notification"
+  node-notify:
+    name: "⚡ Results: Pipeline Status Notification"
     # Runs after all jobs complete (success/failure), provides final status summary
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [lint-and-format, test, build, security-scan, integration-test]
+    needs: [node-lint-and-format, node-test, node-build, node-security-audit, node-integration-test]
     if: always()
     steps:
       - name: "✅ Notification: Success Status Report"
-        if: needs.lint-and-format.result == 'success' && needs.test.result == 'success' && needs.build.result == 'success'
+        if: needs.node-lint-and-format.result == 'success' && needs.node-test.result == 'success' && needs.node-build.result == 'success'
         run: |
           echo "✅ All CI checks passed successfully!"
 
       - name: "❌ Notification: Failure Status Report"
-        if: needs.lint-and-format.result == 'failure' || needs.test.result == 'failure' || needs.build.result == 'failure'
+        if: needs.node-lint-and-format.result == 'failure' || needs.node-test.result == 'failure' || needs.node-build.result == 'failure'
         run: |
           echo "❌ CI pipeline failed. Check the logs for details."
           # Note: Not exiting with failure to allow notification completion
