@@ -1,4 +1,4 @@
-name: "🚀 CI/CD Pipeline"
+name: "🚀 Node CI/CD Pipeline"
 
 # Main continuous integration workflow for code quality and testing
 # Triggers: Push/PR to main+develop branches + manual dispatch
@@ -85,7 +85,7 @@ jobs:
             ${{ runner.os }}-build-
 
   test:
-    name: "🧪 Test Suite: Node ${{ matrix.node-version }}"
+    name: "🧪 Node Test Suite: v${{ matrix.node-version }}"
     # Runs Vitest tests across Node.js 20+22, generates coverage for Node 20
     runs-on: ubuntu-latest
     permissions:

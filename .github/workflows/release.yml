@@ -1,4 +1,4 @@
-name: "🏁 Production Release & Publishing"
+name: "🏁 Node Release & NPM Publishing"
 
 # Production release workflow with GitHub Release and NPM publishing
 # Triggers: Git tags matching v*.*.* (semantic versioning)

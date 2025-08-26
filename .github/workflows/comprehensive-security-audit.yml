@@ -1,4 +1,4 @@
-name: "🔒 Comprehensive Security Audit"
+name: "🔒 Node Comprehensive Security Audit"
 
 # This workflow performs comprehensive security auditing across multiple dimensions
 # Triggers: Daily at 2 AM UTC + can be called by CI workflow + manual dispatch
