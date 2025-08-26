@@ -24,8 +24,8 @@ permissions:
   contents: read
 
 jobs:
-  lint-and-format:
-    name: "✨ Code Quality: Deno Lint & Format"
+  deno-lint-and-format:
+    name: "🦕 Code Quality: Lint & Format"
     # Uses Deno built-in linter and formatter, validates code quality
     runs-on: ubuntu-latest
     permissions:
@@ -67,8 +67,8 @@ jobs:
         # Validates TypeScript types without running the code
         run: deno check src/cli.ts tests/generate-security.test.ts
 
-  test:
-    name: "🧪 Test Suite: Deno ${{ matrix.deno-version }}"
+  deno-test:
+    name: "🦕 Test Suite: Deno ${{ matrix.deno-version }}"
     # Runs Deno native tests across different Deno versions
     runs-on: ubuntu-latest
     permissions:
@@ -127,13 +127,13 @@ jobs:
             coverage/
           retention-days: 7
 
-  build:
-    name: "🛠️ Build: Deno Compile to Binary"
+  deno-build:
+    name: "🦕 Build: Multi-platform Binaries"
     # Compiles Deno application to single executable binary for multiple platforms
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [lint-and-format, test]
+    needs: [deno-lint-and-format, deno-test]
     strategy:
       matrix:
         include:
@@ -186,14 +186,14 @@ jobs:
           path: build/${{ matrix.output }}
           retention-days: 7
 
-  security-audit:
-    name: "🔒 Security: Deno Security Audit"
+  deno-security-audit:
+    name: "🦕 Security: Deno Security Audit"
     # Performs Deno-specific security checks and dependency auditing
     runs-on: ubuntu-latest
     permissions:
       contents: read
       security-events: write
-    needs: [build]
+    needs: [deno-build]
     steps:
       - name: "📥 Repository: Checkout Code"
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -227,13 +227,13 @@ jobs:
           deno lint --rules-exclude=no-explicit-any src/ tests/
           echo "✅ Security scan completed"
 
-  integration-test:
-    name: "🔌 Integration: Deno CLI End-to-End Tests"
+  deno-integration-test:
+    name: "🦕 Integration: CLI End-to-End Tests"
     # Downloads compiled binaries and tests complete CLI functionality
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [build]
+    needs: [deno-build]
     steps:
       - name: "📥 Repository: Checkout Code"
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -361,17 +361,17 @@ jobs:
             echo "✅ Performance baseline met (${duration}ms)"
           fi
 
-  notify:
-    name: "📢 Results: Deno Pipeline Status Notification"
+  deno-notify:
+    name: "🦕 Results: Pipeline Status Notification"
     # Runs after all jobs complete, provides final status summary
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [lint-and-format, test, build, security-audit, integration-test]
+    needs: [deno-lint-and-format, deno-test, deno-build, deno-security-audit, deno-integration-test]
     if: always()
     steps:
       - name: "✅ Notification: Success Status Report"
-        if: needs.lint-and-format.result == 'success' && needs.test.result == 'success' && needs.build.result == 'success' && needs.integration-test.result == 'success'
+        if: needs.deno-lint-and-format.result == 'success' && needs.deno-test.result == 'success' && needs.deno-build.result == 'success' && needs.deno-integration-test.result == 'success'
         run: |
           echo "✅ 🦕 Deno CI/CD Pipeline completed successfully!"
           echo "✨ Code quality checks passed"
@@ -383,19 +383,19 @@ jobs:
           echo "🎉 Deno + Cliffy migration is working perfectly!"
 
       - name: "❌ Notification: Failure Status Report"
-        if: needs.lint-and-format.result == 'failure' || needs.test.result == 'failure' || needs.build.result == 'failure' || needs.integration-test.result == 'failure'
+        if: needs.deno-lint-and-format.result == 'failure' || needs.deno-test.result == 'failure' || needs.deno-build.result == 'failure' || needs.deno-integration-test.result == 'failure'
         run: |
           echo "❌ 🦕 Deno CI/CD Pipeline failed!"
-          echo "Lint & Format: ${{ needs.lint-and-format.result }}"
-          echo "Test: ${{ needs.test.result }}"
-          echo "Build: ${{ needs.build.result }}"
-          echo "Security Audit: ${{ needs.security-audit.result }}"
-          echo "Integration Test: ${{ needs.integration-test.result }}"
+          echo "Lint & Format: ${{ needs.deno-lint-and-format.result }}"
+          echo "Test: ${{ needs.deno-test.result }}"
+          echo "Build: ${{ needs.deno-build.result }}"
+          echo "Security Audit: ${{ needs.deno-security-audit.result }}"
+          echo "Integration Test: ${{ needs.deno-integration-test.result }}"
           echo ""
           echo "Please check the logs above for detailed error information."
 
       - name: "📊 Notification: Performance & Size Report"
-        if: needs.build.result == 'success'
+        if: needs.deno-build.result == 'success'
         run: |
           echo "📊 Deno vs Node.js Comparison:"
           echo "🦕 Deno Benefits Achieved:"
