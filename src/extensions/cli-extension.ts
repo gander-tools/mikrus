@@ -1,3 +1,4 @@
+import type { IncomingMessage } from 'node:http'
 import type { GluegunToolbox } from 'gluegun'
 import type { MikrusToolbox } from '../types'
 
@@ -62,13 +63,15 @@ module.exports = (toolbox: GluegunToolbox) => {
             headers: { 'User-Agent': 'mikrus-cli/1.0.0' },
             timeout: 5000,
           },
-          (res: any) => {
-            resolve(res.statusCode >= 200 && res.statusCode < 400)
+          (res: IncomingMessage) => {
+            resolve(res.statusCode! >= 200 && res.statusCode! < 400)
           }
         )
 
-        req.on('error', (error: any) => {
-          mikrusToolbox.print.debug(`API connectivity check failed: ${error}`)
+        req.on('error', (error: NodeJS.ErrnoException) => {
+          mikrusToolbox.print.debug(
+            `API connectivity check failed: ${error.message}`
+          )
           resolve(false)
         })
 
