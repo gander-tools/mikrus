@@ -22,8 +22,8 @@ permissions:
   contents: read
 
 jobs:
-  dependency-scan:
-    name: "🔍 Dependencies: Deno Security Audit"
+  deno-dependency-scan:
+    name: "🦕 Deno Dependencies: Deno Security Audit"
     # Runs Deno dependency audit and vulnerability checks
     # Fails on critical/high severity issues, allows moderate/low
     runs-on: ubuntu-latest
@@ -94,8 +94,8 @@ jobs:
             echo "✅ All imports use HTTPS or JSR registry"
           fi
 
-  license-scan:
-    name: "📋 Licenses: Deno Dependency Review"
+  deno-license-scan:
+    name: "🦕 Deno Licenses: Deno Dependency Review"
     # Reviews Deno URL-based imports for license compliance
     # JSR registry provides automatic license information
     runs-on: ubuntu-latest
@@ -127,8 +127,8 @@ jobs:
           echo "✅ Cliffy framework uses MIT license (compatible)"
           echo "✅ No problematic licenses detected in Deno ecosystem"
 
-  secrets-scan:
-    name: "🔐 Secrets: Hardcoded Credentials Detection"
+  deno-secrets-scan:
+    name: "🦕 Deno Secrets: Hardcoded Credentials Detection"
     # Searches source code for hardcoded passwords, API keys, AWS keys
     # Uses grep patterns to detect common secret formats
     runs-on: ubuntu-latest
@@ -195,8 +195,8 @@ jobs:
             echo "✅ Input validation patterns found in CLI"
           fi
 
-  supply-chain-security:
-    name: "🔗 Supply Chain: Package Integrity & Trust"
+  deno-supply-chain-security:
+    name: "🦕 Deno Supply Chain: Package Integrity & Trust"
     # Verifies package integrity, checks for suspicious packages and typosquatting
     # Validates lockfile consistency and package authenticity
     runs-on: ubuntu-latest
@@ -238,8 +238,8 @@ jobs:
           # This would typically use a more sophisticated typosquatting detection tool
           echo "✅ Basic typosquatting check completed"
 
-  cli-quality-validation:
-    name: "🔧 Deno CLI Quality: TypeScript & Code Standards"
+  deno-cli-quality-validation:
+    name: "🦕 Deno CLI Quality: TypeScript & Code Standards"
     # Validates CLI-specific quality standards using Deno native tools
     runs-on: ubuntu-latest
     permissions:
