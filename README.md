@@ -3,7 +3,7 @@
 [![Deno CI](https://github.com/gander-tools/mikrus/actions/workflows/deno-ci.yml/badge.svg)](https://github.com/gander-tools/mikrus/actions/workflows/deno-ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/gander-tools/mikrus/blob/main/LICENSE)
 [![Deno](https://img.shields.io/badge/deno-%5E2.0.0-green.svg)](https://deno.land/)
-[![Cliffy](https://img.shields.io/badge/cliffy-%5E1.0.0--rc.4-orange.svg)](https://cliffy.io/)
+[![Cliffy](https://img.shields.io/badge/cliffy-v1.0.0--rc.4-orange.svg)](https://github.com/c4spar/deno-cliffy)
 
 Command-line interface tool for managing VPS servers on the **mikr.us** platform. Built with modern Deno runtime and Cliffy CLI framework. Inspired by [mikrus-cli](https://github.com/unkn0w/noobs/blob/main/mikrus-cli/mikrus).
 
