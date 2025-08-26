@@ -1,15 +1,15 @@
-export interface <%= name %>Model {
+export interface testfileModel {
   id: number;
   name: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export class <%= name %>Service {
-  private models: <%= name %>Model[] = [];
+export class testfileService {
+  private models: testfileModel[] = [];
 
-  create(name: string): <%= name %>Model {
-    const model: <%= name %>Model = {
+  create(name: string): testfileModel {
+    const model: testfileModel = {
       id: Date.now(),
       name,
       createdAt: new Date(),
@@ -20,11 +20,11 @@ export class <%= name %>Service {
     return model;
   }
 
-  findAll(): <%= name %>Model[] {
+  findAll(): testfileModel[] {
     return this.models;
   }
 
-  findById(id: number): <%= name %>Model | undefined {
+  findById(id: number): testfileModel | undefined {
     return this.models.find(model => model.id === id);
   }
 }

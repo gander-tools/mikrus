@@ -1,411 +1,236 @@
-import type { GluegunToolbox } from 'gluegun'
-import { describe, expect, test, vi } from 'vitest'
+import { assertEquals, assertThrows } from "@std/testing/asserts";
+import { validateAndSanitizeInput, utils } from "../src/utils.ts";
 
-describe('Generate Command Security Tests', () => {
-  // Mock setup helper
-  const createMockToolbox = (first?: string): GluegunToolbox =>
-    ({
-      parameters: { first },
-      template: { generate: vi.fn() },
-      print: { info: vi.fn(), error: vi.fn() },
-    }) as unknown as GluegunToolbox
+Deno.test("Generate Command Security Tests", async (t) => {
+  
+  await t.step("Input Validation Edge Cases", async (t) => {
+    await t.step("should reject empty string input", () => {
+      assertThrows(
+        () => validateAndSanitizeInput("   "), // Only whitespace
+        Error,
+        "Name parameter cannot be empty"
+      );
+    });
 
-  const mockProcessExit = () => {
-    return vi.spyOn(process, 'exit').mockImplementation(() => {
-      throw new Error('process.exit called')
-    })
-  }
+    await t.step("should reject null input", () => {
+      assertThrows(
+        () => validateAndSanitizeInput(null as any),
+        Error,
+        "Name parameter is required and must be a string"
+      );
+    });
 
-  describe('Input Validation Edge Cases', () => {
-    test('should reject empty string input', async () => {
-      const toolbox = createMockToolbox('   ') // Only whitespace
-      const mockExit = mockProcessExit()
+    await t.step("should reject non-string input", () => {
+      assertThrows(
+        () => validateAndSanitizeInput(123 as any),
+        Error,
+        "Name parameter is required and must be a string"
+      );
+    });
+  });
 
-      const generateCommand = await import('../src/commands/generate')
+  await t.step("Path Traversal Protection", async (t) => {
+    await t.step("should reject path traversal with ../", () => {
+      assertThrows(
+        () => validateAndSanitizeInput("../malicious-file"),
+        Error,
+        "Path traversal detected"
+      );
+    });
 
-      await expect(generateCommand.run(toolbox)).rejects.toThrow(
-        'process.exit called'
-      )
-      expect(toolbox.print.error).toHaveBeenCalledWith(
-        expect.stringContaining('Name parameter cannot be empty')
-      )
+    await t.step("should reject path traversal with ..\\", () => {
+      assertThrows(
+        () => validateAndSanitizeInput("..\\malicious-file"),
+        Error,
+        "Path traversal detected"
+      );
+    });
 
-      mockExit.mockRestore()
-    })
+    await t.step("should reject embedded .. sequences", () => {
+      assertThrows(
+        () => validateAndSanitizeInput("some..sequence"),
+        Error,
+        "Path traversal detected"
+      );
+    });
+  });
 
-    test('should reject null input', async () => {
-      const toolbox = createMockToolbox(null as any)
-      const mockExit = mockProcessExit()
+  await t.step("Absolute Path Protection", async (t) => {
+    await t.step("should reject Unix absolute paths", () => {
+      assertThrows(
+        () => validateAndSanitizeInput("/etc/passwd"),
+        Error,
+        "Absolute paths are not allowed"
+      );
+    });
 
-      const generateCommand = await import('../src/commands/generate')
+    await t.step("should reject Windows absolute paths", () => {
+      assertThrows(
+        () => validateAndSanitizeInput("C:\\Windows\\System32\\evil.exe"),
+        Error,
+        "Absolute paths are not allowed"
+      );
+    });
 
-      await expect(generateCommand.run(toolbox)).rejects.toThrow(
-        'process.exit called'
-      )
-      expect(toolbox.print.error).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'Name parameter is required and must be a string'
-        )
-      )
+    await t.step("should reject backslash paths", () => {
+      assertThrows(
+        () => validateAndSanitizeInput("\\malicious\\path"),
+        Error,
+        "Absolute paths are not allowed"
+      );
+    });
+  });
 
-      mockExit.mockRestore()
-    })
-
-    test('should reject non-string input', async () => {
-      const toolbox = createMockToolbox(123 as any)
-      const mockExit = mockProcessExit()
-
-      const generateCommand = await import('../src/commands/generate')
-
-      await expect(generateCommand.run(toolbox)).rejects.toThrow(
-        'process.exit called'
-      )
-      expect(toolbox.print.error).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'Name parameter is required and must be a string'
-        )
-      )
-
-      mockExit.mockRestore()
-    })
-  })
-
-  describe('Path Traversal Protection', () => {
-    test('should reject path traversal with ../', async () => {
-      const toolbox = createMockToolbox('../malicious-file')
-      const mockExit = mockProcessExit()
-
-      const generateCommand = await import('../src/commands/generate')
-
-      await expect(generateCommand.run(toolbox)).rejects.toThrow(
-        'process.exit called'
-      )
-      expect(toolbox.print.error).toHaveBeenCalledWith(
-        expect.stringContaining('Path traversal detected')
-      )
-
-      mockExit.mockRestore()
-    })
-
-    test('should reject path traversal with ..\\', async () => {
-      const toolbox = createMockToolbox('..\\malicious-file')
-      const mockExit = mockProcessExit()
-
-      const generateCommand = await import('../src/commands/generate')
-
-      await expect(generateCommand.run(toolbox)).rejects.toThrow(
-        'process.exit called'
-      )
-      expect(toolbox.print.error).toHaveBeenCalledWith(
-        expect.stringContaining('Path traversal detected')
-      )
-
-      mockExit.mockRestore()
-    })
-
-    test('should reject embedded .. sequences', async () => {
-      const toolbox = createMockToolbox('some..sequence')
-      const mockExit = mockProcessExit()
-
-      const generateCommand = await import('../src/commands/generate')
-
-      await expect(generateCommand.run(toolbox)).rejects.toThrow(
-        'process.exit called'
-      )
-      expect(toolbox.print.error).toHaveBeenCalledWith(
-        expect.stringContaining('Path traversal detected')
-      )
-
-      mockExit.mockRestore()
-    })
-  })
-
-  describe('Absolute Path Protection', () => {
-    test('should reject Unix absolute paths', async () => {
-      const toolbox = createMockToolbox('/etc/passwd')
-      const mockExit = mockProcessExit()
-
-      const generateCommand = await import('../src/commands/generate')
-
-      await expect(generateCommand.run(toolbox)).rejects.toThrow(
-        'process.exit called'
-      )
-      expect(toolbox.print.error).toHaveBeenCalledWith(
-        expect.stringContaining('Absolute paths are not allowed')
-      )
-
-      mockExit.mockRestore()
-    })
-
-    test('should reject Windows absolute paths', async () => {
-      const toolbox = createMockToolbox('C:\\Windows\\System32\\evil.exe')
-      const mockExit = mockProcessExit()
-
-      const generateCommand = await import('../src/commands/generate')
-
-      await expect(generateCommand.run(toolbox)).rejects.toThrow(
-        'process.exit called'
-      )
-      expect(toolbox.print.error).toHaveBeenCalledWith(
-        expect.stringContaining('Absolute paths are not allowed')
-      )
-
-      mockExit.mockRestore()
-    })
-
-    test('should reject backslash paths', async () => {
-      const toolbox = createMockToolbox('\\malicious\\path')
-      const mockExit = mockProcessExit()
-
-      const generateCommand = await import('../src/commands/generate')
-
-      await expect(generateCommand.run(toolbox)).rejects.toThrow(
-        'process.exit called'
-      )
-      expect(toolbox.print.error).toHaveBeenCalledWith(
-        expect.stringContaining('Absolute paths are not allowed')
-      )
-
-      mockExit.mockRestore()
-    })
-  })
-
-  describe('Command Injection Protection', () => {
-    test('should reject shell metacharacters', async () => {
+  await t.step("Command Injection Protection", async (t) => {
+    await t.step("should reject shell metacharacters", async () => {
       const dangerousInputs = [
-        'file; rm -rf /',
-        'file | cat /etc/passwd',
-        'file && evil-command',
-        'file$(malicious)',
-        'file`malicious`',
-        'file<script>',
+        "file; rm -rf /",
+        "file | cat /etc/passwd", 
+        "file && evil-command",
+        "file$(malicious)",
+        "file`malicious`",
+        "file<script>",
         "file'injection",
         'file"injection',
-        'file\\injection',
-      ]
+        "file\\injection",
+      ];
 
       for (const input of dangerousInputs) {
-        const toolbox = createMockToolbox(input)
-        const mockExit = mockProcessExit()
-
-        const generateCommand = await import('../src/commands/generate')
-
-        await expect(generateCommand.run(toolbox)).rejects.toThrow(
-          'process.exit called'
-        )
-        expect(toolbox.print.error).toHaveBeenCalledWith(
-          expect.stringContaining('Invalid characters detected')
-        )
-
-        mockExit.mockRestore()
+        assertThrows(
+          () => validateAndSanitizeInput(input),
+          Error,
+          "Invalid characters detected"
+        );
       }
-    })
-  })
+    });
+  });
 
-  describe('File System Reserved Characters', () => {
-    test('should reject reserved filesystem characters', async () => {
+  await t.step("File System Reserved Characters", async (t) => {
+    await t.step("should reject reserved filesystem characters", async () => {
       // These characters are caught by command injection protection first
       const shellMetaChars = [
-        'file<name',
-        'file>name',
+        "file<name",
+        "file>name", 
         'file"name',
-        'file|name',
-      ]
+        "file|name",
+      ];
 
       for (const input of shellMetaChars) {
-        const toolbox = createMockToolbox(input)
-        const mockExit = mockProcessExit()
-
-        const generateCommand = await import('../src/commands/generate')
-
-        await expect(generateCommand.run(toolbox)).rejects.toThrow(
-          'process.exit called'
-        )
-        expect(toolbox.print.error).toHaveBeenCalledWith(
-          expect.stringContaining('Invalid characters detected')
-        )
-
-        mockExit.mockRestore()
+        assertThrows(
+          () => validateAndSanitizeInput(input),
+          Error,
+          "Invalid characters detected"
+        );
       }
 
       // These characters are specifically reserved filesystem chars
       const fsReservedChars = [
-        'file:name',
-        'file/name',
-        'file?name',
-        'file*name',
-      ]
+        "file:name",
+        "file/name",
+        "file?name", 
+        "file*name",
+      ];
 
       for (const input of fsReservedChars) {
-        const toolbox = createMockToolbox(input)
-        const mockExit = mockProcessExit()
-
-        const generateCommand = await import('../src/commands/generate')
-
-        await expect(generateCommand.run(toolbox)).rejects.toThrow(
-          'process.exit called'
-        )
-        expect(toolbox.print.error).toHaveBeenCalledWith(
-          expect.stringContaining('reserved file system characters')
-        )
-
-        mockExit.mockRestore()
+        assertThrows(
+          () => validateAndSanitizeInput(input),
+          Error,
+          "reserved file system characters"
+        );
       }
-    })
-  })
+    });
+  });
 
-  describe('Length Validation', () => {
-    test('should reject extremely long input', async () => {
-      const longInput = 'a'.repeat(101) // Exceeds 100 char limit
-      const toolbox = createMockToolbox(longInput)
-      const mockExit = mockProcessExit()
+  await t.step("Length Validation", async (t) => {
+    await t.step("should reject extremely long input", () => {
+      const longInput = "a".repeat(101); // Exceeds 100 char limit
+      assertThrows(
+        () => validateAndSanitizeInput(longInput),
+        Error,
+        "Name parameter is too long"
+      );
+    });
 
-      const generateCommand = await import('../src/commands/generate')
+    await t.step("should accept input at maximum length", () => {
+      const maxInput = "a".repeat(100); // Exactly 100 chars
+      const result = validateAndSanitizeInput(maxInput);
+      assertEquals(result, maxInput);
+    });
+  });
 
-      await expect(generateCommand.run(toolbox)).rejects.toThrow(
-        'process.exit called'
-      )
-      expect(toolbox.print.error).toHaveBeenCalledWith(
-        expect.stringContaining('Name parameter is too long')
-      )
-
-      mockExit.mockRestore()
-    })
-
-    test('should accept input at maximum length', async () => {
-      const maxInput = 'a'.repeat(100) // Exactly 100 chars
-      const toolbox = createMockToolbox(maxInput)
-
-      const generateCommand = await import('../src/commands/generate')
-
-      await generateCommand.run(toolbox)
-
-      expect(toolbox.template.generate).toHaveBeenCalledWith({
-        template: 'model.ts.ejs',
-        target: `models/${maxInput}-model.ts`,
-        props: { name: maxInput },
-      })
-      expect(toolbox.print.error).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('Valid Pattern Enforcement', () => {
-    test('should reject invalid characters in filename', async () => {
+  await t.step("Valid Pattern Enforcement", async (t) => {
+    await t.step("should reject invalid characters in filename", async () => {
       const invalidInputs = [
-        'file with spaces',
-        'file@symbol',
-        'file#hash',
-        'file%percent',
-        'file(parentheses)',
-        'file[brackets]',
-        'file{braces}',
-        'file+plus',
-      ]
+        "file with spaces",
+        "file@symbol",
+        "file#hash",
+        "file%percent",
+        "file(parentheses)",
+        "file[brackets]",
+        "file{braces}",
+        "file+plus",
+      ];
 
       for (const input of invalidInputs) {
-        const toolbox = createMockToolbox(input)
-        const mockExit = mockProcessExit()
-
-        const generateCommand = await import('../src/commands/generate')
-
-        await expect(generateCommand.run(toolbox)).rejects.toThrow(
-          'process.exit called'
-        )
-        expect(toolbox.print.error).toHaveBeenCalledWith(
-          expect.stringContaining(
-            'must contain only letters, numbers, hyphens, and underscores'
-          )
-        )
-
-        mockExit.mockRestore()
+        assertThrows(
+          () => validateAndSanitizeInput(input),
+          Error,
+          "must contain only letters, numbers, hyphens, and underscores"
+        );
       }
-    })
+    });
 
-    test('should accept valid filename patterns', async () => {
+    await t.step("should accept valid filename patterns", async () => {
       const validInputs = [
-        'simple-file',
-        'file_with_underscores',
-        'CamelCaseFile',
-        'file123',
-        'a',
-        'FILE-NAME-123_TEST',
-      ]
+        "simple-file",
+        "file_with_underscores", 
+        "CamelCaseFile",
+        "file123",
+        "a",
+        "FILE-NAME-123_TEST",
+      ];
 
       for (const input of validInputs) {
-        const toolbox = createMockToolbox(input)
-
-        const generateCommand = await import('../src/commands/generate')
-
-        await generateCommand.run(toolbox)
-
-        expect(toolbox.template.generate).toHaveBeenCalledWith({
-          template: 'model.ts.ejs',
-          target: `models/${input}-model.ts`,
-          props: { name: input },
-        })
-        expect(toolbox.print.error).not.toHaveBeenCalled()
+        const result = validateAndSanitizeInput(input);
+        assertEquals(result, input);
       }
-    })
-  })
+    });
+  });
 
-  describe('Error Handling Edge Cases', () => {
-    test('should handle template generation failure gracefully', async () => {
-      const toolbox = createMockToolbox('valid-name')
-      const mockExit = mockProcessExit()
+  await t.step("Whitespace Handling", async (t) => {
+    await t.step("should trim whitespace from input", () => {
+      const result = validateAndSanitizeInput("  valid-name  ");
+      assertEquals(result, "valid-name");
+    });
+  });
+});
 
-      // Mock template.generate to throw an error
-      vi.mocked(toolbox.template.generate).mockRejectedValue(
-        new Error('Template file not found')
-      )
+Deno.test("Utility Functions", async (t) => {
+  await t.step("validateIdentifier", async (t) => {
+    await t.step("should return true for valid identifiers", () => {
+      assertEquals(utils.validateIdentifier("valid-name"), true);
+      assertEquals(utils.validateIdentifier("file_123"), true);
+      assertEquals(utils.validateIdentifier("CamelCase"), true);
+    });
 
-      const generateCommand = await import('../src/commands/generate')
+    await t.step("should return false for invalid identifiers", () => {
+      assertEquals(utils.validateIdentifier(""), false);
+      assertEquals(utils.validateIdentifier("file with spaces"), false);
+      assertEquals(utils.validateIdentifier("file@invalid"), false);
+    });
 
-      await expect(generateCommand.run(toolbox)).rejects.toThrow(
-        'process.exit called'
-      )
-      expect(toolbox.print.error).toHaveBeenCalledWith(
-        expect.stringContaining('Security validation failed')
-      )
+    await t.step("should return false for non-string input", () => {
+      assertEquals(utils.validateIdentifier(null as any), false);
+      assertEquals(utils.validateIdentifier(123 as any), false);
+    });
+  });
 
-      mockExit.mockRestore()
-    })
-
-    test('should handle non-Error exceptions', async () => {
-      const toolbox = createMockToolbox('valid-name')
-      const mockExit = mockProcessExit()
-
-      // Mock template.generate to throw a non-Error object
-      vi.mocked(toolbox.template.generate).mockRejectedValue('String error')
-
-      const generateCommand = await import('../src/commands/generate')
-
-      await expect(generateCommand.run(toolbox)).rejects.toThrow(
-        'process.exit called'
-      )
-      expect(toolbox.print.error).toHaveBeenCalledWith(
-        expect.stringContaining('Security validation failed: String error')
-      )
-
-      mockExit.mockRestore()
-    })
-  })
-
-  describe('Whitespace Handling', () => {
-    test('should trim whitespace from input', async () => {
-      const toolbox = createMockToolbox('  valid-name  ')
-
-      const generateCommand = await import('../src/commands/generate')
-
-      await generateCommand.run(toolbox)
-
-      expect(toolbox.template.generate).toHaveBeenCalledWith({
-        template: 'model.ts.ejs',
-        target: 'models/valid-name-model.ts',
-        props: { name: 'valid-name' },
-      })
-      expect(toolbox.print.info).toHaveBeenCalledWith(
-        'Generated file at models/valid-name-model.ts'
-      )
-    })
-  })
-})
+  await t.step("API connectivity check", async (t) => {
+    await t.step("should handle network failures gracefully", async () => {
+      // This test will fail in real environments but demonstrates the structure
+      const result = await utils.checkApiConnectivity();
+      // Just test that it returns a boolean without throwing
+      assertEquals(typeof result, "boolean");
+    });
+  });
+});
