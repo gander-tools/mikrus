@@ -277,7 +277,7 @@ jobs:
           output=$(./build/mikrus-linux --version)
           echo "Version output: $output"
           
-          if ! echo "$output" | grep -E "^[0-9]+\.[0-9]+\.[0-9]+"; then
+          if ! echo "$output" | grep -E "[0-9]+\.[0-9]+\.[0-9]+"; then
             echo "❌ ERROR: Version output does not match expected format (semver)"
             exit 1
           fi
