@@ -114,9 +114,12 @@ export const utils: MikrusUtils = {
    */
   checkApiConnectivity: async (): Promise<boolean> => {
     try {
-      const response = await fetch("https://mikr.us/api/health", {
+      // Use environment variable for API endpoint, fallback to default
+      const apiEndpoint = Deno.env.get("MIKRUS_API_URL") ?? "https://mikr.us/api/health";
+      
+      const response = await fetch(apiEndpoint, {
         method: "HEAD",
-        headers: { "User-Agent": "mikrus-cli/1.0.0" },
+        headers: { "User-Agent": "mikrus-cli" }, // Remove version to avoid disclosure
         signal: AbortSignal.timeout(5000), // 5 second timeout
       });
 

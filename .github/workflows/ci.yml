@@ -6,7 +6,7 @@ name: "🦕 Deno CI/CD Pipeline"
 
 on:
   push:
-    branches: [ main-deno ]
+    branches: [ main-deno, feature/deno-cliffy-experiment ]
   pull_request:
     branches: [ main-deno ]
     paths:

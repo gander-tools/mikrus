@@ -107,9 +107,9 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: "🦕 Runtime: Setup Deno"
-        uses: denoland/setup-deno@1b9de07eec64aed604b43ad3e30c9e7bd7dd8d84 # v1
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
         with:
-          deno-version: v1.x
+          deno-version: v2.x
 
       - name: "🏷️ Version: Extract from Tag"
         id: get_version
@@ -245,9 +245,9 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: "🦕 Runtime: Setup Deno"
-        uses: denoland/setup-deno@1b9de07eec64aed604b43ad3e30c9e7bd7dd8d84 # v1
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
         with:
-          deno-version: v1.x
+          deno-version: v2.x
 
       - name: "🔍 Validation: Dry Run Publish"
         run: deno publish --dry-run
