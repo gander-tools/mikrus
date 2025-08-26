@@ -1,146 +1,211 @@
-# Publishing Guide
+# Publishing Guide (Deno + JSR)
 
-This document describes the publishing setup for the `mikrus` CLI package.
+This document describes the publishing setup for the `mikrus` CLI package using Deno and JSR (JavaScript Registry).
 
 ## Package Information
 
 - **Author**: Adam Gąsowski (GitHub: @gander)
 - **Organization**: Gander Tools (GitHub: @gander-tools)
-- **Package name**: `mikrus` (no scope)
-- **Executable**: `mikrus`
-- **NPM account**: gander
+- **Package name**: `@gander/mikrus` (JSR scoped package)
+- **Runtime**: Deno 2.0+
+- **CLI Framework**: Cliffy
 - **Repository**: https://github.com/gander-tools/mikrus
 
-## Package Configuration
+## Distribution Strategy
 
-The `mikrus` package is configured as a public NPM package:
+mikrus uses a **dual distribution approach**:
 
-- **Package name**: `mikrus` (no scope)
-- **Publisher**: gander (NPM account)
-- **Registry**: https://registry.npmjs.org/
+1. **Pre-compiled Binaries** - Single executable files (~500MB)
+2. **JSR Package** - Source code for developers (future)
+
+### Binary Distribution
+
+Pre-compiled binaries are built and distributed through GitHub Releases:
+
+- **Platforms**: Linux (x86_64), Windows (x86_64), macOS (x86_64, ARM64)
+- **CI/CD**: Automated compilation via GitHub Actions
+- **Download**: Direct binary download from GitHub Releases
+
+### JSR Publishing (Future)
+
+JSR (JavaScript Registry) is the modern package registry for Deno:
+
+- **Registry**: https://jsr.io/
+- **Package name**: `@gander/mikrus`
+- **Scope**: `@gander`
 - **Access**: public
-- **Provenance**: enabled for supply chain security
 
-## NPM Token Setup (Required Before First Publishing)
+## Current Release Process (GitHub Binaries)
 
-**IMPORTANT**: This setup is required before the first release can be published.
+### Automated Release
 
-1. **Generate NPM Automation Token**:
+The release process is currently automated through GitHub Actions:
+
+1. **Tag Creation**: Create a git tag with semantic versioning
    ```bash
-   # Login to NPM (if not already logged in)
-   npm login --auth-type=web
-   
-   # Generate automation token
-   npm token create --type=automation
-   ```
-
-2. **Configure GitHub Organization Secret**:
-   - Go to: https://github.com/organizations/gander-tools/settings/secrets/actions
-   - Click "New organization secret"
-   - Name: `NPM_TOKEN`
-   - Value: `npm_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX` (token from step 1)
-   - Select repositories: `gander-tools/mikrus`
-
-3. **Verify Token Permissions**:
-   ```bash
-   # Test token (optional)
-   curl -H "Authorization: Bearer npm_XXXXXXXX" https://registry.npmjs.org/-/whoami
-   ```
-
-## Publishing Process
-
-### Automatic Publishing (GitHub Actions Only)
-
-Publishing is handled exclusively through GitHub Actions. **Local publishing is not supported.**
-
-1. Create and push a version tag:
-   ```bash
-   # Update version in package.json first
-   git add package.json
-   git commit -m "bump version to 1.0.0"
-   
-   # Create and push tag
    git tag v1.0.0
-   git push origin main
    git push origin v1.0.0
    ```
 
-2. The GitHub Actions release workflow will automatically:
-   - Verify all CI pipeline requirements have passed
-   - Build the project and create comprehensive build artifacts
-   - Run full test suite including integration tests
-   - Create GitHub release with checksums and artifacts
-   - Publish to NPM with cryptographic provenance (only if all prerequisites pass)
-   - Verify published package integrity
+2. **Automated Build**: CI/CD pipeline automatically:
+   - Compiles binaries for all platforms
+   - Creates GitHub Release
+   - Uploads binary assets
 
-### Publishing Requirements
+3. **Download**: Users can download binaries from GitHub Releases
 
-- Publishing is **only available through GitHub Actions**
-- Tag must follow semantic versioning (e.g., `v1.0.0`)
-- All 7 required CI status checks must pass:
-  - Lint & Format (Biome code quality checks)
-  - Test (full test suite with 18 tests)
-  - Build (TypeScript compilation)
-  - Integration Test (CLI functionality validation)
-  - Security Audit (comprehensive security scanning)
-- Integration tests (CLI help/version commands) must pass
-- NPM publishing only proceeds if all prerequisites are met
+### Manual Binary Compilation
 
-## Security Features
-
-### NPM Provenance
-
-The package is published with NPM provenance enabled, which:
-- Links the published package to its source code
-- Provides cryptographic proof of the build process
-- Enables verification of package authenticity
-
-### Package Integrity
-
-Each release includes:
-- SHA256 checksums for all release artifacts
-- GitHub Releases with signed commits
-- Build artifact verification
-
-### Verification
-
-Users can verify package authenticity:
+For local testing or custom builds:
 
 ```bash
-# Verify NPM provenance
-npm audit signatures
+# Compile for current platform
+deno task compile
 
-# Verify checksums (for GitHub releases)
-sha256sum -c mikrus-1.0.0.tar.gz.sha256
+# Compile for specific platform
+deno compile --allow-read --allow-write --allow-net \
+  --target=x86_64-pc-windows-msvc \
+  --output=./mikrus-windows.exe \
+  src/cli.ts
+
+# Compile for all platforms  
+deno task compile:all
 ```
 
-## Requirements
+## Future JSR Publishing Setup
 
-- Node.js 20+
-- Repository must have `id-token: write` permissions for provenance
-- Clean Git history (no uncommitted changes)
+When ready for JSR publishing, follow these steps:
 
-## Troubleshooting
+### 1. JSR Configuration
 
-### Publishing Fails
+Ensure `jsr.json` is properly configured:
 
-1. Ensure the package version is incremented
-2. Verify repository permissions
-3. Check a build process completed successfully
+```json
+{
+  "name": "@gander/mikrus",
+  "version": "0.0.1",
+  "description": "Command-line interface tool for managing VPS servers on mikr.us platform",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/cli.ts"
+  },
+  "exclude": [
+    "tests/",
+    "build/",
+    "coverage/",
+    ".github/"
+  ]
+}
+```
 
-### Provenance Issues
+### 2. JSR Authentication
 
-- Ensure `id-token: write` permission is set
-- Verify GitHub Actions environment
-- Check NPM registry supports provenance
+Set up JSR publishing credentials:
 
-### Version Conflicts
+```bash
+# Generate JSR token (when available)
+deno publish --token=<JSR_TOKEN>
+```
 
-- Use `npm view mikrus versions --json` to check existing versions
-- Ensure the version follows semantic versioning
-- Update package.json version before tagging
+### 3. Publication Command
+
+Publish to JSR registry:
+
+```bash
+# Validate package
+deno publish --dry-run
+
+# Publish to JSR
+deno publish
+```
+
+## Version Management
+
+### Semantic Versioning
+
+mikrus follows semantic versioning (SemVer):
+
+- **MAJOR** (1.0.0): Breaking changes to CLI interface
+- **MINOR** (0.1.0): New commands or significant features
+- **PATCH** (0.0.1): Bug fixes and minor improvements
+
+### Version Update Process
+
+1. **Update Version**: Update version in `jsr.json` and `deno.json`
+2. **Create Tag**: Create git tag matching the version
+3. **Automated Release**: CI/CD handles the rest
+
+## Security and Provenance
+
+### Binary Security
+
+- **Compilation**: Reproducible builds through GitHub Actions
+- **Signing**: Future implementation of binary signing
+- **Checksum**: SHA256 checksums provided with releases
+
+### JSR Security (Future)
+
+- **Provenance**: JSR provides automatic provenance for published packages
+- **Integrity**: Content verification through JSR registry
+- **Supply Chain**: JSR tracks dependency chains
+
+## Installation Methods
+
+### Binary Installation (Current)
+
+```bash
+# Download and install binary (Linux)
+curl -LO https://github.com/gander-tools/mikrus/releases/latest/download/mikrus-linux
+chmod +x mikrus-linux
+sudo mv mikrus-linux /usr/local/bin/mikrus
+
+# Verify installation
+mikrus --version
+```
+
+### Deno Installation (Current)
+
+```bash
+# Run directly from source
+deno run --allow-read --allow-write --allow-net \
+  https://raw.githubusercontent.com/gander-tools/mikrus/main/src/cli.ts
+
+# Clone and run locally
+git clone https://github.com/gander-tools/mikrus.git
+cd mikrus
+deno task dev
+```
+
+### JSR Installation (Future)
+
+```bash
+# Install from JSR (when available)
+deno install --allow-read --allow-write --allow-net \
+  --name mikrus jsr:@gander/mikrus
+
+# Import in code (when available)
+import { mikrusCommand } from "jsr:@gander/mikrus";
+```
+
+## Migration Notes
+
+### From npm to JSR
+
+Key differences from npm publishing:
+
+- **No build step**: Deno runs TypeScript natively
+- **No dependencies**: URL-based imports, no package.json dependencies
+- **Permissions**: Explicit permission system
+- **Registry**: JSR instead of npm for better Deno integration
+
+### Legacy npm Support
+
+npm package is **deprecated** in favor of:
+1. Pre-compiled binaries (primary distribution)
+2. JSR package (future developer distribution)
+3. Direct Deno execution (development)
 
 ---
 
-**Last Updated**: 2025-08-25  
-**Repository**: https://github.com/gander-tools/mikrus
+**Migration Status**: ✅ Binary distribution ready | 🚧 JSR publishing in development
+**Current Recommendation**: Use pre-compiled binaries for production, Deno source for development

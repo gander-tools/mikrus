@@ -1,19 +1,21 @@
-name: "🏁 Production Release & Publishing"
+name: "🏁 Production Release & Publishing (Deno)"
 
-# Production release workflow with GitHub Release and NPM publishing
+# Production release workflow with GitHub Release and JSR publishing
 # Triggers: Git tags matching v*.*.* (semantic versioning)
-# Purpose: CI verification → Build → GitHub Release → NPM publish with provenance
+# Purpose: CI verification → Build Binaries → GitHub Release → JSR publish (future)
 
+# TEMPORARILY DISABLED for Deno migration - will be rewritten for JSR publishing
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  # push:
+  #   tags:
+  #     - 'v*.*.*'
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to release (e.g., 1.2.3) - must match existing git tag'
-        required: true
+      deno_migration_status:
+        description: 'This workflow is disabled during Deno migration'
+        required: false
         type: string
+        default: 'disabled'
 
 permissions:
   contents: write

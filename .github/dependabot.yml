@@ -1,37 +1,9 @@
 version: 2
 updates:
-  # Enable version updates for npm
-  - package-ecosystem: "bun"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 10
-    reviewers:
-      - "gander" # Replace it with actual GitHub username
-    assignees:
-      - "gander" # Replace it with actual GitHub username
-    commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
-      include: "scope"
-    labels:
-      - "dependencies"
-    groups:
-      # Group all patch updates together
-      patch-updates:
-        patterns:
-          - "*"
-        update-types:
-          - "patch"
-      # Group dev dependencies minor updates
-      dev-dependencies:
-        patterns:
-          - "*"
-        dependency-type: "development"
-        update-types:
-          - "minor"
+  # DISABLED: Deno uses URL-based imports, no package.json dependencies
+  # - package-ecosystem: "bun" 
+  # Deno dependencies are managed via URL imports in deno.json
+  # No automatic updates needed - manual review preferred for security
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
