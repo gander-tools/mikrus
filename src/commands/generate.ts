@@ -1,102 +1,107 @@
-import type { GluegunToolbox } from 'gluegun'
+import { Command } from "@cliffy/command";
+import { ensureDir } from "@std/fs";
+import { dirname } from "@std/path";
+import { utils, validateAndSanitizeInput } from "../utils.ts";
+
+// Embedded template content for compiled binary compatibility
+const MODEL_TEMPLATE = `export interface <%= name %>Model {
+  id: number;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export class <%= name %>Service {
+  private models: <%= name %>Model[] = [];
+
+  create(name: string): <%= name %>Model {
+    const model: <%= name %>Model = {
+      id: Date.now(),
+      name,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    this.models.push(model);
+    return model;
+  }
+
+  findAll(): <%= name %>Model[] {
+    return this.models;
+  }
+
+  findById(id: number): <%= name %>Model | undefined {
+    return this.models.find(model => model.id === id);
+  }
+}
+`;
 
 /**
- * Validates and sanitizes user input to prevent security vulnerabilities
+ * Template generation function using embedded templates for binary compatibility
  */
-function validateAndSanitizeInput(input: string | undefined): string {
-  // Check if input is provided
-  if (!input || typeof input !== 'string') {
-    throw new Error('Name parameter is required and must be a string')
-  }
+async function generateFromTemplate(props: {
+  template: string;
+  target: string;
+  name: string;
+}): Promise<void> {
+  try {
+    // Get template content - use embedded template for compiled binary compatibility
+    let templateContent: string;
 
-  // Trim whitespace
-  const trimmed = input.trim()
+    if (props.template === "model.ts.ejs") {
+      templateContent = MODEL_TEMPLATE;
+    } else {
+      throw new Error(`Unknown template: ${props.template}`);
+    }
 
-  // Check for empty input after trimming
-  if (trimmed.length === 0) {
-    throw new Error('Name parameter cannot be empty')
-  }
+    // Simple template replacement (similar to EJS but basic)
+    // Replace <%= name %> with actual name value
+    const generatedContent = templateContent.replace(
+      /<%=\s*name\s*%>/g,
+      props.name,
+    );
 
-  // Path traversal protection - prevent directory traversal attacks
-  if (
-    trimmed.includes('../') ||
-    trimmed.includes('..\\') ||
-    trimmed.includes('..')
-  ) {
+    // Ensure target directory exists
+    await ensureDir(dirname(props.target));
+
+    // Write generated file
+    await Deno.writeTextFile(props.target, generatedContent);
+  } catch (error) {
     throw new Error(
-      'Path traversal detected. Name parameter cannot contain ".." sequences'
-    )
+      `Template generation failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
   }
-
-  // Absolute path protection
-  if (
-    trimmed.startsWith('/') ||
-    trimmed.startsWith('\\') ||
-    /^[a-zA-Z]:/.test(trimmed)
-  ) {
-    throw new Error(
-      'Absolute paths are not allowed. Name parameter must be a relative filename'
-    )
-  }
-
-  // Command injection protection - remove dangerous shell metacharacters
-  const dangerousChars = /[;|&$`<>'"\\]/
-  if (dangerousChars.test(trimmed)) {
-    throw new Error(
-      'Invalid characters detected. Name parameter cannot contain: ; | & $ ` < > \' " \\'
-    )
-  }
-
-  // File system reserved characters protection
-  const reservedChars = /[<>:"/|?*]/
-  if (reservedChars.test(trimmed)) {
-    throw new Error('Name parameter contains reserved file system characters')
-  }
-
-  // Length validation
-  if (trimmed.length > 100) {
-    throw new Error(
-      'Name parameter is too long. Maximum length is 100 characters'
-    )
-  }
-
-  // Valid filename pattern - alphanumeric, hyphens, underscores only
-  const validPattern = /^[a-zA-Z0-9_-]+$/
-  if (!validPattern.test(trimmed)) {
-    throw new Error(
-      'Name parameter must contain only letters, numbers, hyphens, and underscores'
-    )
-  }
-
-  return trimmed
 }
 
-module.exports = {
-  name: 'generate',
-  alias: ['g'],
-  run: async (toolbox: GluegunToolbox) => {
-    const {
-      parameters,
-      template: { generate },
-      print: { info, error },
-    } = toolbox
-
+/**
+ * Generate command for Cliffy
+ */
+export const generateCommand = new Command()
+  .description("Generate a new model file from template")
+  .arguments("<name:string>")
+  .alias("g")
+  .example("Generate a user model", "mikrus generate user")
+  .example("Generate with alias", "mikrus g user")
+  .action(async (_options, name: string) => {
     try {
       // Validate and sanitize the input
-      const name = validateAndSanitizeInput(parameters.first)
+      const validName = validateAndSanitizeInput(name);
 
-      await generate({
-        template: 'model.ts.ejs',
-        target: `models/${name}-model.ts`,
-        props: { name },
-      })
+      // Generate the file using template
+      await generateFromTemplate({
+        template: "model.ts.ejs",
+        target: `models/${validName}-model.ts`,
+        name: validName,
+      });
 
-      info(`Generated file at models/${name}-model.ts`)
+      utils.success(`Generated file at models/${validName}-model.ts`);
     } catch (err) {
-      error(
-        `Security validation failed: ${err instanceof Error ? err.message : String(err)}`
-      )
-      process.exit(1)
+      utils.error(
+        `Security validation failed: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
     }
-  },
-}
+  });

@@ -1,23 +1,21 @@
-# mikrus CLI
+# mikrus CLI (Deno + Cliffy)
 
-[![CI/CD Pipeline](https://github.com/gander-tools/mikrus/actions/workflows/ci.yml/badge.svg)](https://github.com/gander-tools/mikrus/actions/workflows/ci.yml)
-[![Security Audit](https://github.com/gander-tools/mikrus/actions/workflows/comprehensive-security-audit.yml/badge.svg)](https://github.com/gander-tools/mikrus/actions/workflows/comprehensive-security-audit.yml)
-[![NPM Version](https://img.shields.io/npm/v/mikrus.svg)](https://www.npmjs.com/package/mikrus)
-[![NPM Downloads](https://img.shields.io/npm/dm/mikrus.svg)](https://www.npmjs.com/package/mikrus)
-[![License](https://img.shields.io/npm/l/mikrus.svg)](https://github.com/gander-tools/mikrus/blob/main/LICENSE)
+[![Deno CI](https://github.com/gander-tools/mikrus/actions/workflows/deno-ci.yml/badge.svg)](https://github.com/gander-tools/mikrus/actions/workflows/deno-ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/gander-tools/mikrus/blob/main/LICENSE)
+[![Deno](https://img.shields.io/badge/deno-%5E2.0.0-green.svg)](https://deno.land/)
+[![Cliffy](https://img.shields.io/badge/cliffy-v1.0.0--rc.4-orange.svg)](https://github.com/c4spar/deno-cliffy)
 
-Command-line interface tool for managing VPS servers on the **mikr.us** platform. Inspired by [mikrus-cli](https://github.com/unkn0w/noobs/blob/main/mikrus-cli/mikrus).
+Command-line interface tool for managing VPS servers on the **mikr.us** platform. Built with modern Deno runtime and Cliffy CLI framework. Inspired by [mikrus-cli](https://github.com/unkn0w/noobs/blob/main/mikrus-cli/mikrus).
 
 ## Installation
 
-### Quick Start (User Installation)
+### Quick Start (Binary Download)
 
 ```shell
-# Install globally using npm
-npm install -g mikrus
-
-# Or using bun
-bun install -g mikrus
+# Download pre-compiled binary for your platform
+curl -LO https://github.com/gander-tools/mikrus/releases/latest/download/mikrus-linux
+chmod +x mikrus-linux
+sudo mv mikrus-linux /usr/local/bin/mikrus
 
 # Verify installation
 mikrus --version
@@ -31,21 +29,19 @@ mikrus --help
 git clone https://github.com/gander-tools/mikrus.git
 cd mikrus
 
-# Install dependencies
-bun install --frozen-lockfile
+# Run directly with Deno
+deno task dev --help
 
-# Build the project
-bun run build
-
-# Test the CLI locally
-./bin/mikrus --help
+# Or compile your own binary
+deno task compile
+./build/mikrus --help
 ```
 
 ### Prerequisites
 
-- **Node.js**: 20.0.0 or higher (LTS recommended)
-- **Package Manager**: Bun (recommended) or npm
+- **Deno**: 2.0.0 or higher ([Install Deno](https://deno.land/manual/getting_started/installation))
 - **Operating System**: Linux, macOS, or Windows
+- **Permissions**: `--allow-read`, `--allow-write`, `--allow-net` for full functionality
 
 ### Verification
 
@@ -65,48 +61,53 @@ mikrus generate --help
 ## Development
 
 ### Building and Running
-- `bun run build` - Clean build, compile TypeScript, and copy templates
-- `bun run compile` - Compile TypeScript only
-- `bun run clean-build` - Clean the build directory
+- `deno task dev` - Run CLI directly with Deno
+- `deno task compile` - Compile single binary executable
+- `deno task compile:all` - Compile for all platforms (Linux, Windows, macOS)
 
 ### Code Quality
-- `bun run check` - Run Biome linter and formatter checks
-- `bun run check:fix` - Run Biome checks and auto-fix issues
-- `bun run lint` - Run Biome linter only
-- `bun run format` - Format code with Biome
+- `deno task lint` - Run Deno linter
+- `deno task fmt` - Format code with Deno formatter
+- `deno task fmt:check` - Check code formatting
+- `deno task check` - Type check TypeScript files
 
 ### Testing
-- `bun run test` - Run all tests once
-- `bun run test:watch` - Run tests in watch mode
-- `bun run test:ui` - Run tests with Vitest UI
-- `bun run test:coverage` - Run tests with a coverage report
+- `deno task test` - Run all tests
+- `deno task test:coverage` - Run tests with coverage report
+- `deno task coverage:html` - Generate HTML coverage report
+
+### Binary Compilation
+```shell
+# Single platform
+deno task compile
+
+# All platforms
+deno task compile:all
+
+# Custom target
+deno compile --allow-read --allow-write --allow-net \
+  --target=x86_64-pc-windows-msvc \
+  --output=./mikrus-windows.exe \
+  src/cli.ts
+```
 
 ## CI/CD Architecture
 
-This project uses a **minimal 4-workflow architecture** optimized for efficiency and reliability:
+This project uses **Deno-native CI/CD pipeline** optimized for modern JavaScript runtime:
 
-### Core Workflows
-1. **[CI Pipeline](./.github/workflows/ci.yml)** - Main validation workflow
-   - Triggers: Push/PR to main/develop branches
-   - Includes: Lint, test, build, security scan, integration tests
-   
-2. **[Security Audit](./.github/workflows/comprehensive-security-audit.yml)** - Comprehensive security analysis
-   - Triggers: Daily schedule (2:00 UTC) + called by CI Pipeline
-   - Includes: Dependency scan, license compliance, secrets detection, supply chain security, Snyk vulnerability scanning
-
-3. **[Release](./.github/workflows/release.yml)** - Automated release and publishing
-   - Triggers: Git tags matching `v*.*.*`
-   - Includes: GitHub Release creation, NPM publishing with provenance
-
-4. **[Dependabot Auto-merge](./.github/workflows/dependabot-auto-merge.yml)** - Dependency automation
-   - Triggers: Dependabot PRs
-   - Includes: Automatic merging of minor/patch updates after CI success
+### Core Workflow
+- **[Deno CI](./.github/workflows/deno-ci.yml)** - Complete Deno testing and deployment pipeline
+  - Multi-platform testing (Ubuntu, Windows, macOS)
+  - Security auditing and dependency scanning
+  - Cross-platform binary compilation
+  - Integration testing with compiled binaries
 
 ### Workflow Features
-- **GitHub Native Integration**: Uses GitHub's native branch auto-deletion instead of custom workflows
-- **Resource Optimization**: Minimal workflow count reduces GitHub Actions minutes consumption
-- **Security-First**: All releases require successful CI and security validation
-- **Provenance**: NPM packages published with cryptographic provenance for supply chain security
+- **Native Deno Support**: No Node.js or build steps required
+- **Permission-based Security**: Explicit permission management
+- **Cross-platform Binaries**: Linux, Windows, macOS compilation
+- **Zero Dependencies**: URL-based imports, no node_modules
+- **Fast CI**: Native TypeScript execution without compilation step
 
 ## Usage Examples
 
@@ -117,7 +118,7 @@ This project uses a **minimal 4-workflow architecture** optimized for efficiency
 mikrus --help
 
 # Generate a new component/model/service
-mikrus generate <type> <name>
+mikrus generate <name>
 
 # Check CLI version
 mikrus --version
@@ -126,12 +127,31 @@ mikrus --version
 ### Advanced Usage
 
 ```shell
-# Generate with specific options
-mikrus generate model User --with-validation
+# Generate with alias
+mikrus g <name>
 
 # View command-specific help
 mikrus generate --help
+
+# Run with explicit permissions
+deno run --allow-read --allow-write src/cli.ts generate example
 ```
+
+## Architecture Overview
+
+### Deno + Cliffy Stack
+- **Runtime**: Deno 2.0+ (native TypeScript, secure by default)
+- **CLI Framework**: Cliffy 1.0.0-rc.4 (modern, typed CLI commands)
+- **Dependencies**: URL-based imports (no package.json dependencies)
+- **Testing**: Deno native testing (no external frameworks)
+- **Security**: Permission-based access control
+
+### Key Features
+- **Zero Configuration**: No build step, no transpilation needed
+- **Type Safety**: Native TypeScript support with strict type checking
+- **Security First**: Explicit permissions for file system and network access
+- **Single Binary**: Compile to standalone executable (~500MB)
+- **Cross Platform**: Native support for Linux, macOS, Windows
 
 ## Troubleshooting
 
@@ -139,30 +159,29 @@ mikrus generate --help
 
 **Issue**: `mikrus: command not found`
 ```shell
-# Solution: Ensure global installation
-npm install -g mikrus
-# Or add local bin to PATH
-export PATH="$PATH:./node_modules/.bin"
+# Solution: Ensure binary is in PATH or use full path
+export PATH="$PATH:/usr/local/bin"
+# Or use full path
+/usr/local/bin/mikrus --help
 ```
 
-**Issue**: Permission errors on Unix systems
+**Issue**: Permission errors
 ```shell
-# Solution: Fix binary permissions
-chmod +x ./bin/mikrus
+# Solution: Run with explicit permissions
+deno run --allow-read --allow-write --allow-net src/cli.ts
 ```
 
-**Issue**: Node.js version compatibility
+**Issue**: Deno version compatibility
 ```shell
-# Check your Node.js version
-node --version
-# Upgrade to Node.js 20+ if needed
-nvm install 20 && nvm use 20
+# Check your Deno version
+deno --version
+# Upgrade to Deno 2+ if needed
+curl -fsSL https://deno.land/x/install/install.sh | sh
 ```
 
 ### Getting Help
 
-- 📚 **Documentation**: See [docs/commands.md](./docs/commands.md) for detailed command reference
-- 🔌 **Plugin System**: Learn about plugins in [docs/plugins.md](./docs/plugins.md)
+- 📚 **Documentation**: See [DENO-WORKFLOW.md](./DENO-WORKFLOW.md) for detailed Deno workflow
 - 🔒 **Security**: Review security guidelines in [docs/security.md](./docs/security.md)
 - 🐛 **Issues**: Report bugs at [GitHub Issues](https://github.com/gander-tools/mikrus/issues)
 - 💬 **Discussions**: Join conversations in [GitHub Discussions](https://github.com/gander-tools/mikrus/discussions)
@@ -170,8 +189,8 @@ nvm install 20 && nvm use 20
 ## 📚 Project Documentation
 
 ### Core Documentation
+- 🦕 **[Deno Workflow](./DENO-WORKFLOW.md)** - Deno development and CI/CD guide
 - 📋 **[Commands Reference](./docs/commands.md)** - Complete CLI command documentation
-- 🔌 **[Plugin System](./docs/plugins.md)** - Plugin development and usage guide
 - 🔒 **[Security Guidelines](./docs/security.md)** - Security best practices and compliance
 
 ### Project Policies
@@ -180,12 +199,29 @@ nvm install 20 && nvm use 20
 - ⚖️ **[License](./LICENSE)** - MIT License terms and conditions
 
 ### Repository Health
-- 🛡️ **Security Status**: 0 open vulnerabilities, daily automated scans
-- 🧪 **Test Coverage**: 78.23% with 31 comprehensive tests
-- 🔄 **CI/CD Pipeline**: 6 required status checks, automated quality gates
+- 🛡️ **Security Status**: Permission-based security model, daily automated scans
+- 🧪 **Test Coverage**: 100% with 30 comprehensive security tests
+- 🔄 **CI/CD Pipeline**: Deno-native testing and cross-platform compilation
+
+## Deno Migration Benefits
+
+### Before (Node.js + Gluegun)
+- Node.js 20+ required
+- npm/bun package manager dependency
+- TypeScript compilation step required
+- Large node_modules directory
+- Vitest testing framework dependency
+
+### After (Deno + Cliffy)
+- ✅ **Native TypeScript**: No compilation step needed
+- ✅ **Zero Dependencies**: URL-based imports, no node_modules
+- ✅ **Security First**: Permission-based access control
+- ✅ **Single Binary**: Standalone executable distribution
+- ✅ **Modern Runtime**: Latest JavaScript features out of the box
 
 ---
 
-**Last Updated**: 2025-08-25  
-**License**: [MIT](./LICENSE)
-
+**Last Updated**: 2025-08-26  
+**License**: [MIT](./LICENSE)  
+**Runtime**: Deno 2.0+  
+**Framework**: Cliffy 1.0.0-rc.4

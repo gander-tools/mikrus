@@ -1,4 +1,4 @@
-name: "🔍 Automated Code Review (Claude)"
+name: "🦕 Deno Automated Code Review (Claude)"
 
 # Automated pull request reviews using Claude AI
 # Triggers: ONLY PR opened/synchronized (automatic, no @claude needed)
@@ -15,8 +15,8 @@ on:
     #   - "src/**/*.jsx"
 
 jobs:
-  automated-pr-review:
-    name: "🔍 Claude AI: Automated Pull Request Review"
+  deno-automated-pr-review:
+    name: "🦕 Deno Claude AI: Automated Pull Request Review"
     # Comprehensive automated review for code quality, security, and best practices
     # Optional: Filter by PR author
     # if: |
@@ -56,24 +56,26 @@ jobs:
 
           # MAXIMUM EFFECTIVENESS: Production-Grade Automated Review
           direct_prompt: |
-            🔍 COMPREHENSIVE PRODUCTION-GRADE CODE REVIEW
-            You are a senior TypeScript/CLI security expert. Perform RIGOROUS analysis.
+            🔍 COMPREHENSIVE PRODUCTION-GRADE CODE REVIEW (DENO + CLIFFY)
+            You are a senior TypeScript/Deno/CLI security expert. Perform RIGOROUS analysis.
             
             🚨 CRITICAL SECURITY AUDIT (FAIL ON ANY VIOLATION):
-            ❌ Command injection vulnerabilities (process.exec, child_process)
+            ❌ Command injection vulnerabilities (Deno.run, Deno.Command)
             ❌ Path traversal attacks (../../, resolve() without validation)
             ❌ Unsafe user input processing (eval, Function constructor)
             ❌ Hardcoded secrets/credentials/API keys
-            ❌ Insecure file permissions (777, world-writable)
-            ❌ SQL injection patterns (if database operations)
-            ❌ Prototype pollution vulnerabilities
+            ❌ Insecure file permissions (--allow-all, overly broad permissions)
+            ❌ Network vulnerabilities (unvalidated fetch, insecure URLs)
+            ❌ Import vulnerabilities (untrusted HTTP imports)
             
-            🔒 CLI SECURITY CHECKLIST:
+            🔒 DENO CLI SECURITY CHECKLIST:
             ✅ Input sanitization on ALL user arguments
             ✅ File path validation (stay within project bounds)
+            ✅ Proper permission usage (--allow-read, --allow-write, --allow-net)
+            ✅ Secure HTTP imports (HTTPS only, known trusted sources)
             ✅ Error messages don't leak sensitive info
             ✅ Proper exit codes (0 success, 1+ errors)
-            ✅ Resource cleanup (streams, processes, temp files)
+            ✅ Resource cleanup (streams, file handles)
             
             📋 CODE QUALITY ENFORCEMENT (ZERO TOLERANCE):
             ❌ TypeScript `any` usage (must use proper types)
@@ -81,15 +83,15 @@ jobs:
             ❌ Unused imports/variables/functions
             ❌ Console.log in production code
             ❌ Hardcoded values (use constants/config)
-            ❌ Biome rule violations
+            ❌ Deno lint rule violations
             ❌ Missing JSDoc for public APIs
             
-            🧪 TESTING REQUIREMENTS (MANDATORY):
-            ✅ Unit tests for ALL new functions
+            🧪 TESTING REQUIREMENTS (MANDATORY - Deno Native):
+            ✅ Unit tests for ALL new functions using Deno.test
             ✅ Integration tests for CLI commands
             ✅ Edge case testing (empty inputs, invalid paths)
             ✅ Error scenario testing
-            ✅ Mock external dependencies
+            ✅ Mock external dependencies (fetch, file operations)
             ✅ Test coverage >80% for new code
             
             ⚡ PERFORMANCE OPTIMIZATION:
@@ -99,18 +101,19 @@ jobs:
             ❌ Large bundle size increases
             ❌ Blocking operations on main thread
             
-            🏗️ ARCHITECTURE COMPLIANCE:
-            ✅ Follow Gluegun CLI conventions
+            🏗️ ARCHITECTURE COMPLIANCE (Deno + Cliffy):
+            ✅ Follow Cliffy CLI command patterns
             ✅ Proper command structure in src/commands/
-            ✅ Consistent toolbox usage
-            ✅ Template usage for code generation
-            ✅ Extension patterns for new features
+            ✅ Consistent Cliffy Command usage
+            ✅ Template usage for code generation (native Deno APIs)
+            ✅ Proper deno.json configuration
+            ✅ JSR-compatible imports
             
-            📦 DEPENDENCY SECURITY:
-            ❌ Known vulnerable package versions
-            ❌ Unnecessary dependency additions
-            ❌ Dev dependencies in production
-            ❌ Packages without version pinning
+            📦 DEPENDENCY SECURITY (Deno):
+            ❌ Insecure HTTP imports (use HTTPS only)
+            ❌ Untrusted dependency sources  
+            ❌ Missing version pinning in imports
+            ❌ Overly broad permissions requested
             
             🎯 REVIEW OUTPUT FORMAT:
             Use this EXACT structure:
@@ -153,8 +156,8 @@ jobs:
           #   'Welcome! Please review this PR from a first-time contributor. Be encouraging and provide detailed explanations for any suggestions.' ||
           #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
           
-          # Security: Restrict to read-only analysis and safe validation commands
-          allowed_tools: "Bash(bun run test),Bash(bun run check),Bash(bun run lint)"
+          # Security: Restrict to read-only analysis and safe validation commands (Deno)
+          allowed_tools: "Bash(deno task test),Bash(deno task check),Bash(deno task lint)"
           
           # Optional: Skip review for certain conditions
           # if: |

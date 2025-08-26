@@ -2,6 +2,9 @@ rc: ~/.lefthookrc
 
 pre-commit:
   commands:
-    biome:
+    deno-lint:
       glob: "*.{js,ts,json,jsx,tsx}"
-      run: bun run check {staged_files}
+      run: deno lint {staged_files}
+    deno-fmt:
+      glob: "*.{js,ts,json,jsx,tsx,md}"
+      run: deno fmt --check {staged_files}
