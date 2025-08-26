@@ -28,6 +28,8 @@
     "cross-spawn": "^7.0.5",
     "ejs": "^3.1.10",
     "lodash": "^4.17.21",
+    "lodash.trim": "4.5.1",
+    "lodash.trimend": "4.5.1",
     "semver": "^7.6.3",
   },
   "packages": {
