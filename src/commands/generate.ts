@@ -1,10 +1,43 @@
 import { Command } from "@cliffy/command";
 import { ensureDir } from "@std/fs";
-import { dirname, join } from "@std/path";
+import { dirname, fromFileUrl, join } from "@std/path";
 import { utils, validateAndSanitizeInput } from "../utils.ts";
 
+// Embedded template content for compiled binary compatibility
+const MODEL_TEMPLATE = `export interface <%= name %>Model {
+  id: number;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export class <%= name %>Service {
+  private models: <%= name %>Model[] = [];
+
+  create(name: string): <%= name %>Model {
+    const model: <%= name %>Model = {
+      id: Date.now(),
+      name,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    this.models.push(model);
+    return model;
+  }
+
+  findAll(): <%= name %>Model[] {
+    return this.models;
+  }
+
+  findById(id: number): <%= name %>Model | undefined {
+    return this.models.find(model => model.id === id);
+  }
+}
+`;
+
 /**
- * Template generation function using Deno APIs
+ * Template generation function using embedded templates for binary compatibility
  */
 async function generateFromTemplate(props: {
   template: string;
@@ -12,9 +45,14 @@ async function generateFromTemplate(props: {
   name: string;
 }): Promise<void> {
   try {
-    // Read template file
-    const templatePath = join("src", "templates", props.template);
-    const templateContent = await Deno.readTextFile(templatePath);
+    // Get template content - use embedded template for compiled binary compatibility
+    let templateContent: string;
+    
+    if (props.template === "model.ts.ejs") {
+      templateContent = MODEL_TEMPLATE;
+    } else {
+      throw new Error(`Unknown template: ${props.template}`);
+    }
 
     // Simple template replacement (similar to EJS but basic)
     // Replace <%= name %> with actual name value
