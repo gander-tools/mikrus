@@ -47,7 +47,7 @@ async function generateFromTemplate(props: {
   try {
     // Get template content - use embedded template for compiled binary compatibility
     let templateContent: string;
-    
+
     if (props.template === "model.ts.ejs") {
       templateContent = MODEL_TEMPLATE;
     } else {
