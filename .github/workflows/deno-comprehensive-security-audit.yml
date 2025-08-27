@@ -7,9 +7,15 @@ name: "🔒 Deno Comprehensive Security Audit"
 on:
   schedule:
     # Run daily at 2 AM UTC
-    - cron: '0 2 * * *'
+    - cron: "0 2 * * *"
   push:
-    branches: [main-deno, feature/deno-cliffy-experiment, feature/*, fix/*, hotfix/*]
+    branches: [
+      main-deno,
+      feature/deno-cliffy-experiment,
+      feature/*,
+      fix/*,
+      hotfix/*,
+    ]
   pull_request:
     branches: [main-deno]
   workflow_call:
@@ -36,9 +42,10 @@ jobs:
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis and security scanning
-        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
+        uses: denoland/setup-deno@v2.0.3
         with:
-          deno-version: v2.x
+          deno-version: v2.4
+          cache-hash: ${{ hashFiles('**/deno.json') }}
 
       - name: "📦 Dependencies: Cache Deno Modules"
         # Cache Deno dependencies for faster security analysis
@@ -48,18 +55,18 @@ jobs:
         # Runs Deno security audit for JSR and remote dependencies
         run: |
           echo "🔍 Running Deno dependency security audit..."
-          
+
           # Check for known vulnerabilities in Deno dependencies
           echo "Checking JSR dependencies for vulnerabilities..."
           deno info src/cli.ts --json > deps_info.json
-          
+
           # List all remote dependencies
           echo "📋 Remote dependencies:"
           deno info src/cli.ts | grep -E "(https://|jsr:|npm:)" | sort | uniq
-          
+
           # Check for suspicious or deprecated dependencies
           echo "🔍 Checking for security issues..."
-          
+
           # Check if any dependencies use insecure HTTP (should be HTTPS)
           insecure_deps=$(deno info src/cli.ts | grep -E "http://[^s]" || echo "")
           if [ ! -z "$insecure_deps" ]; then
@@ -67,9 +74,9 @@ jobs:
             echo "$insecure_deps"
             exit 1
           fi
-          
+
           echo "✅ No insecure HTTP dependencies found"
-          
+
           # Validate JSR dependencies integrity
           echo "🔒 Validating JSR dependency integrity..."
           if deno cache --reload src/cli.ts; then
@@ -78,7 +85,7 @@ jobs:
             echo "❌ Dependency caching failed - possible integrity issues"
             exit 1
           fi
-          
+
           echo "✅ Deno dependency security audit completed successfully"
 
       - name: "🔍 Security: Deno Package Validation"
@@ -108,9 +115,10 @@ jobs:
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis
-        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
+        uses: denoland/setup-deno@v2.0.3
         with:
-          deno-version: v2.x
+          deno-version: v2.4
+          cache-hash: ${{ hashFiles('**/deno.json') }}
 
       - name: "📦 Dependencies: Cache Deno Modules"
         # Cache Deno dependencies for analysis
@@ -122,7 +130,7 @@ jobs:
           echo "📜 Reviewing Deno dependency licenses..."
           echo "📋 Dependency sources:"
           deno info src/cli.ts | grep -E "(https://|jsr:|npm:)" | sort | uniq
-          
+
           echo "✅ JSR registry provides automatic license compliance"
           echo "✅ Cliffy framework uses MIT license (compatible)"
           echo "✅ No problematic licenses detected in Deno ecosystem"
@@ -143,43 +151,43 @@ jobs:
         # Searches source code for hardcoded passwords, API keys, and credentials
         run: |
           echo "🔍 Scanning for hardcoded secrets..."
-          
+
           # Check for common secret patterns (safer approach)
           secret_matches=$(grep -r -i --exclude-dir=node_modules --exclude-dir=.git \
             -E "(password|passwd|pwd|secret|token|key|api_key|apikey|access_key|private_key)" \
             . 2>/dev/null | grep -v -E "(\.md:|\.yml:|test|example|placeholder|EXAMPLE|TODO)" | head -10 || true)
-          
+
           if [ -n "$secret_matches" ]; then
             echo "⚠️ Potential secrets found - please review above matches"
             echo "$secret_matches"
           else
             echo "✅ No obvious secrets detected in source code"
           fi
-          
+
           # Check for AWS keys, API keys, etc. (safer approach)
           aws_keys=$(grep -r -i --exclude-dir=node_modules --exclude-dir=.git \
             -E "(AKIA[0-9A-Z]{16}|sk_live_[0-9a-zA-Z]{24}|sk_test_[0-9a-zA-Z]{24})" . 2>/dev/null || true)
-          
+
           if [ -n "$aws_keys" ]; then
             echo "❌ AWS or Stripe keys detected!"
             echo "$aws_keys"
             exit 1
           fi
-          
+
           echo "✅ No AWS/Stripe keys detected"
 
       - name: "🔐 VPS CLI Security: Credential Safety Check"
         # VPS management CLI specific security validation
         run: |
           echo "🔍 Checking VPS CLI security practices..."
-          
+
           # Check for hardcoded VPS endpoints
           if grep -r "mikr\.us" src/ --exclude="*.test.*" --exclude="*.md" --exclude-dir=node_modules 2>/dev/null; then
             echo "⚠️ Hardcoded mikr.us endpoints found - use environment variables"
           else
             echo "✅ No hardcoded VPS endpoints detected"
           fi
-          
+
           # Verify no API tokens in CLI code
           if grep -r -i "token\|key\|password\|secret" src/commands/ --exclude="*.test.*" --exclude="*.md" 2>/dev/null | grep -v -E "(description|help|example|validate)"; then
             echo "❌ Potential credentials found in CLI commands"
@@ -187,7 +195,7 @@ jobs:
           else
             echo "✅ No credentials detected in CLI commands"
           fi
-          
+
           # Check CLI input validation patterns
           if ! grep -r "validate\|sanitiz" src/commands/ 2>/dev/null; then
             echo "⚠️ Limited input validation detected in CLI commands"
@@ -211,12 +219,12 @@ jobs:
         # Verifies package authenticity and checks for suspicious dependencies
         run: |
           echo "🔍 Verifying package integrity..."
-          
+
           # Check for package-lock.json and bun.lock consistency
           if [ -f "package-lock.json" ] && [ -f "bun.lock" ]; then
             echo "⚠️ Both package-lock.json and bun.lock found - choose one"
           fi
-          
+
           # Verify no suspicious packages (safer approach)
           suspicious_packages=("bitcoinjs-lib" "coinhive" "event-stream" "rc" "flatmap-stream")
           for package in "${suspicious_packages[@]}"; do
@@ -224,17 +232,17 @@ jobs:
               echo "⚠️ Suspicious package detected: $package"
             fi
           done
-          
+
           echo "✅ Supply chain integrity checks completed"
 
       - name: "🔍 Security: Typosquatting Detection"
         # Analyzes dependencies for potential typosquatting attacks
         run: |
           echo "🔍 Checking for potential typosquatting packages..."
-          
+
           # List of legitimate packages to check against
           common_packages=("express" "lodash" "react" "axios" "typescript" "webpack")
-          
+
           # This would typically use a more sophisticated typosquatting detection tool
           echo "✅ Basic typosquatting check completed"
 
@@ -251,9 +259,10 @@ jobs:
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for CLI quality checks
-        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
+        uses: denoland/setup-deno@v2.0.3
         with:
-          deno-version: v2.x
+          deno-version: v2.4
+          cache-hash: ${{ hashFiles('**/deno.json') }}
 
       - name: "📦 Dependencies: Cache Deno Modules"
         # Cache Deno dependencies for faster quality checks
@@ -302,9 +311,10 @@ jobs:
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis and security scanning
-        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
+        uses: denoland/setup-deno@v2.0.3
         with:
-          deno-version: v2.x
+          deno-version: v2.4
+          cache-hash: ${{ hashFiles('**/deno.json') }}
 
       - name: "📦 Dependencies: Cache Deno Modules"
         # Cache Deno dependencies for faster security analysis
@@ -314,18 +324,18 @@ jobs:
         # Comprehensive vulnerability scanning for Deno dependencies
         run: |
           echo "🔍 Running Deno dependency vulnerability scan..."
-          
+
           # Get dependency information
           echo "📋 Analyzing dependency tree..."
           deno info src/cli.ts --json > deps_info.json
-          
+
           # List all remote dependencies with versions
           echo "📦 Remote dependencies:"
           deno info src/cli.ts | grep -E "(https://|jsr:|npm:)" | sort | uniq
-          
+
           # Check for known vulnerable patterns
           echo "🔍 Checking for vulnerability patterns..."
-          
+
           # Check for insecure HTTP dependencies (should be HTTPS)
           insecure_deps=$(deno info src/cli.ts | grep -E "http://[^s]" || echo "")
           if [ ! -z "$insecure_deps" ]; then
@@ -333,7 +343,7 @@ jobs:
             echo "$insecure_deps"
             exit 1
           fi
-          
+
           # Check for deprecated or known vulnerable dependency patterns
           vulnerable_patterns=("event-stream" "flatmap-stream" "getcookies" "rc@1.2.7" "rc@1.2.6")
           for pattern in "${vulnerable_patterns[@]}"; do
@@ -341,7 +351,7 @@ jobs:
               echo "⚠️ WARNING: Potentially vulnerable dependency pattern detected: $pattern"
             fi
           done
-          
+
           # Validate JSR dependencies integrity
           echo "🔒 Validating JSR dependency integrity..."
           if deno cache --reload src/cli.ts tests/generate-security.test.ts; then
@@ -350,31 +360,31 @@ jobs:
             echo "❌ Dependency caching failed - possible integrity issues"
             exit 1
           fi
-          
+
           echo "✅ Deno dependency vulnerability scan completed successfully"
 
       - name: "🔐 Security: Advanced Dependency Analysis"
         # Advanced security analysis for dependency sources and versions
         run: |
           echo "🔍 Advanced dependency security analysis..."
-          
+
           # Check for dependency confusion risks
           echo "🔍 Checking for dependency confusion risks..."
-          
+
           # Analyze JSR vs GitHub raw URL dependencies
           jsr_deps=$(deno info src/cli.ts | grep "jsr:" | wc -l)
           github_deps=$(deno info src/cli.ts | grep "raw.githubusercontent.com" | wc -l)
-          
+
           echo "📊 Dependency sources:"
           echo "  JSR registry: $jsr_deps dependencies"
-          echo "  GitHub raw: $github_deps dependencies" 
-          
+          echo "  GitHub raw: $github_deps dependencies"
+
           # Prefer JSR over raw GitHub URLs for security
           if [ "$github_deps" -gt 0 ]; then
             echo "⚠️ WARNING: GitHub raw URL dependencies detected - prefer JSR registry for better security"
             deno info src/cli.ts | grep "raw.githubusercontent.com"
           fi
-          
+
           # Check for version pinning
           echo "🔍 Checking dependency version pinning..."
           unpinned_deps=$(deno info src/cli.ts | grep -E "(latest|main|master)" || echo "")
@@ -384,7 +394,7 @@ jobs:
           else
             echo "✅ All dependencies appear to be version-pinned"
           fi
-          
+
           echo "✅ Advanced dependency analysis completed"
 
       - name: "📊 Report: Vulnerability Scan Summary"
@@ -394,7 +404,7 @@ jobs:
           echo "📊 Deno Vulnerability Scan Summary"
           echo "=================================="
           echo "✅ Dependency integrity check: PASSED"
-          echo "✅ Insecure HTTP check: PASSED" 
+          echo "✅ Insecure HTTP check: PASSED"
           echo "✅ Known vulnerability patterns: CHECKED"
           echo "✅ JSR registry security: VALIDATED"
           echo "🔒 Deno security audit completed successfully"

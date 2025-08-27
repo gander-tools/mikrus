@@ -1,7 +1,7 @@
 version: 2
 updates:
   # DISABLED: Deno uses URL-based imports, no package.json dependencies
-  # - package-ecosystem: "bun" 
+  # - package-ecosystem: "bun"
   # Deno dependencies are managed via URL imports in deno.json
   # No automatic updates needed - manual review preferred for security
 

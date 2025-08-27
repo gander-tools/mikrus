@@ -14,18 +14,33 @@ import { generateCommand } from "./commands/generate.ts";
  * @returns Promise resolving when CLI execution completes
  */
 async function run(args: string[] = Deno.args): Promise<void> {
-  // Create main CLI command
-  const cli = new Command()
-    .name("mikrus")
-    .version("0.0.1")
-    .description(
-      "Command-line interface tool for managing VPS servers on mikr.us platform",
-    )
-    // Register generate command
-    .command("generate", generateCommand);
+  try {
+    // Create main CLI command
+    const cli = new Command()
+      .name("mikrus")
+      .version("0.0.1")
+      .description(
+        "Command-line interface tool for managing VPS servers on mikr.us platform",
+      )
+      // Add global CLI options
+      .globalOption("--verbose, -v", "Enable verbose output")
+      .globalOption("--config <path>", "Path to configuration file")
+      // Register generate command
+      .command("generate", generateCommand);
 
-  // Execute the CLI with provided arguments
-  await cli.parse(args);
+    // Execute the CLI with provided arguments
+    await cli.parse(args);
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`❌ CLI Error: ${error.message}`);
+      if (args.includes("--verbose") || args.includes("-v")) {
+        console.error("Stack trace:", error.stack);
+      }
+    } else {
+      console.error(`❌ Unexpected error: ${String(error)}`);
+    }
+    Deno.exit(1);
+  }
 }
 
 // Export for programmatic usage and testing

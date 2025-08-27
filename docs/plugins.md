@@ -1,10 +1,12 @@
 # Extension guide for mikrus (Deno + Cliffy)
 
-This document explains how to extend mikrus CLI with additional commands and functionality using the Deno + Cliffy architecture.
+This document explains how to extend mikrus CLI with additional commands and
+functionality using the Deno + Cliffy architecture.
 
 ## Architecture Overview
 
-mikrus uses Cliffy Command structure with native Deno APIs. Unlike the traditional plugin system, extensions are implemented through:
+mikrus uses Cliffy Command structure with native Deno APIs. Unlike the
+traditional plugin system, extensions are implemented through:
 
 1. **Command Extensions** - Adding new CLI commands
 2. **Utility Extensions** - Adding shared functionality to `src/utils.ts`
@@ -12,7 +14,8 @@ mikrus uses Cliffy Command structure with native Deno APIs. Unlike the tradition
 
 ## Adding New Commands
 
-Commands are defined in the `src/commands/` directory. Each command is a separate TypeScript file that exports a Cliffy `Command` object.
+Commands are defined in the `src/commands/` directory. Each command is a
+separate TypeScript file that exports a Cliffy `Command` object.
 
 ### Basic Command Structure
 
@@ -23,10 +26,12 @@ import { Command } from "@cliffy/command";
 export const exampleCommand = new Command()
   .description("Example command description")
   .arguments("[name:string]")
-  .option("-f, --format <format:string>", "Output format", { default: "default" })
+  .option("-f, --format <format:string>", "Output format", {
+    default: "default",
+  })
   .action(async (options, name?: string) => {
     // Command implementation
-    console.log(`Hello ${name || 'World'}!`);
+    console.log(`Hello ${name || "World"}!`);
     console.log(`Format: ${options.format}`);
   });
 ```
@@ -44,7 +49,9 @@ import { exampleCommand } from "./commands/example.ts";
 const cli = new Command()
   .name("mikrus")
   .version("0.0.1")
-  .description("Command-line interface tool for managing VPS servers on mikr.us platform")
+  .description(
+    "Command-line interface tool for managing VPS servers on mikr.us platform",
+  )
   .command("generate", generateCommand)
   .command("example", exampleCommand); // Add your command here
 
@@ -62,7 +69,7 @@ export async function validateApiKey(key: string): Promise<boolean> {
   try {
     const response = await fetch("https://api.mikr.us/validate", {
       method: "POST",
-      headers: { "Authorization": `Bearer ${key}` }
+      headers: { "Authorization": `Bearer ${key}` },
     });
     return response.ok;
   } catch {
@@ -97,7 +104,7 @@ export interface ApiResponse<T = unknown> {
 export interface ServerInfo {
   id: string;
   name: string;
-  status: 'running' | 'stopped' | 'maintenance';
+  status: "running" | "stopped" | "maintenance";
   ip: string;
 }
 ```
@@ -106,10 +113,12 @@ export interface ServerInfo {
 
 When extending mikrus, follow these security best practices:
 
-1. **Input Validation**: Always validate user input using the existing `validateAndSanitizeInput()` function
+1. **Input Validation**: Always validate user input using the existing
+   `validateAndSanitizeInput()` function
 2. **Path Security**: Use `@std/path` for safe path operations
 3. **API Security**: Validate API keys and sanitize API responses
-4. **Permissions**: Request minimal Deno permissions (`--allow-read`, `--allow-write`, `--allow-net`)
+4. **Permissions**: Request minimal Deno permissions (`--allow-read`,
+   `--allow-write`, `--allow-net`)
 
 ## Testing Extensions
 
@@ -146,4 +155,6 @@ If migrating from Gluegun plugins:
 
 ---
 
-**Note**: This architecture is significantly simpler than traditional plugin systems because Deno provides most functionality natively, eliminating the need for complex plugin loading mechanisms.
+**Note**: This architecture is significantly simpler than traditional plugin
+systems because Deno provides most functionality natively, eliminating the need
+for complex plugin loading mechanisms.

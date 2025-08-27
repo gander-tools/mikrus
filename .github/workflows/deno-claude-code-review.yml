@@ -23,14 +23,14 @@ jobs:
     #   github.event.pull_request.user.login == 'external-contributor' ||
     #   github.event.pull_request.user.login == 'new-developer' ||
     #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
-    
+
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write # Minimal write access for comments only
       issues: read
       id-token: write
-    
+
     steps:
       - name: "📥 Repository: Checkout PR Code"
         # Downloads PR changes for comprehensive code analysis
@@ -58,7 +58,7 @@ jobs:
           direct_prompt: |
             🔍 COMPREHENSIVE PRODUCTION-GRADE CODE REVIEW (DENO + CLIFFY)
             You are a senior TypeScript/Deno/CLI security expert. Perform RIGOROUS analysis.
-            
+
             🚨 CRITICAL SECURITY AUDIT (FAIL ON ANY VIOLATION):
             ❌ Command injection vulnerabilities (Deno.run, Deno.Command)
             ❌ Path traversal attacks (../../, resolve() without validation)
@@ -67,7 +67,7 @@ jobs:
             ❌ Insecure file permissions (--allow-all, overly broad permissions)
             ❌ Network vulnerabilities (unvalidated fetch, insecure URLs)
             ❌ Import vulnerabilities (untrusted HTTP imports)
-            
+
             🔒 DENO CLI SECURITY CHECKLIST:
             ✅ Input sanitization on ALL user arguments
             ✅ File path validation (stay within project bounds)
@@ -76,7 +76,7 @@ jobs:
             ✅ Error messages don't leak sensitive info
             ✅ Proper exit codes (0 success, 1+ errors)
             ✅ Resource cleanup (streams, file handles)
-            
+
             📋 CODE QUALITY ENFORCEMENT (ZERO TOLERANCE):
             ❌ TypeScript `any` usage (must use proper types)
             ❌ Missing error handling (try/catch, .catch())
@@ -85,7 +85,7 @@ jobs:
             ❌ Hardcoded values (use constants/config)
             ❌ Deno lint rule violations
             ❌ Missing JSDoc for public APIs
-            
+
             🧪 TESTING REQUIREMENTS (MANDATORY - Deno Native):
             ✅ Unit tests for ALL new functions using Deno.test
             ✅ Integration tests for CLI commands
@@ -93,14 +93,14 @@ jobs:
             ✅ Error scenario testing
             ✅ Mock external dependencies (fetch, file operations)
             ✅ Test coverage >80% for new code
-            
+
             ⚡ PERFORMANCE OPTIMIZATION:
             ❌ Synchronous file operations (use async)
             ❌ Memory leaks (unclosed streams/handlers)
             ❌ Inefficient loops (O(n²) when O(n) possible)
             ❌ Large bundle size increases
             ❌ Blocking operations on main thread
-            
+
             🏗️ ARCHITECTURE COMPLIANCE (Deno + Cliffy):
             ✅ Follow Cliffy CLI command patterns
             ✅ Proper command structure in src/commands/
@@ -108,40 +108,40 @@ jobs:
             ✅ Template usage for code generation (native Deno APIs)
             ✅ Proper deno.json configuration
             ✅ JSR-compatible imports
-            
+
             📦 DEPENDENCY SECURITY (Deno):
             ❌ Insecure HTTP imports (use HTTPS only)
-            ❌ Untrusted dependency sources  
+            ❌ Untrusted dependency sources
             ❌ Missing version pinning in imports
             ❌ Overly broad permissions requested
-            
+
             🎯 REVIEW OUTPUT FORMAT:
             Use this EXACT structure:
-            
+
             ## 🚨 CRITICAL ISSUES (MUST FIX BEFORE MERGE)
             [List blocking security/quality issues]
-            
-            ## ⚠️ MAJOR ISSUES (FIX RECOMMENDED)  
+
+            ## ⚠️ MAJOR ISSUES (FIX RECOMMENDED)
             [List important improvements needed]
-            
+
             ## 💡 MINOR IMPROVEMENTS (OPTIONAL)
             [List nice-to-have optimizations]
-            
+
             ## ✅ POSITIVE OBSERVATIONS
             [Highlight good practices found]
-            
+
             ## 📊 REVIEW SUMMARY
             - Security Score: X/10
-            - Quality Score: X/10  
+            - Quality Score: X/10
             - Test Coverage: X%
             - Performance Impact: [LOW/MEDIUM/HIGH]
             - Recommendation: [APPROVE/CHANGES_NEEDED/REJECT]
-            
+
             Be RUTHLESS but CONSTRUCTIVE. Include code examples and specific line references.
 
           # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
           # use_sticky_comment: true
-          
+
           # Optional: Customize review based on file types
           # direct_prompt: |
           #   Review this PR focusing on:
@@ -149,18 +149,17 @@ jobs:
           #   - For API endpoints: Security, input validation, and error handling
           #   - For React components: Performance, accessibility, and best practices
           #   - For tests: Coverage, edge cases, and test quality
-          
+
           # Optional: Different prompts for different authors
           # direct_prompt: |
-          #   ${{ github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' && 
+          #   ${{ github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' &&
           #   'Welcome! Please review this PR from a first-time contributor. Be encouraging and provide detailed explanations for any suggestions.' ||
           #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
-          
+
           # Security: Restrict to read-only analysis and safe validation commands (Deno)
           allowed_tools: "Bash(deno task test),Bash(deno task check),Bash(deno task lint)"
-          
+
           # Optional: Skip review for certain conditions
           # if: |
           #   !contains(github.event.pull_request.title, '[skip-review]') &&
           #   !contains(github.event.pull_request.title, '[WIP]')
-
