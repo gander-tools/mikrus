@@ -4,7 +4,7 @@
   "description": "Command-line interface tool for managing VPS servers on mikr.us platform (Deno + Cliffy)",
   "keywords": [
     "cli",
-    "vps", 
+    "vps",
     "mikr.us",
     "server-management",
     "hosting",

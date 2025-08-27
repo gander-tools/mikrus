@@ -1,6 +1,7 @@
 # Deno Workflow Documentation
 
-This document explains how to use the new Deno-based CI/CD workflow for the experimental branch.
+This document explains how to use the new Deno-based CI/CD workflow for the
+experimental branch.
 
 ## 🚀 Quick Start
 
@@ -65,6 +66,7 @@ deno task compile:all      # Build for all platforms
 ### Workflow: `.github/workflows/deno-ci.yml`
 
 The Deno workflow runs on:
+
 - **Push** to `feature/deno-cliffy-experiment` branch
 - **Pull requests** to `main` branch (when Deno files change)
 - **Manual dispatch** via GitHub Actions UI
@@ -72,18 +74,21 @@ The Deno workflow runs on:
 ### Pipeline Stages
 
 #### 1. **Code Quality** (`lint-and-format`)
+
 - ✨ Deno lint check (`deno lint`)
 - 🎨 Deno format check (`deno fmt --check`)
 - 🔍 TypeScript type checking (`deno check`)
 - 💾 Caches dependencies for faster subsequent runs
 
 #### 2. **Testing** (`test`)
+
 - 🧪 Runs on Deno v2.4.x and v2.x (matrix)
 - 🧪 Executes all security tests with native Deno test runner
 - 📊 Generates coverage reports (on primary version)
 - 📤 Uploads coverage artifacts
 
 #### 3. **Building** (`build`)
+
 - 🛠️ Compiles to single executable binaries
 - 🌍 Multi-platform builds:
   - Linux x64 (`mikrus-linux`)
@@ -94,12 +99,14 @@ The Deno workflow runs on:
 - 📤 Uploads binary artifacts
 
 #### 4. **Security Audit** (`security-audit`)
+
 - 🔍 Dependency security analysis
 - 🔒 Permission analysis and validation
 - 🛡️ Basic code security scanning
 - ✅ Validates minimal permission model
 
 #### 5. **Integration Tests** (`integration-test`)
+
 - 🔌 End-to-end CLI functionality testing
 - ✅ Tests all major commands:
   - `--help` command validation
@@ -111,6 +118,7 @@ The Deno workflow runs on:
 - ⚡ Performance baseline measurement
 
 #### 6. **Notification** (`notify`)
+
 - 📢 Pipeline status summary
 - 📊 Performance comparison report
 - ✅ Success/failure notifications
@@ -138,6 +146,7 @@ The pipeline validates these performance improvements:
 ### Common Issues
 
 **1. Permission Errors**
+
 ```bash
 # Error: Requires net access to "deno.land"
 # Solution: Run with network permission
@@ -145,18 +154,21 @@ deno run --allow-net src/cli.ts
 ```
 
 **2. Cache Issues**
+
 ```bash
 # Clear cache and re-download dependencies
 deno cache --reload src/cli.ts
 ```
 
 **3. Format Issues**
+
 ```bash
 # Auto-fix formatting
 deno fmt src/ tests/
 ```
 
 **4. Type Errors**
+
 ```bash
 # Check types without running
 deno check src/cli.ts
@@ -202,6 +214,7 @@ Dependencies are managed via URL imports in `deno.json`:
 ```
 
 To update:
+
 1. Change version numbers in URLs
 2. Run `deno cache --reload src/cli.ts`
 3. Test functionality
@@ -241,6 +254,6 @@ If the Deno approach is adopted:
 
 ---
 
-**Status**: ✅ Fully functional Deno CI/CD pipeline
-**Performance**: ⚡ Meets all speed and efficiency targets
-**Recommendation**: 🚀 Ready for production consideration
+**Status**: ✅ Fully functional Deno CI/CD pipeline **Performance**: ⚡ Meets
+all speed and efficiency targets **Recommendation**: 🚀 Ready for production
+consideration
