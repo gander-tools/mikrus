@@ -127,13 +127,6 @@ export const generateCommand = new Command()
       });
 
       utils.success(`Generated file at ${targetPath}`);
-
-      // Verbose mode suggestions
-      if (options.verbose) {
-        console.log(`📝 Template used: ${templateName}`);
-        console.log(`🎯 Sanitized name: ${validName}`);
-        console.log(`📁 Output directory: ${outputDir}`);
-      }
     } catch (err) {
       utils.error(
         `Generation failed: ${

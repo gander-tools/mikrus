@@ -1,5 +1,5 @@
 import { Command } from "@cliffy/command";
-import { colors } from "@cliffy/ansi/colors";
+import { red, yellow } from "jsr:@std/fmt@1.0.8/colors";
 import { generateCommand } from "./commands/generate.ts";
 
 /**
@@ -47,16 +47,16 @@ async function run(args: string[] = Deno.args): Promise<void> {
       // Custom error handling
       .error((error, _cmd) => {
         if (error instanceof Error) {
-          console.error(colors.red("✗ Error:"), error.message);
+          console.error(red("✗ Error:"), error.message);
 
           // Provide helpful suggestions for common errors
           if (error.message.includes("Unknown command")) {
-            console.log(colors.yellow("\n💡 Available commands:"));
+            console.log(yellow("\n💡 Available commands:"));
             console.log("  generate  Generate a new model file from template");
             console.log("\nTry: mikrus --help");
           }
         } else {
-          console.error(colors.red("✗ An unexpected error occurred"));
+          console.error(red("✗ An unexpected error occurred"));
         }
 
         Deno.exit(1);
@@ -67,11 +67,11 @@ async function run(args: string[] = Deno.args): Promise<void> {
   } catch (error) {
     // Global error handler for unhandled exceptions
     console.error(
-      colors.red("✗ Fatal error:"),
+      red("✗ Fatal error:"),
       error instanceof Error ? error.message : "Unknown error",
     );
     console.log(
-      colors.yellow(
+      yellow(
         "💡 Please report this issue at: https://github.com/gander-tools/mikrus/issues",
       ),
     );
