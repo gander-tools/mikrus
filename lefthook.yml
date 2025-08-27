@@ -1,10 +1,56 @@
 rc: ~/.lefthookrc
 
+# Install lefthook: lefthook install
+# Run manually: lefthook run pre-commit
+
 pre-commit:
+  parallel: true
   commands:
+    # TypeScript type checking
+    deno-check:
+      glob: "src/**/*.{ts,tsx}"
+      run: deno check src/cli.ts
+      
+    # Deno linting for code quality
     deno-lint:
-      glob: "*.{js,ts,json,jsx,tsx}"
+      glob: "**/*.{js,ts,json,jsx,tsx}"
+      exclude: "build/**/*"
       run: deno lint {staged_files}
+      
+    # Deno formatting check
     deno-fmt:
-      glob: "*.{js,ts,json,jsx,tsx,md}"
+      glob: "**/*.{js,ts,json,jsx,tsx,md}"
+      exclude: "build/**/*"
       run: deno fmt --check {staged_files}
+      
+    # Run tests on staged files
+    deno-test:
+      glob: "tests/**/*.test.{ts,tsx}"
+      run: deno test --allow-read --allow-write {staged_files}
+
+pre-push:
+  parallel: true
+  commands:
+    # Full test suite before push
+    full-test:
+      run: deno test --allow-read --allow-write --coverage
+      
+    # Type check entire project
+    full-check:
+      run: deno check src/cli.ts tests/*.test.ts
+      
+    # Lint entire project
+    full-lint:
+      run: deno lint src/ tests/
+
+# Optional: commit message validation
+commit-msg:
+  commands:
+    conventional-commits:
+      run: |
+        commit_msg=$(cat {1})
+        if ! echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|build|ci|perf|revert)(\(.+\))?: .+"; then
+          echo "❌ Commit message must follow conventional commits format"
+          echo "Examples: feat: add new feature | fix(api): resolve bug | docs: update README"
+          exit 1
+        fi
