@@ -13,10 +13,10 @@ jobs:
     name: "🦕 Deno Analyze and Tag Issues"
     runs-on: ubuntu-latest
     if: github.repository == 'gander-tools/mikrus'
-    
+
     steps:
       - name: "🔍 Analyze Issue Content"
-        id: analyze
+        id: deno_analyze
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         with:
           script: |
@@ -121,7 +121,7 @@ jobs:
               labels: labels,
               shouldTag: labels.length > 0
             };
-      
+
       - name: "🏷️ Apply Labels to Issue"
         if: fromJSON(steps.analyze.outputs.result).shouldTag
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7

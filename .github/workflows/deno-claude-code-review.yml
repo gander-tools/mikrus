@@ -23,14 +23,14 @@ jobs:
     #   github.event.pull_request.user.login == 'external-contributor' ||
     #   github.event.pull_request.user.login == 'new-developer' ||
     #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
-    
+
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write # Minimal write access for comments only
       issues: read
       id-token: write
-    
+
     steps:
       - name: "📥 Repository: Checkout PR Code"
         # Downloads PR changes for comprehensive code analysis
@@ -42,7 +42,7 @@ jobs:
 
       - name: "🧠 Claude AI: Analyze Code Changes"
         # Performs automated code review using Claude AI with TypeScript CLI focus
-        id: claude-review
+        id: deno_claude_review
         uses: anthropics/claude-code-action@a47fdbe49f641eadaf74042deb4cd9dfb8a981d5 # Pinned SHA for security
         timeout-minutes: 15 # Security: Prevent long-running executions
         env:
@@ -141,7 +141,7 @@ jobs:
 
           # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
           # use_sticky_comment: true
-          
+
           # Optional: Customize review based on file types
           # direct_prompt: |
           #   Review this PR focusing on:
@@ -149,16 +149,16 @@ jobs:
           #   - For API endpoints: Security, input validation, and error handling
           #   - For React components: Performance, accessibility, and best practices
           #   - For tests: Coverage, edge cases, and test quality
-          
+
           # Optional: Different prompts for different authors
           # direct_prompt: |
-          #   ${{ github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' && 
+          #   ${{ github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' &&
           #   'Welcome! Please review this PR from a first-time contributor. Be encouraging and provide detailed explanations for any suggestions.' ||
           #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
-          
+
           # Security: Restrict to read-only analysis and safe validation commands (Deno)
           allowed_tools: "Bash(deno task test),Bash(deno task check),Bash(deno task lint)"
-          
+
           # Optional: Skip review for certain conditions
           # if: |
           #   !contains(github.event.pull_request.title, '[skip-review]') &&

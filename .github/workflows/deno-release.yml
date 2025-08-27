@@ -112,7 +112,7 @@ jobs:
           deno-version: v2.x
 
       - name: "🏷️ Version: Extract from Tag"
-        id: get_version
+        id: deno_get_version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ github.event.inputs.version }}"
@@ -168,7 +168,7 @@ jobs:
           fetch-depth: 0
 
       - name: "🏷️ Version: Extract from Tag"
-        id: get_version
+        id: deno_get_version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ github.event.inputs.version }}"
@@ -178,7 +178,7 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: "📝 Documentation: Generate Release Notes"
-        id: release_notes
+        id: deno_release_notes
         run: |
           VERSION="${{ steps.get_version.outputs.VERSION }}"
           echo "## 🚀 Release $VERSION" > release_notes.md
@@ -223,7 +223,7 @@ jobs:
           ls -la ./release-assets/
 
       - name: "🚀 GitHub: Create Release"
-        id: create_release
+        id: deno_create_release
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
           tag_name: v${{ steps.get_version.outputs.VERSION }}
