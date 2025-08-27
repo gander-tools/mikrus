@@ -9,7 +9,7 @@ pre-commit:
     # TypeScript type checking
     deno-check:
       glob: "src/**/*.{ts,tsx}"
-      run: deno check src/cli.ts
+      run: deno check {staged_files}
       
     # Deno linting for code quality
     deno-lint:
@@ -26,18 +26,18 @@ pre-commit:
     # Run tests on staged files
     deno-test:
       glob: "tests/**/*.test.{ts,tsx}"
-      run: deno test --allow-read --allow-write {staged_files}
+      run: deno test --allow-read --allow-write --allow-net {staged_files}
 
 pre-push:
   parallel: true
   commands:
     # Full test suite before push
     full-test:
-      run: deno test --allow-read --allow-write --coverage
+      run: deno test --allow-read --allow-write --allow-net --coverage
       
     # Type check entire project
     full-check:
-      run: deno check src/cli.ts tests/*.test.ts
+      run: deno check src/ tests/
       
     # Lint entire project
     full-lint:
