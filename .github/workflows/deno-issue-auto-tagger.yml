@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: "🔍 Analyze Issue Content"
-        id: deno_analyze
+        id: deno_issue_analyze
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         with:
           script: |
@@ -123,11 +123,12 @@ jobs:
             };
 
       - name: "🏷️ Apply Labels to Issue"
-        if: fromJSON(steps.analyze.outputs.result).shouldTag
+        id: deno_issue_apply_labels
+        if: fromJSON(steps.deno_issue_analyze.outputs.result).shouldTag
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         with:
           script: |
-            const result = JSON.parse('${{ steps.analyze.outputs.result }}');
+            const result = JSON.parse('${{ steps.deno_issue_analyze.outputs.result }}');
             const suggestedLabels = result.labels;
             
             if (suggestedLabels.length === 0) {
@@ -201,12 +202,13 @@ jobs:
             }
 
       - name: "📊 Issue Triage Summary"
+        id: deno_issue_triage_summary
         if: always()
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         with:
           script: |
             const issue = context.payload.issue;
-            const analyzeResult = '${{ steps.analyze.outputs.result }}';
+            const analyzeResult = '${{ steps.deno_issue_analyze.outputs.result }}';
             const result = analyzeResult ? JSON.parse(analyzeResult) : {};
             
             console.log('=== ISSUE TRIAGE SUMMARY ===');
