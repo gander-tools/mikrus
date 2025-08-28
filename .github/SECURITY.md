@@ -53,14 +53,21 @@ vulnerability, please report it responsibly:
 
 ## Security Features
 
-### 🛡️ **Built-in Security Controls**
+### 🛡️ **Deno Security Model & Built-in Controls**
 
-- **Input Validation**: All user inputs are validated and sanitized
-- **Path Traversal Protection**: File operations are restricted to project
+- **Permission-Based Security**: Explicit --allow-read, --allow-write,
+  --allow-net permissions
+
+- **Input Validation**: Comprehensive sanitization and validation for all CLI
+  parameters
+- **Path Traversal Protection**: File operations restricted to project
   directories
-- **Rate Limiting**: CLI operations are rate-limited to prevent abuse
-- **Dependency Scanning**: Automated vulnerability scanning in CI/CD
-- **Secure Defaults**: Conservative security settings by default
+- **URL-Based Import Security**: JSR registry and HTTPS-only dependencies
+  eliminate npm vulnerabilities
+- **No Node.js Attack Surface**: No node_modules or traditional dependency
+  vulnerabilities
+- **Secure Runtime**: Deno's secure-by-default runtime with explicit permission
+  model
 
 ### 🔍 **Security Monitoring**
 
