@@ -1,6 +1,6 @@
 name: "📦 Deno Package Release"
 
-# Builds Linux x86_64 binary and creates draft GitHub Release
+# Builds Linux x86_64 + Windows x86_64 binaries and creates draft GitHub Release
 # Does NOT publish release - remains as draft
 # Does NOT create tags - only responds to existing tags
 
@@ -129,16 +129,33 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-  # Phase 2: Build Linux Binary
-  build-linux:
-    name: "🔨 Build Linux x86_64"
-    runs-on: ubuntu-latest
+  # Phase 2: Build Matrix - Multi-platform binaries
+  build-binaries:
+    name: "🔨 Build ${{ matrix.platform.name }}"
+    runs-on: ${{ matrix.platform.os }}
     needs: stability-check
     if: needs.stability-check.outputs.is_stable == 'true'
     permissions:
       contents: read
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: "Linux x86_64"
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            output: mikrus-linux-x64
+            artifact: linux-x64
+          - name: "Windows x86_64"
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            output: mikrus-windows-x64.exe
+            artifact: windows-x64
+    
     outputs:
-      binary_size: ${{ steps.analysis.outputs.BINARY_SIZE_MB }}
+      binary_size_linux: ${{ steps.analysis.outputs.BINARY_SIZE_MB }}
+      binary_size_windows: ${{ steps.analysis.outputs.BINARY_SIZE_MB }}
     
     steps:
       - name: "📥 Checkout Repository"
@@ -157,74 +174,95 @@ jobs:
           echo "📦 Caching Deno dependencies..."
           deno cache src/cli.ts
 
-      - name: "🔨 Compile Linux Binary"
+      - name: "🔨 Compile ${{ matrix.platform.name }} Binary"
         run: |
-          echo "🔨 Compiling Linux x86_64 binary..."
+          echo "🔨 Compiling ${{ matrix.platform.name }} binary..."
 
           VERSION="${{ needs.stability-check.outputs.version }}"
           GIT_HASH="${GITHUB_SHA::7}"
           
-          sed -i "s/%VERSION%/$VERSION/g" ./src/version.ts
-          sed -i "s/%GIT_HASH%/$GIT_HASH/g" ./src/version.ts
+          # Cross-platform version replacement
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            # Windows using PowerShell
+            powershell -Command "(Get-Content ./src/version.ts) -replace '%VERSION%', '$VERSION' | Set-Content ./src/version.ts"
+            powershell -Command "(Get-Content ./src/version.ts) -replace '%GIT_HASH%', '$GIT_HASH' | Set-Content ./src/version.ts"
+          else
+            # Unix (Linux/macOS)
+            sed -i "s/%VERSION%/$VERSION/g" ./src/version.ts
+            sed -i "s/%GIT_HASH%/$GIT_HASH/g" ./src/version.ts
+          fi
 
           # Create dist directory
           mkdir -p ./dist
           
-          # Compile with Deno
+          # Compile with Deno for target platform
           deno compile \
             --allow-read \
             --allow-write \
             --allow-net \
-            --target=x86_64-unknown-linux-gnu \
-            --output=./dist/mikrus-linux-x64 \
+            --target=${{ matrix.platform.target }} \
+            --output=./dist/${{ matrix.platform.output }} \
             src/cli.ts
           
-          echo "✅ Binary compiled successfully"
+          echo "✅ Binary compiled successfully for ${{ matrix.platform.name }}"
 
       - name: "🧪 Test Binary"
         run: |
           echo "🧪 Testing compiled binary..."
-          chmod +x ./dist/mikrus-linux-x64
           
-          # Basic functionality tests
-          ./dist/mikrus-linux-x64 --version
-          ./dist/mikrus-linux-x64 --help
+          # Make executable on Unix systems
+          if [[ "${{ runner.os }}" != "Windows" ]]; then
+            chmod +x ./dist/${{ matrix.platform.output }}
+          fi
           
-          echo "✅ Binary tests passed"
+          # Test basic functionality
+          ./dist/${{ matrix.platform.output }} --version
+          ./dist/${{ matrix.platform.output }} --help
+          
+          echo "✅ Binary tests passed for ${{ matrix.platform.name }}"
 
       - name: "📊 Binary Analysis"
         id: analysis
         run: |
           echo "📊 Analyzing binary..."
           
-          # Get file size
-          SIZE=$(stat -c%s "./dist/mikrus-linux-x64")
+          # Cross-platform file size calculation
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            SIZE=$(stat -c%s "./dist/${{ matrix.platform.output }}" 2>/dev/null || echo "0")
+          else
+            SIZE=$(stat -c%s "./dist/${{ matrix.platform.output }}" 2>/dev/null || stat -f%z "./dist/${{ matrix.platform.output }}" 2>/dev/null || echo "0")
+          fi
+          
           SIZE_MB=$((SIZE / 1024 / 1024))
           
           echo "BINARY_SIZE_MB=$SIZE_MB" >> $GITHUB_OUTPUT
           echo "📦 Binary size: ${SIZE_MB}MB"
           
-          # Create checksum
-          sha256sum ./dist/mikrus-linux-x64 > ./dist/mikrus-linux-x64.sha256
+          # Cross-platform checksum creation
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            certutil -hashfile "./dist/${{ matrix.platform.output }}" SHA256 > "./dist/${{ matrix.platform.output }}.sha256"
+          else
+            sha256sum "./dist/${{ matrix.platform.output }}" > "./dist/${{ matrix.platform.output }}.sha256"
+          fi
           
-          echo "🔒 Checksum created"
+          echo "🔒 Checksum created for ${{ matrix.platform.name }}"
 
       - name: "📤 Upload Binary Artifact"
         uses: actions/upload-artifact@v4
         with:
-          name: mikrus-linux-x64
+          name: ${{ matrix.platform.artifact }}
           path: |
-            ./dist/mikrus-linux-x64
-            ./dist/mikrus-linux-x64.sha256
+            ./dist/${{ matrix.platform.output }}
+            ./dist/${{ matrix.platform.output }}.sha256
           retention-days: 7
           compression-level: 9
 
       - name: "📊 Build Summary"
         run: |
-          echo "## 🔨 Linux x86_64 Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔨 ${{ matrix.platform.name }} Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Target**: x86_64-unknown-linux-gnu" >> $GITHUB_STEP_SUMMARY
-          echo "- **Binary**: mikrus-linux-x64" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target**: ${{ matrix.platform.target }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Binary**: ${{ matrix.platform.output }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Size**: ${{ steps.analysis.outputs.BINARY_SIZE_MB }}MB" >> $GITHUB_STEP_SUMMARY
           echo "- **Version**: ${{ needs.stability-check.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
@@ -233,7 +271,7 @@ jobs:
   create-draft-release:
     name: "📝 Create Draft Release"
     runs-on: ubuntu-latest
-    needs: [stability-check, build-linux]
+    needs: [stability-check, build-binaries]
     permissions:
       contents: write
     
@@ -243,10 +281,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: "📥 Download Binary"
+      - name: "📥 Download All Binaries"
         uses: actions/download-artifact@v4
         with:
-          name: mikrus-linux-x64
           path: ./release-assets
 
       - name: "📝 Generate Release Notes"
@@ -254,21 +291,25 @@ jobs:
         env:
           VERSION: ${{ needs.stability-check.outputs.version }}
           TAG: ${{ needs.stability-check.outputs.tag }}
-          BINARY_SIZE: ${{ needs.build-linux.outputs.binary_size }}
         run: |
-          cat > release_notes.md << 'EOF'
+          # Get binary sizes
+          LINUX_SIZE=$(find ./release-assets -name "mikrus-linux-x64" -exec stat -c%s {} \; | awk '{print int($1/1024/1024)"MB"}' 2>/dev/null || echo "~MB")
+          WINDOWS_SIZE=$(find ./release-assets -name "mikrus-windows-x64.exe" -exec stat -c%s {} \; | awk '{print int($1/1024/1024)"MB"}' 2>/dev/null || echo "~MB")
+          
+          cat > release_notes.md << EOF
           ## 🚀 mikrus CLI ${{ env.TAG }}
           
           ### 📦 Assets
           
           | Platform | Architecture | Size | File |
           |----------|-------------|------|------|
-          | Linux | x86_64 | ${{ env.BINARY_SIZE }}MB | `mikrus-linux-x64` |
+          | Linux | x86_64 | ${LINUX_SIZE} | \`mikrus-linux-x64\` |
+          | Windows | x86_64 | ${WINDOWS_SIZE} | \`mikrus-windows-x64.exe\` |
           
           ### 🔧 Installation
           
           #### Linux x86_64
-          ```bash
+          \`\`\`bash
           # Download binary
           wget https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/mikrus-linux-x64
           
@@ -280,17 +321,41 @@ jobs:
           
           # Verify installation
           mikrus --version
-          ```
+          \`\`\`
+          
+          #### Windows x86_64
+          \`\`\`powershell
+          # Download binary (PowerShell)
+          Invoke-WebRequest -Uri "https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/mikrus-windows-x64.exe" -OutFile "mikrus.exe"
+          
+          # Or using curl (if available)
+          curl -L -o mikrus.exe "https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/mikrus-windows-x64.exe"
+          
+          # Verify installation
+          .\mikrus.exe --version
+          \`\`\`
           
           ### 🔐 Verify Integrity
           
-          ```bash
+          #### Linux
+          \`\`\`bash
           # Download checksum file
           wget https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/mikrus-linux-x64.sha256
           
           # Verify checksum
           sha256sum -c mikrus-linux-x64.sha256
-          ```
+          \`\`\`
+          
+          #### Windows
+          \`\`\`powershell
+          # Download checksum file
+          Invoke-WebRequest -Uri "https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/mikrus-windows-x64.exe.sha256" -OutFile "mikrus-windows-x64.exe.sha256"
+          
+          # Verify checksum (PowerShell)
+          \$hash = Get-FileHash -Path "mikrus.exe" -Algorithm SHA256
+          \$expected = Get-Content "mikrus-windows-x64.exe.sha256"
+          if (\$hash.Hash -eq \$expected.Split()[0]) { Write-Host "✅ Checksum verified" } else { Write-Host "❌ Checksum mismatch" }
+          \`\`\`
           
           ### 📝 Changelog
           
@@ -311,7 +376,12 @@ jobs:
           
           ### 📋 Requirements
           
-          - Linux x86_64
+          **Linux x86_64:**
+          - Linux x86_64 (64-bit)
+          - No external dependencies (Deno runtime embedded)
+          
+          **Windows x86_64:**
+          - Windows 10/11 x86_64 (64-bit)
           - No external dependencies (Deno runtime embedded)
           
           ### 📚 Documentation
@@ -341,13 +411,15 @@ jobs:
             gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
           fi
           
-          # Create new draft release
+          # Create new draft release with all assets
           gh release create "$TAG" \
             --draft \
             --title "mikrus CLI $TAG" \
             --notes-file release_notes.md \
-            ./release-assets/mikrus-linux-x64 \
-            ./release-assets/mikrus-linux-x64.sha256
+            ./release-assets/linux-x64/mikrus-linux-x64 \
+            ./release-assets/linux-x64/mikrus-linux-x64.sha256 \
+            ./release-assets/windows-x64/mikrus-windows-x64.exe \
+            ./release-assets/windows-x64/mikrus-windows-x64.exe.sha256
           
           echo "✅ Draft release created successfully"
           echo "📌 Release URL: https://github.com/${{ github.repository }}/releases/tag/$TAG"
@@ -361,11 +433,16 @@ jobs:
           echo "### 📌 Release Information" >> $GITHUB_STEP_SUMMARY
           echo "- **Tag**: $TAG" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: Draft (not published)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Binary Size**: ${{ needs.build-linux.outputs.binary_size }}MB" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platforms**: Linux x86_64 + Windows x86_64" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📦 Included Assets" >> $GITHUB_STEP_SUMMARY
-          echo "- mikrus-linux-x64 (Linux x86_64 binary)" >> $GITHUB_STEP_SUMMARY
+          echo "**Linux x86_64:**" >> $GITHUB_STEP_SUMMARY
+          echo "- mikrus-linux-x64 (Linux binary)" >> $GITHUB_STEP_SUMMARY
           echo "- mikrus-linux-x64.sha256 (SHA256 checksum)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Windows x86_64:**" >> $GITHUB_STEP_SUMMARY
+          echo "- mikrus-windows-x64.exe (Windows binary)" >> $GITHUB_STEP_SUMMARY
+          echo "- mikrus-windows-x64.exe.sha256 (SHA256 checksum)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### ⚠️ Next Steps" >> $GITHUB_STEP_SUMMARY
           echo "1. Review the draft release at [GitHub Releases](https://github.com/${{ github.repository }}/releases)" >> $GITHUB_STEP_SUMMARY
