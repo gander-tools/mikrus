@@ -128,7 +128,8 @@ runtime:
 
 ```shell
 # Display help and available commands
-mikrus --help
+mikrus          # Shows usage automatically when no args provided
+mikrus --help   # Explicit help command
 
 # Generate a new component/model/service
 mikrus generate <name>
