@@ -128,10 +128,8 @@ jobs:
           fi
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "git_hash=$GIT_HASH" >> $GITHUB_OUTPUT
           echo "tag=$TAG" >> $GITHUB_OUTPUT
-          
-          sed -i "s/%VERSION%/$VERSION/g" src/version.ts
-          sed -i "s/%GIT_HASH%/$GIT_HASH/g" src/version.ts
 
   # Phase 2: Build Linux Binary
   build-linux:
@@ -164,7 +162,13 @@ jobs:
       - name: "🔨 Compile Linux Binary"
         run: |
           echo "🔨 Compiling Linux x86_64 binary..."
+
+          VERSION="${{ needs.stability-check.outputs.version }}"
+          GIT_HASH="${{ needs.stability-check.outputs.git_hash }}"
           
+          sed -i "s/%VERSION%/$VERSION/g" ./src/version.ts
+          sed -i "s/%GIT_HASH%/$GIT_HASH/g" ./src/version.ts
+
           # Create dist directory
           mkdir -p ./dist
           
