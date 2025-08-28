@@ -130,8 +130,8 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           
-          sed -i "s/%VERSION%/$VERSION/g" version.ts
-          sed -i "s/%GIT_HASH%/$GIT_HASH/g" version.ts
+          sed -i "s/%VERSION%/$VERSION/g" src/version.ts
+          sed -i "s/%GIT_HASH%/$GIT_HASH/g" src/version.ts
 
   # Phase 2: Build Linux Binary
   build-linux:
