@@ -1,7 +1,7 @@
 import { Command } from "@cliffy/command";
 import { red, yellow } from "jsr:@std/fmt@1.0.8/colors";
 import { generateCommand } from "./commands/generate.ts";
-import { VERSION, GIT_HASH } from "./version.ts";
+import { GIT_HASH, VERSION } from "./version.ts";
 
 /**
  * Creates and runs the mikrus CLI using Cliffy framework
