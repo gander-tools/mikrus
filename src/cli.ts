@@ -64,6 +64,12 @@ async function run(args: string[] = Deno.args): Promise<void> {
       });
 
     // Execute the CLI with provided arguments
+    // Show help if no arguments provided
+    if (args.length === 0) {
+      await cli.showHelp();
+      return;
+    }
+
     await cli.parse(args);
   } catch (error) {
     // Global error handler for unhandled exceptions
