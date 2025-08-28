@@ -111,12 +111,8 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: "🦕 Runtime: Setup Deno"
-<<<<<<< HEAD
-        uses: denoland/setup-deno@v2.0.3
-=======
         id: deno_release_setup_deno
         uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
->>>>>>> origin/master
         with:
           deno-version: v2.4
           cache-hash: ${{ hashFiles('**/deno.json') }}
@@ -196,7 +192,7 @@ jobs:
       - name: "📝 Documentation: Generate Release Notes"
         id: deno_release_generate_notes
         run: |
-          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          VERSION="${{ steps.deno_release_extract_version.outputs.VERSION }}"
           echo "## 🚀 Release $VERSION" > release_notes.md
           echo "" >> release_notes.md
           echo "### 📦 Installation" >> release_notes.md
@@ -244,11 +240,11 @@ jobs:
         id: deno_release_create_release
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
-          tag_name: v${{ steps.get_version.outputs.VERSION }}
-          name: Release ${{ steps.get_version.outputs.VERSION }}
+          tag_name: v${{ steps.deno_release_extract_version.outputs.VERSION }}
+          name: Release ${{ steps.deno_release_extract_version.outputs.VERSION }}
           body_path: release_notes.md
           draft: false
-          prerelease: ${{ contains(steps.get_version.outputs.VERSION, '-') }}
+          prerelease: ${{ contains(steps.deno_release_extract_version.outputs.VERSION, '-') }}
           files: ./release-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -264,12 +260,8 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: "🦕 Runtime: Setup Deno"
-<<<<<<< HEAD
-        uses: denoland/setup-deno@v2.0.3
-=======
         id: deno_jsr_setup
         uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
->>>>>>> origin/master
         with:
           deno-version: v2.4
           cache-hash: ${{ hashFiles('**/deno.json') }}
@@ -357,9 +349,5 @@ jobs:
             echo "❌ Help output missing expected description"
             exit 1
           fi
-<<<<<<< HEAD
-
-=======
           
->>>>>>> origin/master
           echo "✅ Help test passed"
