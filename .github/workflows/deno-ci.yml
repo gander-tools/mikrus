@@ -6,14 +6,14 @@ name: "🦕 Deno CI/CD Pipeline"
 
 on:
   push:
-    branches: [ main-deno, feature/deno-cliffy-experiment ]
+    branches: [main-deno, feature/deno-cliffy-experiment]
   pull_request:
-    branches: [ main-deno ]
+    branches: [main-deno]
     paths:
-      - 'deno.json'
-      - 'src/**'
-      - 'tests/**'
-      - '.github/workflows/ci.yml'
+      - "deno.json"
+      - "src/**"
+      - "tests/**"
+      - ".github/workflows/ci.yml"
   workflow_dispatch:
 
 concurrency:
@@ -39,7 +39,8 @@ jobs:
         id: deno_setup_lint
         uses: denoland/setup-deno@0df5d9c641efdff149993c321fc27c11c5df8623 # v1
         with:
-          deno-version: v2.x
+          deno-version: v2.4
+          cache-hash: ${{ hashFiles('**/deno.json') }}
 
       - name: "💾 Cache: Restore Deno Dependencies"
         id: deno_cache_dependencies_lint
@@ -83,12 +84,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        deno-version: ['v2.4.x', 'v2.x']
+        deno-version: ["v2.4.x", "v2.x"]
         include:
           # Primary testing with coverage
-          - deno-version: 'v2.4.x'
+          - deno-version: "v2.4.x"
             coverage: true
-          - deno-version: 'v2.x'
+          - deno-version: "v2.x"
             coverage: false
     steps:
       - name: "📥 Repository: Checkout Code"
@@ -172,7 +173,8 @@ jobs:
         id: deno_setup_build
         uses: denoland/setup-deno@0df5d9c641efdff149993c321fc27c11c5df8623 # v1
         with:
-          deno-version: v2.x
+          deno-version: v2.4
+          cache-hash: ${{ hashFiles('**/deno.json') }}
 
       - name: "📦 Dependencies: Cache and Download"
         id: deno_cache_download_build
@@ -223,7 +225,8 @@ jobs:
         id: deno_setup_security
         uses: denoland/setup-deno@0df5d9c641efdff149993c321fc27c11c5df8623 # v1
         with:
-          deno-version: v2.x
+          deno-version: v2.4
+          cache-hash: ${{ hashFiles('**/deno.json') }}
 
       - name: "🔍 Security: Deno Dependency Audit"
         id: deno_dependency_audit
@@ -281,23 +284,23 @@ jobs:
           echo "🔍 Testing CLI help command..."
           output=$(./build/mikrus-linux --help)
           echo "$output"
-          
+
           # Validate help output contains expected content
           if ! echo "$output" | grep -q "mikrus"; then
             echo "❌ ERROR: Help output does not contain CLI name"
             exit 1
           fi
-          
+
           if ! echo "$output" | grep -q "Command-line interface tool for managing VPS servers"; then
             echo "❌ ERROR: Help output does not contain expected description"
             exit 1
           fi
-          
+
           if ! echo "$output" | grep -q "generate"; then
             echo "❌ ERROR: Help output does not contain generate command"
             exit 1
           fi
-          
+
           echo "✅ Help command test passed"
 
       - name: "📋 Integration: CLI Version Command Test"
@@ -306,47 +309,47 @@ jobs:
           echo "📋 Testing CLI version command..."
           output=$(./build/mikrus-linux --version)
           echo "Version output: $output"
-          
+
           if ! echo "$output" | grep -E "[0-9]+\.[0-9]+\.[0-9]+"; then
             echo "❌ ERROR: Version output does not match expected format (semver)"
             exit 1
           fi
-          
+
           echo "✅ Version command test passed"
 
       - name: "📄 Integration: CLI Generate Command Test"
         id: deno_test_generate_command
         run: |
           echo "📄 Testing CLI generate command..."
-          
+
           # Create a temporary directory for testing
           mkdir -p test-output
           cd test-output
-          
+
           # Test generate command
           output=$(../build/mikrus-linux generate test-integration-model)
           echo "$output"
-          
+
           # Verify file was created
           if [ ! -f "models/test-integration-model-model.ts" ]; then
             echo "❌ ERROR: Generate command did not create expected file"
             exit 1
           fi
-          
+
           # Verify file contents
           content=$(cat models/test-integration-model-model.ts)
           if ! echo "$content" | grep -q "test-integration-model"; then
             echo "❌ ERROR: Generated file does not contain expected content"
             exit 1
           fi
-          
+
           if ! echo "$content" | grep -q "export interface"; then
             echo "❌ ERROR: Generated file does not contain expected TypeScript interface"
             exit 1
           fi
-          
+
           echo "✅ Generate command test passed"
-          
+
           # Cleanup
           cd ..
           rm -rf test-output
@@ -355,7 +358,7 @@ jobs:
         id: deno_test_security_validation
         run: |
           echo "🛡️ Testing security validation..."
-          
+
           # Test path traversal protection
           if ./build/mikrus-linux generate "../malicious-file" 2>&1 | grep -q "Path traversal detected"; then
             echo "✅ Path traversal protection working"
@@ -363,7 +366,7 @@ jobs:
             echo "❌ ERROR: Path traversal protection failed"
             exit 1
           fi
-          
+
           # Test command injection protection
           if ./build/mikrus-linux generate "file; rm -rf /" 2>&1 | grep -q "Invalid characters detected"; then
             echo "✅ Command injection protection working"
@@ -371,22 +374,22 @@ jobs:
             echo "❌ ERROR: Command injection protection failed"
             exit 1
           fi
-          
+
           echo "✅ Security validation tests passed"
 
       - name: "⚡ Integration: Performance Baseline Test"
         id: deno_test_performance_baseline
         run: |
           echo "⚡ Testing performance baseline..."
-          
+
           # Measure startup time for help command
           start_time=$(date +%s%N)
           ./build/mikrus-linux --help > /dev/null
           end_time=$(date +%s%N)
           duration=$(( (end_time - start_time) / 1000000 )) # Convert to milliseconds
-          
+
           echo "Startup time: ${duration}ms"
-          
+
           # Performance expectation: < 1000ms (should be much faster)
           if [ $duration -gt 1000 ]; then
             echo "⚠️ WARNING: Startup time (${duration}ms) is slower than expected"
@@ -400,7 +403,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [deno-lint-and-format, deno-test, deno-build, deno-security-audit, deno-integration-test]
+    needs: [
+      deno-lint-and-format,
+      deno-test,
+      deno-build,
+      deno-security-audit,
+      deno-integration-test,
+    ]
     if: always()
     steps:
       - name: "✅ Notification: Success Status Report"

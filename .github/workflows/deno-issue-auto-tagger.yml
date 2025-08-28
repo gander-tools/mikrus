@@ -23,13 +23,13 @@ jobs:
             const issue = context.payload.issue;
             const title = issue.title.toLowerCase();
             const body = issue.body ? issue.body.toLowerCase() : '';
-            
+
             console.log('Issue Title:', issue.title);
             console.log('Issue Body Length:', issue.body ? issue.body.length : 0);
-            
+
             // Initialize labels array
             let labels = [];
-            
+
             // Primary categorization based on title prefix and content
             if (title.includes('[feature]') || title.includes('feature request')) {
               labels.push('feature');
@@ -38,7 +38,7 @@ jobs:
               labels.push('bug');
               console.log('✅ Detected BUG report');
             }
-            
+
             // Content-based analysis for additional context
             const contentKeywords = {
               // Priority indicators
@@ -46,7 +46,7 @@ jobs:
               'urgent': () => labels.push('priority:high'),
               'blocking': () => labels.push('priority:high'),
               'important': () => labels.push('priority:medium'),
-              
+
               // Component areas
               'cli': () => labels.push('area:cli'),
               'command': () => labels.push('area:cli'),
@@ -59,26 +59,26 @@ jobs:
               'security': () => labels.push('area:security'),
               'performance': () => labels.push('area:performance'),
               'slow': () => labels.push('area:performance'),
-              
+
               // Bug types
               'crash': () => labels.push('type:crash'),
               'error': () => labels.push('type:error'),
               'exception': () => labels.push('type:error'),
               'memory leak': () => labels.push('type:memory'),
               'regression': () => labels.push('type:regression'),
-              
+
               // Feature types
               'enhancement': () => labels.push('type:enhancement'),
               'improvement': () => labels.push('type:enhancement'),
               'new command': () => labels.push('type:new-feature'),
               'api': () => labels.push('area:api'),
-              
+
               // Complexity indicators
               'simple': () => labels.push('complexity:low'),
               'complex': () => labels.push('complexity:high'),
               'breaking change': () => labels.push('breaking-change'),
               'backward compatibility': () => labels.push('breaking-change'),
-              
+
               // Platform specific
               'windows': () => labels.push('platform:windows'),
               'macos': () => labels.push('platform:macos'),
@@ -86,7 +86,7 @@ jobs:
               'node': () => labels.push('runtime:node'),
               'bun': () => labels.push('runtime:bun'),
             };
-            
+
             // Analyze content for keywords
             const fullContent = `${title} ${body}`;
             for (const [keyword, action] of Object.entries(contentKeywords)) {
@@ -95,28 +95,28 @@ jobs:
                 console.log(`🔍 Found keyword: "${keyword}"`);
               }
             }
-            
+
             // Special detection patterns
             if (body.includes('steps to reproduce') || body.includes('reproduction')) {
               labels.push('needs-reproduction');
               console.log('📝 Found reproduction steps');
             }
-            
+
             if (body.includes('workaround') && !body.includes('no workaround')) {
               labels.push('has-workaround');
               console.log('🔧 Found workaround mentioned');
             }
-            
+
             // Environment detection
             if (body.includes('environment') || body.includes('version')) {
               labels.push('has-environment-info');
               console.log('🖥️ Found environment information');
             }
-            
+
             // Remove duplicates and return
             labels = [...new Set(labels)];
             console.log('Final labels:', labels);
-            
+
             return {
               labels: labels,
               shouldTag: labels.length > 0
@@ -130,33 +130,33 @@ jobs:
           script: |
             const result = JSON.parse('${{ steps.deno_issue_analyze.outputs.result }}');
             const suggestedLabels = result.labels;
-            
+
             if (suggestedLabels.length === 0) {
               console.log('❌ No labels to apply');
               return;
             }
-            
+
             console.log(`🏷️ Processing ${suggestedLabels.length} suggested labels:`, suggestedLabels);
-            
+
             try {
               // Check which labels exist in the repository
               const existingLabelsResponse = await github.rest.issues.listLabelsForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo
               });
-              
+
               const existingLabelNames = existingLabelsResponse.data.map(label => label.name);
               console.log(`📋 Repository has ${existingLabelNames.length} existing labels`);
-              
+
               // Filter to only apply labels that exist
               const validLabels = suggestedLabels.filter(label => existingLabelNames.includes(label));
               const missingLabels = suggestedLabels.filter(label => !existingLabelNames.includes(label));
-              
+
               console.log(`✅ Valid labels to apply (${validLabels.length}):`, validLabels);
               if (missingLabels.length > 0) {
                 console.log(`⚠️  Missing labels that need to be created (${missingLabels.length}):`, missingLabels);
               }
-              
+
               // Apply only existing labels
               if (validLabels.length > 0) {
                 await github.rest.issues.addLabels({
@@ -165,23 +165,23 @@ jobs:
                   issue_number: context.issue.number,
                   labels: validLabels
                 });
-                
+
                 console.log(`✅ Successfully applied ${validLabels.length} labels`);
               } else {
                 console.log('⚠️ No valid labels to apply - all suggested labels are missing from repository');
               }
-              
+
               // Add a comment explaining the auto-tagging results
-              const appliedLabelsText = validLabels.length > 0 ? 
-                'This issue has been automatically analyzed and tagged with the following labels:\n' + 
-                validLabels.map(label => `- \`${label}\``).join('\n') : 
+              const appliedLabelsText = validLabels.length > 0 ?
+                'This issue has been automatically analyzed and tagged with the following labels:\n' +
+                validLabels.map(label => `- \`${label}\``).join('\n') :
                 'This issue was analyzed but no existing labels matched the content.';
-              
-              const missingLabelsText = missingLabels.length > 0 ? 
+
+              const missingLabelsText = missingLabels.length > 0 ?
                 '\n\n**Note**: The following labels were suggested but don\'t exist in this repository yet:\n' +
-                missingLabels.map(label => `- \`${label}\``).join('\n') + 
+                missingLabels.map(label => `- \`${label}\``).join('\n') +
                 '\n\nMaintainers may want to create these labels for better issue organization.' : '';
-              
+
               const comment = '🤖 **Auto-Tagging Complete**\n\n' +
                 appliedLabelsText + missingLabelsText + '\n\n' +
                 'These labels help organize and prioritize issues. If any labels seem incorrect, maintainers can adjust them manually.\n\n' +
@@ -195,7 +195,7 @@ jobs:
                 issue_number: context.issue.number,
                 body: comment
               });
-              
+
             } catch (error) {
               console.error('❌ Error applying labels:', error);
               core.setFailed(`Failed to apply labels: ${error.message}`);
@@ -210,7 +210,7 @@ jobs:
             const issue = context.payload.issue;
             const analyzeResult = '${{ steps.deno_issue_analyze.outputs.result }}';
             const result = analyzeResult ? JSON.parse(analyzeResult) : {};
-            
+
             console.log('=== ISSUE TRIAGE SUMMARY ===');
             console.log(`Issue #${issue.number}: ${issue.title}`);
             console.log(`Author: ${issue.user.login}`);

@@ -1,14 +1,17 @@
 .DS_Store
-node_modules
-npm-debug.log
 coverage
-.nyc_output
-dist
 build
 .vscode
 .idea
+
+# Deno cache
+.deno/
 
 # CRITICAL: Never commit Claude Code memory files
 CLAUDE.md
 CLAUDE.local.md
 .claude/
+
+# Test artifacts and generated models
+models/test-*
+*-test-model.ts

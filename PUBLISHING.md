@@ -1,6 +1,7 @@
 # Publishing Guide (Deno + JSR)
 
-This document describes the publishing setup for the `mikrus` CLI package using Deno and JSR (JavaScript Registry).
+This document describes the publishing setup for the `mikrus` CLI package using
+Deno and JSR (JavaScript Registry).
 
 ## Package Information
 
@@ -201,11 +202,13 @@ Key differences from npm publishing:
 ### Legacy npm Support
 
 npm package is **deprecated** in favor of:
+
 1. Pre-compiled binaries (primary distribution)
 2. JSR package (future developer distribution)
 3. Direct Deno execution (development)
 
 ---
 
-**Migration Status**: ✅ Binary distribution ready | 🚧 JSR publishing in development
-**Current Recommendation**: Use pre-compiled binaries for production, Deno source for development
+**Migration Status**: ✅ Binary distribution ready | 🚧 JSR publishing in
+development **Current Recommendation**: Use pre-compiled binaries for
+production, Deno source for development
