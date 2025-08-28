@@ -26,7 +26,9 @@ jobs:
       pull-requests: write
       issues: read
       id-token: write
-
+      actions: read
+      checks: read
+    
     steps:
       - name: Checkout repository
         id: deno_claude_checkout
