@@ -197,6 +197,7 @@ jobs:
             --allow-read \
             --allow-write \
             --allow-net \
+            --include=./deno.json \
             --target=x86_64-unknown-linux-gnu \
             --output=./dist/mikrus-linux-x64 \
             src/cli.ts
