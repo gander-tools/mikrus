@@ -2,8 +2,8 @@
 
 [![Deno CI](https://github.com/gander-tools/mikrus/actions/workflows/deno-ci.yml/badge.svg)](https://github.com/gander-tools/mikrus/actions/workflows/deno-ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/gander-tools/mikrus/blob/main/LICENSE)
-[![Deno](https://img.shields.io/badge/deno-%5E2.4.0-green.svg)](https://deno.land/)
-[![Cliffy](https://img.shields.io/badge/cliffy-v1.0.0--rc.4-orange.svg)](https://github.com/c4spar/deno-cliffy)
+[![Deno](https://img.shields.io/badge/deno-2.4%2B-green.svg)](https://deno.land/)
+[![Cliffy](https://img.shields.io/badge/cliffy-v1.0.0--rc.8-orange.svg)](https://github.com/c4spar/deno-cliffy)
 [![JSR](https://jsr.io/badges/@gander-tools/mikrus)](https://jsr.io/@gander-tools/mikrus)
 
 Command-line interface tool for managing VPS servers on the **mikr.us**
@@ -42,7 +42,7 @@ deno task compile
 
 ### Prerequisites
 
-- **Deno**: 2.4.0 or higher
+- **Deno**: 2.4+ or higher
   ([Install Deno](https://deno.land/manual/getting_started/installation))
 - **Operating System**: Linux, macOS, or Windows
 - **Permissions**: `--allow-read`, `--allow-write`, `--allow-net` for full
