@@ -1,10 +1,7 @@
 import { Command } from "@cliffy/command";
 import { red, yellow } from "jsr:@std/fmt@1.0.8/colors";
 import { generateCommand } from "./commands/generate.ts";
-
-// Load version dynamically from deno.json
-const denoConfig = JSON.parse(await Deno.readTextFile("./deno.json"));
-const version = denoConfig.version;
+import { GIT_HASH, VERSION } from "./version.ts";
 
 /**
  * Creates and runs the mikrus CLI using Cliffy framework
@@ -24,7 +21,7 @@ async function run(args: string[] = Deno.args): Promise<void> {
     // Create main CLI command with enhanced configuration
     const cli = new Command()
       .name("mikrus")
-      .version(version)
+      .version(`${VERSION} (${GIT_HASH})`)
       .description(
         "Command-line interface tool for managing VPS servers on mikr.us platform",
       )
