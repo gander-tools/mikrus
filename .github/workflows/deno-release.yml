@@ -349,5 +349,5 @@ jobs:
             echo "❌ Help output missing expected description"
             exit 1
           fi
-          
+
           echo "✅ Help test passed"

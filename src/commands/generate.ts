@@ -84,22 +84,52 @@ export const generateCommand = new Command()
   .alias("g")
   .example("Generate a user model", "mikrus generate user")
   .example("Generate with alias", "mikrus g user")
-  .action(async (_options, name: string) => {
+  .example("Generate a product model", "mikrus g product-item")
+  .option(
+    "--output, -o <path:string>",
+    "Output directory for generated files",
+    { default: "models" },
+  )
+  .option(
+    "--template, -t <template:string>",
+    "Template to use for generation",
+    { default: "model.ts.ejs" },
+  )
+  .option(
+    "--dry-run",
+    "Show what would be generated without creating files",
+  )
+  .action(async (options, name: string) => {
     try {
       // Validate and sanitize the input
       const validName = validateAndSanitizeInput(name);
 
+      // Determine output path with user option support
+      const outputDir = options.output || "models";
+      const templateName = options.template || "model.ts.ejs";
+      const targetPath = `${outputDir}/${validName}-model.ts`;
+
+      // Dry-run mode: show what would be generated
+      if (options.dryRun) {
+        console.log(`\n📋 Dry-run mode - no files will be created:`);
+        console.log(`   Template: ${templateName}`);
+        console.log(`   Target: ${targetPath}`);
+        console.log(`   Name: ${validName}`);
+        console.log(`\n✅ Dry-run completed successfully`);
+        return;
+      }
+
       // Generate the file using template
       await generateFromTemplate({
-        template: "model.ts.ejs",
-        target: `models/${validName}-model.ts`,
+        template: templateName,
+        target: targetPath,
         name: validName,
       });
 
-      utils.success(`Generated file at models/${validName}-model.ts`);
+      utils.success(`Generated file at ${targetPath}`);
     } catch (err) {
       utils.error(
-        `Security validation failed: ${
+        `Generation failed: ${
           err instanceof Error ? err.message : String(err)
         }`,
       );

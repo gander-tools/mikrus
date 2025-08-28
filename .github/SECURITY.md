@@ -57,6 +57,7 @@ vulnerability, please report it responsibly:
 
 - **Permission-Based Security**: Explicit --allow-read, --allow-write,
   --allow-net permissions
+
 - **Input Validation**: Comprehensive sanitization and validation for all CLI
   parameters
 - **Path Traversal Protection**: File operations restricted to project

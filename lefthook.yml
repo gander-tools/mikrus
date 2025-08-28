@@ -10,19 +10,19 @@ pre-commit:
     deno-check:
       glob: "src/**/*.{ts,tsx}"
       run: deno check {staged_files}
-      
+
     # Deno linting for code quality
     deno-lint:
       glob: "**/*.{js,ts,json,jsx,tsx}"
       exclude: "build/**/*"
       run: deno lint {staged_files}
-      
+
     # Deno formatting check
     deno-fmt:
       glob: "**/*.{js,ts,json,jsx,tsx,md}"
       exclude: "build/**/*"
       run: deno fmt --check {staged_files}
-      
+
     # Run tests on staged files
     deno-test:
       glob: "tests/**/*.test.{ts,tsx}"
@@ -34,11 +34,11 @@ pre-push:
     # Full test suite before push
     full-test:
       run: deno test --allow-read --allow-write --allow-net --coverage
-      
+
     # Type check entire project
     full-check:
       run: deno check src/ tests/
-      
+
     # Lint entire project
     full-lint:
       run: deno lint src/ tests/
