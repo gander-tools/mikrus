@@ -69,7 +69,7 @@ async function run(args: string[] = Deno.args): Promise<void> {
       await cli.showHelp();
       return;
     }
-    
+
     await cli.parse(args);
   } catch (error) {
     // Global error handler for unhandled exceptions
