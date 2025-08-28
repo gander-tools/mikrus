@@ -62,6 +62,7 @@ jobs:
         run: |
           VERSION="${{ steps.extract_version.outputs.VERSION }}"
           TAG="${{ steps.extract_version.outputs.TAG }}"
+          GIT_HASH="${{ github.sha }}"
           
           echo "🔍 Validating stability for version: $VERSION"
           
@@ -128,6 +129,9 @@ jobs:
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=$TAG" >> $GITHUB_OUTPUT
+          
+          sed -i "s/%VERSION%/$VERSION/g" version.ts
+          sed -i "s/%GIT_HASH%/$GIT_HASH/g" version.ts
 
   # Phase 2: Build Linux Binary
   build-linux:
@@ -151,34 +155,6 @@ jobs:
         with:
           deno-version: ${{ env.DENO_VERSION }}
           cache-hash: ${{ hashFiles('**/deno.json', '**/deno.lock') }}
-
-      - name: "🔧 Update Version in deno.json"
-        run: |
-          VERSION="${{ needs.stability-check.outputs.version }}"
-          echo "📝 Updating version in deno.json to: $VERSION"
-          
-          # Check if deno.json exists
-          if [[ ! -f "deno.json" ]]; then
-            echo "❌ deno.json file not found!"
-            exit 1
-          fi
-          
-          # Update version in deno.json
-          # Using jq to properly update JSON
-          if command -v jq &> /dev/null; then
-            # If jq is available, use it for proper JSON handling
-            jq --arg version "$VERSION" '.version = $version' deno.json > deno.json.tmp && mv deno.json.tmp deno.json
-          else
-            # Fallback to sed if jq is not available
-            # This assumes version is on its own line in format: "version": "x.x.x"
-            sed -i "s/\"version\":[[:space:]]*\"[^\"]*\"/\"version\": \"$VERSION\"/" deno.json
-          fi
-          
-          echo "✅ Version updated to $VERSION in deno.json"
-          
-          # Show the updated content for verification
-          echo "📋 Updated deno.json content (first 20 lines):"
-          head -n 20 deno.json
 
       - name: "📦 Cache Dependencies"
         run: |
