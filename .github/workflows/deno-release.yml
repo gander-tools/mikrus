@@ -154,8 +154,8 @@ jobs:
             artifact: windows-x64
     
     outputs:
-      binary_size_linux: ${{ steps.analysis.outputs.BINARY_SIZE_MB }}
-      binary_size_windows: ${{ steps.analysis.outputs.BINARY_SIZE_MB }}
+      binary_size_linux: ${{ steps.analysis-unix.outputs.BINARY_SIZE_MB }}
+      binary_size_windows: ${{ steps.analysis-windows.outputs.BINARY_SIZE_MB }}
     
     steps:
       - name: "📥 Checkout Repository"
@@ -181,19 +181,50 @@ jobs:
           VERSION="${{ needs.stability-check.outputs.version }}"
           GIT_HASH="${GITHUB_SHA::7}"
           
-          # Cross-platform version replacement
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            # Windows using PowerShell
-            powershell -Command "(Get-Content ./src/version.ts) -replace '%VERSION%', '$VERSION' | Set-Content ./src/version.ts"
-            powershell -Command "(Get-Content ./src/version.ts) -replace '%GIT_HASH%', '$GIT_HASH' | Set-Content ./src/version.ts"
-          else
-            # Unix (Linux/macOS)
-            sed -i "s/%VERSION%/$VERSION/g" ./src/version.ts
-            sed -i "s/%GIT_HASH%/$GIT_HASH/g" ./src/version.ts
-          fi
+          echo "✅ Binary compiled successfully for ${{ matrix.platform.name }}"
+        shell: bash
 
-          # Create dist directory
+      - name: "🔄 Replace Version Placeholders (Windows)"
+        if: runner.os == 'Windows'
+        run: |
+          $VERSION = "${{ needs.stability-check.outputs.version }}"
+          $GIT_HASH = "${{ github.sha }}".Substring(0,7)
+          
+          Write-Host "🔄 Replacing version placeholders on Windows..."
+          
+          # Replace version placeholders using PowerShell
+          (Get-Content ./src/version.ts) -replace '%VERSION%', $VERSION | Set-Content ./src/version.ts
+          (Get-Content ./src/version.ts) -replace '%GIT_HASH%', $GIT_HASH | Set-Content ./src/version.ts
+          
+          Write-Host "✅ Version placeholders replaced (Windows)"
+        shell: powershell
+
+      - name: "🔄 Replace Version Placeholders (Unix)"
+        if: runner.os != 'Windows'
+        run: |
+          VERSION="${{ needs.stability-check.outputs.version }}"
+          GIT_HASH="${{ github.sha }}"
+          GIT_HASH="${GIT_HASH::7}"
+          
+          echo "🔄 Replacing version placeholders on Unix..."
+          
+          # Replace version placeholders using sed
+          sed -i "s/%VERSION%/$VERSION/g" ./src/version.ts
+          sed -i "s/%GIT_HASH%/$GIT_HASH/g" ./src/version.ts
+          
+          echo "✅ Version placeholders replaced (Unix)"
+        shell: bash
+
+      - name: "📁 Create Distribution Directory"
+        run: |
+          echo "📁 Creating distribution directory..."
           mkdir -p ./dist
+          echo "✅ Distribution directory created"
+        shell: bash
+
+      - name: "⚡ Compile Binary"
+        run: |
+          echo "⚡ Compiling binary for ${{ matrix.platform.name }}..."
           
           # Compile with Deno for target platform
           deno compile \
@@ -205,47 +236,69 @@ jobs:
             src/cli.ts
           
           echo "✅ Binary compiled successfully for ${{ matrix.platform.name }}"
+        shell: bash
 
-      - name: "🧪 Test Binary"
+      - name: "🔧 Make Binary Executable (Unix)"
+        if: runner.os != 'Windows'
         run: |
-          echo "🧪 Testing compiled binary..."
-          
-          # Make executable on Unix systems
-          if [[ "${{ runner.os }}" != "Windows" ]]; then
-            chmod +x ./dist/${{ matrix.platform.output }}
-          fi
+          echo "🔧 Making binary executable on Unix..."
+          chmod +x ./dist/${{ matrix.platform.output }}
+          echo "✅ Binary made executable"
+        shell: bash
+
+      - name: "🧪 Test Binary Functionality"
+        run: |
+          echo "🧪 Testing compiled binary functionality..."
           
           # Test basic functionality
           ./dist/${{ matrix.platform.output }} --version
           ./dist/${{ matrix.platform.output }} --help
           
           echo "✅ Binary tests passed for ${{ matrix.platform.name }}"
+        shell: bash
 
-      - name: "📊 Binary Analysis"
-        id: analysis
+      - name: "📊 Binary Analysis (Windows)"
+        if: runner.os == 'Windows'
+        id: analysis-windows
         run: |
-          echo "📊 Analyzing binary..."
+          Write-Host "📊 Analyzing binary on Windows..."
           
-          # Cross-platform file size calculation
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            SIZE=$(stat -c%s "./dist/${{ matrix.platform.output }}" 2>/dev/null || echo "0")
-          else
-            SIZE=$(stat -c%s "./dist/${{ matrix.platform.output }}" 2>/dev/null || stat -f%z "./dist/${{ matrix.platform.output }}" 2>/dev/null || echo "0")
-          fi
+          # Get file size using PowerShell
+          $filePath = "./dist/${{ matrix.platform.output }}"
+          $fileInfo = Get-Item $filePath
+          $SIZE = $fileInfo.Length
+          $SIZE_MB = [math]::Floor($SIZE / 1024 / 1024)
           
+          # Set GitHub output
+          echo "BINARY_SIZE_MB=$SIZE_MB" >> $env:GITHUB_OUTPUT
+          Write-Host "📦 Binary size: ${SIZE_MB}MB"
+          
+          # Create SHA256 checksum
+          Write-Host "🔒 Creating checksum..."
+          certutil -hashfile $filePath SHA256 > "$filePath.sha256"
+          
+          Write-Host "✅ Binary analysis completed for Windows"
+        shell: powershell
+
+      - name: "📊 Binary Analysis (Unix)"
+        if: runner.os != 'Windows'
+        id: analysis-unix
+        run: |
+          echo "📊 Analyzing binary on Unix..."
+          
+          # Get file size using stat
+          SIZE=$(stat -c%s "./dist/${{ matrix.platform.output }}" 2>/dev/null || stat -f%z "./dist/${{ matrix.platform.output }}" 2>/dev/null || echo "0")
           SIZE_MB=$((SIZE / 1024 / 1024))
           
           echo "BINARY_SIZE_MB=$SIZE_MB" >> $GITHUB_OUTPUT
           echo "📦 Binary size: ${SIZE_MB}MB"
           
-          # Cross-platform checksum creation
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            certutil -hashfile "./dist/${{ matrix.platform.output }}" SHA256 > "./dist/${{ matrix.platform.output }}.sha256"
-          else
-            sha256sum "./dist/${{ matrix.platform.output }}" > "./dist/${{ matrix.platform.output }}.sha256"
-          fi
+          # Create SHA256 checksum
+          echo "🔒 Creating checksum..."
+          sha256sum "./dist/${{ matrix.platform.output }}" > "./dist/${{ matrix.platform.output }}.sha256"
           
-          echo "🔒 Checksum created for ${{ matrix.platform.name }}"
+          echo "✅ Binary analysis completed for Unix"
+        shell: bash
 
       - name: "📤 Upload Binary Artifact"
         uses: actions/upload-artifact@v4
@@ -257,15 +310,29 @@ jobs:
           retention-days: 7
           compression-level: 9
 
-      - name: "📊 Build Summary"
+      - name: "📊 Build Summary (Windows)"
+        if: runner.os == 'Windows'
+        run: |
+          echo "## 🔨 ${{ matrix.platform.name }} Build Complete" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "- **Target**: ${{ matrix.platform.target }}" >> $env:GITHUB_STEP_SUMMARY
+          echo "- **Binary**: ${{ matrix.platform.output }}" >> $env:GITHUB_STEP_SUMMARY
+          echo "- **Size**: ${{ steps.analysis-windows.outputs.BINARY_SIZE_MB }}MB" >> $env:GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ needs.stability-check.outputs.tag }}" >> $env:GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Success" >> $env:GITHUB_STEP_SUMMARY
+        shell: powershell
+
+      - name: "📊 Build Summary (Unix)"
+        if: runner.os != 'Windows'
         run: |
           echo "## 🔨 ${{ matrix.platform.name }} Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Target**: ${{ matrix.platform.target }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Binary**: ${{ matrix.platform.output }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Size**: ${{ steps.analysis.outputs.BINARY_SIZE_MB }}MB" >> $GITHUB_STEP_SUMMARY
+          echo "- **Size**: ${{ steps.analysis-unix.outputs.BINARY_SIZE_MB }}MB" >> $GITHUB_STEP_SUMMARY
           echo "- **Version**: ${{ needs.stability-check.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
+        shell: bash
 
   # Phase 3: Create Draft Release
   create-draft-release:
