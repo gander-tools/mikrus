@@ -38,21 +38,25 @@ jobs:
     steps:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for comprehensive security analysis
+        id: deno_security_checkout_deps
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis and security scanning
-        uses: denoland/setup-deno@v2.0.3
+        id: deno_security_setup_deps
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
         with:
           deno-version: v2.4
           cache-hash: ${{ hashFiles('**/deno.json') }}
 
       - name: "📦 Dependencies: Cache Deno Modules"
         # Cache Deno dependencies for faster security analysis
+        id: deno_security_cache_deps
         run: deno cache src/cli.ts tests/generate-security.test.ts
 
       - name: "🔍 Security: Deno Dependency Security Audit"
         # Runs Deno security audit for JSR and remote dependencies
+        id: deno_security_audit_deps
         run: |
           echo "🔍 Running Deno dependency security audit..."
 
@@ -90,6 +94,7 @@ jobs:
 
       - name: "🔍 Security: Deno Package Validation"
         # Deno-native package validation using JSR and URL-based imports
+        id: deno_security_package_validation
         run: |
           echo "🔍 Validating Deno package security..."
           # Deno uses URL-based imports, so check for secure HTTPS imports
@@ -110,22 +115,26 @@ jobs:
       contents: read
     steps:
       - name: "📥 Repository: Checkout Code"
+        id: deno_security_checkout_license
         # Downloads repository content for comprehensive security analysis
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis
-        uses: denoland/setup-deno@v2.0.3
+        id: deno_security_setup_license
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
         with:
           deno-version: v2.4
           cache-hash: ${{ hashFiles('**/deno.json') }}
 
       - name: "📦 Dependencies: Cache Deno Modules"
         # Cache Deno dependencies for analysis
+        id: deno_security_cache_license
         run: deno cache src/cli.ts tests/generate-security.test.ts
 
       - name: "📋 Legal: Deno License Review"
         # Reviews JSR and URL-based import licenses
+        id: deno_security_license_review
         run: |
           echo "📜 Reviewing Deno dependency licenses..."
           echo "📋 Dependency sources:"
@@ -145,10 +154,12 @@ jobs:
     steps:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for comprehensive security analysis
+        id: deno_security_checkout_secrets
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: "🔍 Security: Hardcoded Secrets Detection"
         # Searches source code for hardcoded passwords, API keys, and credentials
+        id: deno_security_hardcoded_secrets
         run: |
           echo "🔍 Scanning for hardcoded secrets..."
 
@@ -178,6 +189,7 @@ jobs:
 
       - name: "🔐 VPS CLI Security: Credential Safety Check"
         # VPS management CLI specific security validation
+        id: deno_security_vps_credential_safety
         run: |
           echo "🔍 Checking VPS CLI security practices..."
 
@@ -213,10 +225,12 @@ jobs:
     steps:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for comprehensive security analysis
+        id: deno_security_checkout_supply_chain
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: "🔍 Security: Package Integrity Verification"
         # Verifies package authenticity and checks for suspicious dependencies
+        id: deno_security_package_integrity
         run: |
           echo "🔍 Verifying package integrity..."
 
@@ -237,6 +251,7 @@ jobs:
 
       - name: "🔍 Security: Typosquatting Detection"
         # Analyzes dependencies for potential typosquatting attacks
+        id: deno_security_typosquatting_detection
         run: |
           echo "🔍 Checking for potential typosquatting packages..."
 
@@ -255,21 +270,25 @@ jobs:
     steps:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for CLI quality validation
+        id: deno_security_checkout_cli_quality
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for CLI quality checks
-        uses: denoland/setup-deno@v2.0.3
+        id: deno_security_setup_cli_quality
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
         with:
           deno-version: v2.4
           cache-hash: ${{ hashFiles('**/deno.json') }}
 
       - name: "📦 Dependencies: Cache Deno Modules"
         # Cache Deno dependencies for faster quality checks
+        id: deno_security_cache_cli_quality
         run: deno cache src/cli.ts tests/generate-security.test.ts
 
       - name: "✨ Code Quality: Deno Lint & Format Check"
         # Validates code style and formatting using Deno native tools
+        id: deno_security_lint_format_check
         run: |
           echo "🔍 Running Deno quality checks..."
           deno lint src/ tests/
@@ -277,12 +296,14 @@ jobs:
 
       - name: "🔧 TypeScript: Compilation Check"
         # Ensures TypeScript code compiles without errors using Deno check
+        id: deno_security_typescript_compilation
         run: |
           echo "🔍 Checking TypeScript compilation..."
           deno check src/cli.ts tests/generate-security.test.ts
 
       - name: "🧪 TDD Compliance: Test Coverage Check"
         # Validates TDD methodology compliance and test coverage
+        id: deno_security_tdd_compliance
         run: |
           echo "🔍 Running Deno test coverage checks..."
           deno test --coverage --allow-read --allow-write
@@ -290,6 +311,7 @@ jobs:
 
       - name: "🚀 CLI Integration: Smoke Test"
         # Tests basic CLI functionality using Deno run
+        id: deno_security_cli_smoke_test
         run: |
           echo "🔍 Testing CLI functionality with Deno..."
           deno run --allow-read --allow-write --allow-net src/cli.ts --help
@@ -307,21 +329,25 @@ jobs:
     steps:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for vulnerability scanning
+        id: deno_security_checkout_vulnerability
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis and security scanning
-        uses: denoland/setup-deno@v2.0.3
+        id: deno_security_setup_vulnerability
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
         with:
           deno-version: v2.4
           cache-hash: ${{ hashFiles('**/deno.json') }}
 
       - name: "📦 Dependencies: Cache Deno Modules"
         # Cache Deno dependencies for faster security analysis
+        id: deno_security_cache_vulnerability
         run: deno cache src/cli.ts tests/generate-security.test.ts
 
       - name: "🔍 Security: Deno Dependency Vulnerability Scan"
         # Comprehensive vulnerability scanning for Deno dependencies
+        id: deno_security_dependency_vulnerability_scan
         run: |
           echo "🔍 Running Deno dependency vulnerability scan..."
 
@@ -365,6 +391,7 @@ jobs:
 
       - name: "🔐 Security: Advanced Dependency Analysis"
         # Advanced security analysis for dependency sources and versions
+        id: deno_security_advanced_dependency_analysis
         run: |
           echo "🔍 Advanced dependency security analysis..."
 
@@ -399,6 +426,7 @@ jobs:
 
       - name: "📊 Report: Vulnerability Scan Summary"
         # Provides detailed summary of Deno vulnerability scan results
+        id: deno_security_vulnerability_scan_summary
         if: always()
         run: |
           echo "📊 Deno Vulnerability Scan Summary"

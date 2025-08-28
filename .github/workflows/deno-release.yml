@@ -25,11 +25,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "📥 Repository: Checkout Code"
+        id: deno_release_checkout_validate
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
         with:
           fetch-depth: 0
 
       - name: "🏷️ Validation: Check Tag Format"
+        id: deno_release_validate_tag
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ github.event.inputs.version }}"
@@ -67,6 +69,7 @@ jobs:
     needs: [deno-validate-tag]
     steps:
       - name: "✅ Validation: Verify Deno CI Success"
+        id: deno_release_check_ci_status
         uses: actions/github-script@4da74d82a6a0e0e5b12e1e8e994be6e4f13b0ff1 # v7
         with:
           script: |
@@ -104,16 +107,22 @@ jobs:
           - { name: "macos-arm64", target: "aarch64-apple-darwin", ext: "" }
     steps:
       - name: "📥 Repository: Checkout Code"
+        id: deno_release_checkout_build
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: "🦕 Runtime: Setup Deno"
+<<<<<<< HEAD
         uses: denoland/setup-deno@v2.0.3
+=======
+        id: deno_release_setup_deno
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
+>>>>>>> origin/master
         with:
           deno-version: v2.4
           cache-hash: ${{ hashFiles('**/deno.json') }}
 
       - name: "🏷️ Version: Extract from Tag"
-        id: get_version
+        id: deno_release_get_version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ github.event.inputs.version }}"
@@ -124,12 +133,15 @@ jobs:
           echo "Building version: $VERSION"
 
       - name: "🔍 Quality: Run Tests"
+        id: deno_release_run_tests
         run: deno test --allow-read --allow-write
 
       - name: "✨ Code Quality: Check Formatting"
+        id: deno_release_check_formatting
         run: deno fmt --check
 
       - name: "🔨 Compile: ${{ matrix.target.name }} Binary"
+        id: deno_release_compile_binary
         run: |
           deno compile \
             --allow-read \
@@ -140,6 +152,7 @@ jobs:
             src/cli.ts
 
       - name: "🔐 Security: Generate Checksums"
+        id: deno_release_generate_checksums
         run: |
           BINARY="mikrus-${{ matrix.target.name }}${{ matrix.target.ext }}"
           sha256sum "$BINARY" > "$BINARY.sha256"
@@ -147,6 +160,7 @@ jobs:
           cat "$BINARY.sha256"
 
       - name: "📦 Archive: Upload Binary Artifacts"
+        id: deno_release_upload_artifacts
         uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4
         with:
           name: mikrus-${{ matrix.target.name }}
@@ -160,16 +174,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: [deno-build-binaries]
     outputs:
-      release_url: ${{ steps.create_release.outputs.upload_url }}
-      version: ${{ steps.get_version.outputs.VERSION }}
+      release_url: ${{ steps.deno_release_create_release.outputs.upload_url }}
+      version: ${{ steps.deno_release_extract_version.outputs.VERSION }}
     steps:
       - name: "📥 Repository: Checkout Code"
+        id: deno_release_checkout_create
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
         with:
           fetch-depth: 0
 
       - name: "🏷️ Version: Extract from Tag"
-        id: get_version
+        id: deno_release_extract_version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ github.event.inputs.version }}"
@@ -179,7 +194,7 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: "📝 Documentation: Generate Release Notes"
-        id: release_notes
+        id: deno_release_generate_notes
         run: |
           VERSION="${{ steps.get_version.outputs.VERSION }}"
           echo "## 🚀 Release $VERSION" > release_notes.md
@@ -213,18 +228,20 @@ jobs:
           git log --pretty=format:"- %s" --no-merges --max-count=10 >> release_notes.md || echo "- Release $VERSION" >> release_notes.md
 
       - name: "📥 Artifacts: Download All Binaries"
+        id: deno_release_download_artifacts
         uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935 # v4
         with:
           path: ./artifacts
 
       - name: "📦 Organize: Prepare Release Assets"
+        id: deno_release_organize_assets
         run: |
           mkdir -p ./release-assets
           find ./artifacts -name "mikrus-*" -type f -exec cp {} ./release-assets/ \;
           ls -la ./release-assets/
 
       - name: "🚀 GitHub: Create Release"
-        id: create_release
+        id: deno_release_create_release
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
           tag_name: v${{ steps.get_version.outputs.VERSION }}
@@ -243,23 +260,32 @@ jobs:
     if: ${{ !contains(needs.deno-create-release.outputs.version, '-') }} # Only for stable releases
     steps:
       - name: "📥 Repository: Checkout Code"
+        id: deno_jsr_checkout
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: "🦕 Runtime: Setup Deno"
+<<<<<<< HEAD
         uses: denoland/setup-deno@v2.0.3
+=======
+        id: deno_jsr_setup
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
+>>>>>>> origin/master
         with:
           deno-version: v2.4
           cache-hash: ${{ hashFiles('**/deno.json') }}
 
       - name: "🔍 Validation: Dry Run Publish"
+        id: deno_jsr_dry_run
         run: deno publish --dry-run
 
       - name: "🚀 JSR: Publish Package"
+        id: deno_jsr_publish
         run: deno publish
         env:
           DENO_REGISTRY_TOKEN: ${{ secrets.JSR_TOKEN }}
 
       - name: "✅ Verification: Confirm JSR Publication"
+        id: deno_jsr_verify
         run: |
           VERSION="${{ needs.deno-create-release.outputs.version }}"
           echo "Waiting for JSR package propagation..."
@@ -284,6 +310,7 @@ jobs:
             binary: mikrus-macos-x64
     steps:
       - name: "📥 Download: Binary from Release"
+        id: deno_integration_download_binary
         run: |
           VERSION="${{ needs.deno-create-release.outputs.version }}"
           DOWNLOAD_URL="https://github.com/gander-tools/mikrus/releases/download/v$VERSION/${{ matrix.binary }}"
@@ -296,6 +323,7 @@ jobs:
           fi
 
       - name: "🔍 Integration: Version Test"
+        id: deno_integration_version_test
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
             VERSION_OUTPUT=$(./${{ matrix.binary }} --version)
@@ -314,6 +342,7 @@ jobs:
           echo "✅ Version test passed"
 
       - name: "🔍 Integration: Help Test"
+        id: deno_integration_help_test
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
             HELP_OUTPUT=$(./${{ matrix.binary }} --help)
@@ -328,5 +357,9 @@ jobs:
             echo "❌ Help output missing expected description"
             exit 1
           fi
+<<<<<<< HEAD
 
+=======
+          
+>>>>>>> origin/master
           echo "✅ Help test passed"
