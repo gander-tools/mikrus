@@ -1,8 +1,8 @@
-name: "📦 GitHub Packages Distribution"
+name: "📦 Deno Package Release"
 
-# Binary distribution to GitHub Packages
-# Builds and publishes binaries for Linux x86_64
-# Direct package upload without Docker containers
+# Builds Linux x86_64 binary and creates draft GitHub Release
+# Does NOT publish release - remains as draft
+# Does NOT create tags - only responds to existing tags
 
 on:
   push:
@@ -10,26 +10,24 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+' # Semantic versions only
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to build (e.g., 1.0.0)'
+      tag:
+        description: 'Tag version (e.g., v1.0.0)'
         required: true
-        default: '0.0.1'
         type: string
 
 concurrency:
-  group: packages-${{ github.ref }}
+  group: release-${{ github.ref }}-${{ github.event.inputs.tag || '' }}
   cancel-in-progress: false
 
 permissions:
-  contents: read
-  packages: write
+  contents: write
+  pull-requests: read
 
 env:
   DENO_VERSION: '2.4'
-  PACKAGE_NAME: mikrus-cli
 
 jobs:
-  # Phase 0: Stability Check
+  # Phase 1: Stability Check
   stability-check:
     name: "🔍 Stability Validation"
     runs-on: ubuntu-latest
@@ -39,17 +37,23 @@ jobs:
     outputs:
       is_stable: ${{ steps.stability_validation.outputs.is_stable }}
       version: ${{ steps.stability_validation.outputs.version }}
+      tag: ${{ steps.stability_validation.outputs.tag }}
       
     steps:
       - name: "🏷️ Extract Version"
         id: extract_version
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            VERSION="${{ github.event.inputs.version }}"
+            TAG="${{ github.event.inputs.tag }}"
+            VERSION="${TAG#v}"
           else
-            VERSION="${GITHUB_REF#refs/tags/v}"
+            TAG="${GITHUB_REF#refs/tags/}"
+            VERSION="${TAG#v}"
           fi
+          
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "📌 Processing tag: $TAG (version: $VERSION)"
 
       - name: "🔍 Validate Stability Rules"
         id: stability_validation
@@ -57,6 +61,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ steps.extract_version.outputs.VERSION }}"
+          TAG="${{ steps.extract_version.outputs.TAG }}"
+          
           echo "🔍 Validating stability for version: $VERSION"
           
           # Check version format
@@ -79,7 +85,7 @@ jobs:
             MILESTONE_NUM=100  # 0.1.0
             
             if [[ "$VERSION_NUM" -lt "$MILESTONE_NUM" ]]; then
-              echo "🔍 Development phase - checking for active fix PRs..."
+              echo "🔍 Development phase (before v0.1.0) - checking for active fix PRs..."
               
               ACTIVE_FIX_PRS=$(gh pr list \
                 --repo "${{ github.repository }}" \
@@ -90,44 +96,50 @@ jobs:
                   (.labels[]?.name | test("(fix|bug|hotfix)"; "i"))
                 ) | .number' | wc -l)
               
+              echo "📊 Active fix PRs found: $ACTIVE_FIX_PRS"
+              
               if [[ "$ACTIVE_FIX_PRS" -gt 0 ]]; then
-                echo "❌ Found $ACTIVE_FIX_PRS active fix PR(s)"
+                echo "❌ STABILITY CHECK FAILED"
+                echo "   Development phase requires no active fix PRs"
+                echo "   Found $ACTIVE_FIX_PRS active fix PR(s)"
+                
+                # List problematic PRs
+                echo "🔍 Active fix PRs:"
+                gh pr list \
+                  --repo "${{ github.repository }}" \
+                  --state open \
+                  --json number,title \
+                  --jq '.[] | select(.title | test("^(fix|bugfix|hotfix)"; "i")) | "  #\(.number): \(.title)"'
+                
                 echo "is_stable=false" >> $GITHUB_OUTPUT
                 exit 1
               else
-                echo "✅ No active fix PRs"
+                echo "✅ STABILITY CHECK PASSED - No active fix PRs"
                 echo "is_stable=true" >> $GITHUB_OUTPUT
               fi
             else
-              echo "✅ Pre-production milestone"
+              echo "🚀 Pre-production milestone (v0.1.0+)"
               echo "is_stable=true" >> $GITHUB_OUTPUT
             fi
           else
-            echo "✅ Production version"
+            echo "🎉 Production version (v1.0.0+)"
             echo "is_stable=true" >> $GITHUB_OUTPUT
           fi
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-  # Phase 1: Build Binaries
-  build-binaries:
-    name: "🔨 Build ${{ matrix.platform.name }}"
-    runs-on: ${{ matrix.platform.os }}
+  # Phase 2: Build Linux Binary
+  build-linux:
+    name: "🔨 Build Linux x86_64"
+    runs-on: ubuntu-latest
     needs: stability-check
     if: needs.stability-check.outputs.is_stable == 'true'
     permissions:
       contents: read
+    outputs:
+      binary_size: ${{ steps.analysis.outputs.BINARY_SIZE_MB }}
     
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: "Linux x86_64"
-            os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            output: mikrus-linux-x64
-            artifact: linux-x64
-
     steps:
       - name: "📥 Checkout Repository"
         uses: actions/checkout@v4
@@ -138,26 +150,16 @@ jobs:
         uses: denoland/setup-deno@v2
         with:
           deno-version: ${{ env.DENO_VERSION }}
-
-      - name: "🏷️ Extract Version"
-        id: version
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            VERSION="${{ github.event.inputs.version }}"
-          else
-            VERSION="${GITHUB_REF#refs/tags/v}"
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "Building version: $VERSION"
+          cache-hash: ${{ hashFiles('**/deno.json', '**/deno.lock') }}
 
       - name: "📦 Cache Dependencies"
         run: |
-          echo "Caching Deno dependencies..."
+          echo "📦 Caching Deno dependencies..."
           deno cache src/cli.ts
 
-      - name: "🔨 Compile Binary"
+      - name: "🔨 Compile Linux Binary"
         run: |
-          echo "Compiling ${{ matrix.platform.name }} binary..."
+          echo "🔨 Compiling Linux x86_64 binary..."
           
           # Create dist directory
           mkdir -p ./dist
@@ -167,190 +169,199 @@ jobs:
             --allow-read \
             --allow-write \
             --allow-net \
-            --target=${{ matrix.platform.target }} \
-            --output=./dist/${{ matrix.platform.output }} \
+            --target=x86_64-unknown-linux-gnu \
+            --output=./dist/mikrus-linux-x64 \
             src/cli.ts
           
-          echo "Binary compiled successfully"
+          echo "✅ Binary compiled successfully"
 
       - name: "🧪 Test Binary"
-        if: runner.os == 'Linux'
         run: |
-          echo "Testing compiled binary..."
-          chmod +x ./dist/${{ matrix.platform.output }}
+          echo "🧪 Testing compiled binary..."
+          chmod +x ./dist/mikrus-linux-x64
           
           # Basic functionality tests
-          ./dist/${{ matrix.platform.output }} --version
-          ./dist/${{ matrix.platform.output }} --help
+          ./dist/mikrus-linux-x64 --version
+          ./dist/mikrus-linux-x64 --help
           
-          echo "Binary tests passed"
+          echo "✅ Binary tests passed"
 
-      - name: "📏 Binary Analysis"
+      - name: "📊 Binary Analysis"
         id: analysis
         run: |
-          echo "Analyzing binary..."
+          echo "📊 Analyzing binary..."
           
           # Get file size
-          SIZE=$(stat -c%s "./dist/${{ matrix.platform.output }}" 2>/dev/null || stat -f%z "./dist/${{ matrix.platform.output }}" 2>/dev/null || echo "0")
+          SIZE=$(stat -c%s "./dist/mikrus-linux-x64")
           SIZE_MB=$((SIZE / 1024 / 1024))
           
           echo "BINARY_SIZE_MB=$SIZE_MB" >> $GITHUB_OUTPUT
-          echo "Binary size: ${SIZE_MB}MB"
+          echo "📦 Binary size: ${SIZE_MB}MB"
+          
+          # Create checksum
+          sha256sum ./dist/mikrus-linux-x64 > ./dist/mikrus-linux-x64.sha256
+          
+          echo "🔐 Checksum created"
 
-      - name: "📤 Upload Artifact"
+      - name: "📤 Upload Binary Artifact"
         uses: actions/upload-artifact@v4
         with:
-          name: mikrus-${{ matrix.platform.artifact }}-${{ steps.version.outputs.VERSION }}
-          path: ./dist/${{ matrix.platform.output }}
+          name: mikrus-linux-x64
+          path: |
+            ./dist/mikrus-linux-x64
+            ./dist/mikrus-linux-x64.sha256
           retention-days: 7
           compression-level: 9
 
-  # Phase 2: Publish to GitHub Packages
-  publish-packages:
-    name: "🚀 Publish to GitHub Packages"
+      - name: "📊 Build Summary"
+        run: |
+          echo "## 🔨 Linux x86_64 Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target**: x86_64-unknown-linux-gnu" >> $GITHUB_STEP_SUMMARY
+          echo "- **Binary**: mikrus-linux-x64" >> $GITHUB_STEP_SUMMARY
+          echo "- **Size**: ${{ steps.analysis.outputs.BINARY_SIZE_MB }}MB" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ needs.stability-check.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
+
+  # Phase 3: Create Draft Release
+  create-draft-release:
+    name: "📝 Create Draft Release"
     runs-on: ubuntu-latest
-    needs: [stability-check, build-binaries]
+    needs: [stability-check, build-linux]
     permissions:
-      contents: read
-      packages: write
+      contents: write
     
     steps:
-      - name: "🏷️ Setup Version"
-        id: version
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            VERSION="${{ github.event.inputs.version }}"
-          else
-            VERSION="${GITHUB_REF#refs/tags/v}"
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "Publishing version: $VERSION"
+      - name: "📥 Checkout Repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: "📥 Download Artifacts"
+      - name: "📥 Download Binary"
         uses: actions/download-artifact@v4
         with:
-          path: ./artifacts
+          name: mikrus-linux-x64
+          path: ./release-assets
 
-      - name: "📦 Prepare Packages"
-        id: prepare
+      - name: "📝 Generate Release Notes"
+        id: release_notes
+        env:
+          VERSION: ${{ needs.stability-check.outputs.version }}
+          TAG: ${{ needs.stability-check.outputs.tag }}
+          BINARY_SIZE: ${{ needs.build-linux.outputs.binary_size }}
         run: |
-          echo "Preparing packages for upload..."
+          cat > release_notes.md << 'EOF'
+          ## 🚀 mikrus CLI ${{ env.TAG }}
           
-          # Create package directory structure
-          mkdir -p ./packages
+          ### 📦 Assets
           
-          # Find and organize all binaries
-          find ./artifacts -type f -name "mikrus-*" | while read -r file; do
-            filename=$(basename "$file")
-            cp "$file" "./packages/$filename"
-            
-            # Make executable
-            chmod +x "./packages/$filename"
-            
-            echo "Prepared: $filename"
-          done
+          | Platform | Architecture | Size | File |
+          |----------|-------------|------|------|
+          | Linux | x86_64 | ${{ env.BINARY_SIZE }}MB | `mikrus-linux-x64` |
           
-          # List packages
-          echo "Package contents:"
-          ls -la ./packages/
+          ### 🔧 Installation
           
-          # Calculate total size
-          TOTAL_SIZE=$(du -sm ./packages | cut -f1)
-          echo "PACKAGE_SIZE_MB=$TOTAL_SIZE" >> $GITHUB_OUTPUT
-          echo "Total package size: ${TOTAL_SIZE}MB"
+          #### Linux x86_64
+          ```bash
+          # Download binary
+          wget https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/mikrus-linux-x64
+          
+          # Make executable
+          chmod +x mikrus-linux-x64
+          
+          # Move to PATH (optional)
+          sudo mv mikrus-linux-x64 /usr/local/bin/mikrus
+          
+          # Verify installation
+          mikrus --version
+          ```
+          
+          ### 🔐 Verify Integrity
+          
+          ```bash
+          # Download checksum file
+          wget https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/mikrus-linux-x64.sha256
+          
+          # Verify checksum
+          sha256sum -c mikrus-linux-x64.sha256
+          ```
+          
+          ### 📝 Changelog
+          
+          <!-- Changelog will be auto-generated from commits -->
+          
+          ### 🔧 Usage
+          
+          ```bash
+          # Show help
+          mikrus --help
+          
+          # Generate model files
+          mikrus generate <name>
+          
+          # Check version
+          mikrus --version
+          ```
+          
+          ### 📋 Requirements
+          
+          - Linux x86_64
+          - No external dependencies (Deno runtime embedded)
+          
+          ### 📚 Documentation
+          
+          - [README](https://github.com/${{ github.repository }}#readme)
+          - [Issues & Support](https://github.com/${{ github.repository }}/issues)
+          
+          ---
+          
+          **⚠️ Note:** This is a draft release. Review and publish when ready.
+          EOF
+          
+          echo "✅ Release notes generated"
 
-      - name: "📤 Publish Linux x64 Binary"
+      - name: "🏷️ Create Draft Release"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.stability-check.outputs.tag }}
         run: |
-          echo "Publishing Linux x64 binary to GitHub Packages..."
+          echo "📝 Creating draft release for $TAG..."
           
-          OWNER="${{ github.repository_owner }}"
-          REPO="${{ github.event.repository.name }}"
-          VERSION="${{ steps.version.outputs.VERSION }}"
+          # Check if release already exists
+          EXISTING_RELEASE=$(gh release view "$TAG" --json id 2>/dev/null || echo "")
           
-          # Find Linux binary
-          LINUX_BINARY=$(find ./packages -name "*linux-x64*" -type f | head -1)
-          
-          if [[ -n "$LINUX_BINARY" ]]; then
-            BINARY_NAME=$(basename "$LINUX_BINARY")
-            
-            echo "Uploading: $BINARY_NAME"
-            
-            # Upload to GitHub Packages using API
-            # Generic packages endpoint for binaries
-            curl -X PUT \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary "@$LINUX_BINARY" \
-              "https://uploads.github.com/repos/$OWNER/$REPO/releases/assets?name=$BINARY_NAME&label=Linux+x64+Binary" \
-              2>/dev/null || {
-                # Alternative: Upload as package
-                echo "Attempting alternative upload method..."
-                
-                # Create tar.gz for package registry
-                tar -czf "./mikrus-cli-${VERSION}-linux-x64.tar.gz" -C ./packages "$BINARY_NAME"
-                
-                # Upload to package registry
-                curl -X PUT \
-                  -H "Authorization: Bearer $GITHUB_TOKEN" \
-                  -H "Content-Type: application/gzip" \
-                  --data-binary "@./mikrus-cli-${VERSION}-linux-x64.tar.gz" \
-                  "https://npm.pkg.github.com/@$OWNER/${{ env.PACKAGE_NAME }}/-/${{ env.PACKAGE_NAME }}-${VERSION}-linux-x64.tgz" \
-                  || echo "Note: Package upload requires npm registry configuration"
-              }
-            
-            echo "✅ Linux x64 binary published"
-          else
-            echo "⚠️ Linux binary not found"
-            exit 1
+          if [[ -n "$EXISTING_RELEASE" ]]; then
+            echo "⚠️  Release $TAG already exists. Deleting old draft..."
+            gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
           fi
+          
+          # Create new draft release
+          gh release create "$TAG" \
+            --draft \
+            --title "mikrus CLI $TAG" \
+            --notes-file release_notes.md \
+            ./release-assets/mikrus-linux-x64 \
+            ./release-assets/mikrus-linux-x64.sha256
+          
+          echo "✅ Draft release created successfully"
+          echo "📌 Release URL: https://github.com/${{ github.repository }}/releases/tag/$TAG"
 
-      - name: "🧹 Cleanup Old Packages"
+      - name: "📊 Release Summary"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
+          TAG: ${{ needs.stability-check.outputs.tag }}
         run: |
-          echo "Cleaning up old package versions..."
-          
-          # List and clean old package versions via API
-          OWNER="${{ github.repository_owner }}"
-          PACKAGE_TYPE="npm"  # or "container" depending on your setup
-          PACKAGE_NAME="${{ env.PACKAGE_NAME }}"
-          
-          # Get package versions
-          VERSIONS=$(curl -s \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/orgs/$OWNER/packages/$PACKAGE_TYPE/$PACKAGE_NAME/versions" \
-            | jq -r '.[].id' 2>/dev/null || echo "")
-          
-          if [[ -n "$VERSIONS" ]]; then
-            # Keep only the latest 3 versions
-            echo "$VERSIONS" | tail -n +4 | while read -r version_id; do
-              echo "Deleting old version: $version_id"
-              curl -X DELETE \
-                -H "Authorization: Bearer $GITHUB_TOKEN" \
-                -H "Accept: application/vnd.github.v3+json" \
-                "https://api.github.com/orgs/$OWNER/packages/$PACKAGE_TYPE/$PACKAGE_NAME/versions/$version_id" \
-                2>/dev/null || echo "Could not delete version $version_id"
-            done
-          fi
-
-      - name: "📊 Publishing Summary"
-        run: |
-          echo "## 🚀 Package Publishing Complete" >> $GITHUB_STEP_SUMMARY
+          echo "## 📝 Draft Release Created" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📦 Package Information" >> $GITHUB_STEP_SUMMARY
-          echo "- **Name**: ${{ env.PACKAGE_NAME }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version**: ${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total Size**: ${{ steps.prepare.outputs.PACKAGE_SIZE_MB }}MB" >> $GITHUB_STEP_SUMMARY
+          echo "### 📌 Release Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: $TAG" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: Draft (not published)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Binary Size**: ${{ needs.build-linux.outputs.binary_size }}MB" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔧 Installation" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "# Download from GitHub Packages" >> $GITHUB_STEP_SUMMARY
-          echo "gh release download v${{ steps.version.outputs.VERSION }} --repo ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Included Assets" >> $GITHUB_STEP_SUMMARY
+          echo "- mikrus-linux-x64 (Linux x86_64 binary)" >> $GITHUB_STEP_SUMMARY
+          echo "- mikrus-linux-x64.sha256 (SHA256 checksum)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### ✅ Status" >> $GITHUB_STEP_SUMMARY
-          echo "Binary packages successfully published to GitHub Packages" >> $GITHUB_STEP_SUMMARY
+          echo "### ⚠️ Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review the draft release at [GitHub Releases](https://github.com/${{ github.repository }}/releases)" >> $GITHUB_STEP_SUMMARY
+          echo "2. Edit release notes if needed" >> $GITHUB_STEP_SUMMARY
+          echo "3. Publish when ready" >> $GITHUB_STEP_SUMMARY
