@@ -1,10 +1,7 @@
 import { Command } from "@cliffy/command";
 import { red, yellow } from "jsr:@std/fmt@1.0.8/colors";
 import { generateCommand } from "./commands/generate.ts";
-
-// Load version dynamically from deno.json
-const denoConfig = JSON.parse(await Deno.readTextFile("./deno.json"));
-const version = denoConfig.version;
+import { version } from "../deno.json" with { type: "json" };
 
 /**
  * Creates and runs the mikrus CLI using Cliffy framework
