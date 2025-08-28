@@ -2,11 +2,12 @@
 
 [![Deno CI](https://github.com/gander-tools/mikrus/actions/workflows/deno-ci.yml/badge.svg)](https://github.com/gander-tools/mikrus/actions/workflows/deno-ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/gander-tools/mikrus/blob/main/LICENSE)
-[![Deno](https://img.shields.io/badge/deno-%5E2.0.0-green.svg)](https://deno.land/)
-[![Cliffy](https://img.shields.io/badge/cliffy-v1.0.0--rc.4-orange.svg)](https://github.com/c4spar/deno-cliffy)
+[![Deno](https://img.shields.io/badge/deno-%5E2.4-green.svg)](https://deno.land/)
+[![Cliffy](https://img.shields.io/badge/cliffy-%5E1.0.0--rc.8-orange.svg)](https://github.com/c4spar/deno-cliffy)
+[![JSR](https://jsr.io/badges/@gander-tools/mikrus)](https://jsr.io/@gander-tools/mikrus)
 
 Command-line interface tool for managing VPS servers on the **mikr.us**
-platform. Built with modern Deno runtime and Cliffy CLI framework. Inspired by
+platform. Built with the modern Deno runtime and Cliffy CLI framework. Inspired by
 [mikrus-cli](https://github.com/unkn0w/noobs/blob/main/mikrus-cli/mikrus).
 
 ## Installation
@@ -41,7 +42,7 @@ deno task compile
 
 ### Prerequisites
 
-- **Deno**: 2.0.0 or higher
+- **Deno**: ^2.4 or higher
   ([Install Deno](https://deno.land/manual/getting_started/installation))
 - **Operating System**: Linux, macOS, or Windows
 - **Permissions**: `--allow-read`, `--allow-write`, `--allow-net` for full
@@ -80,7 +81,7 @@ mikrus generate --help
 ### Testing
 
 - `deno task test` - Run all tests
-- `deno task test:coverage` - Run tests with coverage report
+- `deno task test:coverage` - Run tests with a coverage report
 - `deno task coverage:html` - Generate HTML coverage report
 
 ### Binary Compilation
@@ -119,7 +120,7 @@ runtime:
 - **Permission-based Security**: Explicit permission management
 - **Cross-platform Binaries**: Linux, Windows, macOS compilation
 - **Zero Dependencies**: URL-based imports, no node_modules
-- **Fast CI**: Native TypeScript execution without compilation step
+- **Fast CI**: Native TypeScript execution without a compilation step
 
 ## Usage Examples
 
@@ -153,8 +154,8 @@ deno run --allow-read --allow-write src/cli.ts generate example
 
 ### Deno + Cliffy Stack
 
-- **Runtime**: Deno 2.0+ (native TypeScript, secure by default)
-- **CLI Framework**: Cliffy 1.0.0-rc.4 (modern, typed CLI commands)
+- **Runtime**: Deno 2.4+ (native TypeScript, secure by default)
+- **CLI Framework**: Cliffy 1.0.0-rc.8 (modern, typed CLI commands)
 - **Dependencies**: URL-based imports (no package.json dependencies)
 - **Testing**: Deno native testing (no external frameworks)
 - **Security**: Permission-based access control
@@ -192,14 +193,12 @@ deno run --allow-read --allow-write --allow-net src/cli.ts
 ```shell
 # Check your Deno version
 deno --version
-# Upgrade to Deno 2+ if needed
+# Upgrade to Deno 2.4+ if needed
 curl -fsSL https://deno.land/x/install/install.sh | sh
 ```
 
 ### Getting Help
 
-- 📚 **Documentation**: See [DENO-WORKFLOW.md](./DENO-WORKFLOW.md) for detailed
-  Deno workflow
 - 🔒 **Security**: Review security guidelines in
   [docs/security.md](./docs/security.md)
 - 🐛 **Issues**: Report bugs at
@@ -211,7 +210,6 @@ curl -fsSL https://deno.land/x/install/install.sh | sh
 
 ### Core Documentation
 
-- 🦕 **[Deno Workflow](./DENO-WORKFLOW.md)** - Deno development and CI/CD guide
 - 📋 **[Commands Reference](./docs/commands.md)** - Complete CLI command
   documentation
 - 🔒 **[Security Guidelines](./docs/security.md)** - Security best practices and
@@ -230,27 +228,9 @@ curl -fsSL https://deno.land/x/install/install.sh | sh
 - 🧪 **Test Coverage**: 100% with 30 comprehensive security tests
 - 🔄 **CI/CD Pipeline**: Deno-native testing and cross-platform compilation
 
-## Deno Migration Benefits
-
-### Before (Node.js + Gluegun)
-
-- Node.js 20+ required
-- npm/bun package manager dependency
-- TypeScript compilation step required
-- Large node_modules directory
-- Vitest testing framework dependency
-
-### After (Deno + Cliffy)
-
-- ✅ **Native TypeScript**: No compilation step needed
-- ✅ **Zero Dependencies**: URL-based imports, no node_modules
-- ✅ **Security First**: Permission-based access control
-- ✅ **Single Binary**: Standalone executable distribution
-- ✅ **Modern Runtime**: Latest JavaScript features out of the box
-
 ---
 
 **Last Updated**: 2025-08-26\
 **License**: [MIT](./LICENSE)\
-**Runtime**: Deno 2.0+\
-**Framework**: Cliffy 1.0.0-rc.4
+**Runtime**: Deno 2.4+\
+**Framework**: Cliffy 1.0.0-rc.8
