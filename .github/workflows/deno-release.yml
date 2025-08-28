@@ -162,7 +162,7 @@ jobs:
           echo "🔨 Compiling Linux x86_64 binary..."
 
           VERSION="${{ needs.stability-check.outputs.version }}"
-          GIT_HASH="${{ github.sha }}"
+          GIT_HASH="${GITHUB_SHA::7}"
           
           sed -i "s/%VERSION%/$VERSION/g" ./src/version.ts
           sed -i "s/%GIT_HASH%/$GIT_HASH/g" ./src/version.ts
