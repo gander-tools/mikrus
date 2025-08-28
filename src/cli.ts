@@ -43,7 +43,7 @@ async function run(args: string[] = Deno.args): Promise<void> {
         "Suppress non-essential output",
       )
       // Add global CLI options
-      .globalOption("--verbose, -v", "Enable verbose output")
+      // .globalOption("--verbose, -v", "Enable verbose output")
       .globalOption("--config <path>", "Path to configuration file")
       // Register generate command
       .command("generate", generateCommand)
