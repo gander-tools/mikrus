@@ -2,8 +2,9 @@
 
 [![Deno CI](https://github.com/gander-tools/mikrus/actions/workflows/deno-ci.yml/badge.svg)](https://github.com/gander-tools/mikrus/actions/workflows/deno-ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/gander-tools/mikrus/blob/main/LICENSE)
-[![Deno](https://img.shields.io/badge/deno-%5E2.0.0-green.svg)](https://deno.land/)
-[![Cliffy](https://img.shields.io/badge/cliffy-v1.0.0--rc.4-orange.svg)](https://github.com/c4spar/deno-cliffy)
+[![Deno](https://img.shields.io/badge/deno-%5E2.4-green.svg)](https://deno.land/)
+[![Cliffy](https://img.shields.io/badge/cliffy-%5E1.0.0--rc.8-orange.svg)](https://github.com/c4spar/deno-cliffy)
+[![JSR](https://jsr.io/badges/@gander-tools/mikrus)](https://jsr.io/@gander-tools/mikrus)
 
 Command-line interface tool for managing VPS servers on the **mikr.us**
 platform. Built with modern Deno runtime and Cliffy CLI framework. Inspired by
@@ -41,7 +42,7 @@ deno task compile
 
 ### Prerequisites
 
-- **Deno**: 2.0.0 or higher
+- **Deno**: ^2.4 or higher
   ([Install Deno](https://deno.land/manual/getting_started/installation))
 - **Operating System**: Linux, macOS, or Windows
 - **Permissions**: `--allow-read`, `--allow-write`, `--allow-net` for full
@@ -127,7 +128,8 @@ runtime:
 
 ```shell
 # Display help and available commands
-mikrus --help
+mikrus          # Shows usage automatically when no args provided
+mikrus --help   # Explicit help command
 
 # Generate a new component/model/service
 mikrus generate <name>
@@ -153,8 +155,8 @@ deno run --allow-read --allow-write src/cli.ts generate example
 
 ### Deno + Cliffy Stack
 
-- **Runtime**: Deno 2.0+ (native TypeScript, secure by default)
-- **CLI Framework**: Cliffy 1.0.0-rc.4 (modern, typed CLI commands)
+- **Runtime**: Deno ^2.4 (native TypeScript, secure by default)
+- **CLI Framework**: Cliffy ^1.0.0-rc.8 (modern, typed CLI commands)
 - **Dependencies**: URL-based imports (no package.json dependencies)
 - **Testing**: Deno native testing (no external frameworks)
 - **Security**: Permission-based access control
@@ -192,7 +194,7 @@ deno run --allow-read --allow-write --allow-net src/cli.ts
 ```shell
 # Check your Deno version
 deno --version
-# Upgrade to Deno 2+ if needed
+# Upgrade to Deno 2.4+ if needed
 curl -fsSL https://deno.land/x/install/install.sh | sh
 ```
 
@@ -252,5 +254,5 @@ curl -fsSL https://deno.land/x/install/install.sh | sh
 
 **Last Updated**: 2025-08-26\
 **License**: [MIT](./LICENSE)\
-**Runtime**: Deno 2.0+\
-**Framework**: Cliffy 1.0.0-rc.4
+**Runtime**: Deno ^2.4\
+**Framework**: Cliffy ^1.0.0-rc.8
