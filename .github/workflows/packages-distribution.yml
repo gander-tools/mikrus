@@ -1,0 +1,429 @@
+name: "📦 GitHub Packages Distribution"
+
+# Multi-platform binary distribution to GitHub Packages
+# Builds stable packages for Windows, Linux, macOS (x86_64 + ARM64)
+# Only triggers on stable version tags, stores latest version only
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+' # Only stable versions (no pre-release)
+      # Examples: v1.0.0, v1.2.3, v2.0.0
+      # Excludes: v1.0.0-beta, v1.0.0-rc.1, v1.0.0-alpha
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., 1.0.0)'
+        required: true
+        default: '0.0.1'
+        type: string
+
+concurrency:
+  group: packages-${{ github.ref }}
+  cancel-in-progress: false # Never cancel package builds
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  DENO_VERSION: '2.4'
+  REGISTRY_URL: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Phase 1: Build Matrix - Multi-platform binaries
+  build-binaries:
+    name: "🔨 Build ${{ matrix.platform.name }}"
+    runs-on: ${{ matrix.platform.os }}
+    permissions:
+      contents: read
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: "Linux x86_64"
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            output: mikrus-linux-x64
+            artifact: linux-x64
+          - name: "Windows x86_64"
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            output: mikrus-windows-x64.exe
+            artifact: windows-x64
+          - name: "macOS x86_64"
+            os: macos-latest
+            target: x86_64-apple-darwin
+            output: mikrus-macos-x64
+            artifact: macos-x64
+          - name: "macOS ARM64"
+            os: macos-latest
+            target: aarch64-apple-darwin
+            output: mikrus-macos-arm64
+            artifact: macos-arm64
+
+    steps:
+      - name: "📥 Checkout Repository"
+        id: packages_checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        with:
+          fetch-depth: 0 # Full history for version detection
+
+      - name: "🦕 Setup Deno Environment"
+        id: packages_setup_deno
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
+          cache-hash: ${{ hashFiles('**/deno.json', '**/deno.lock') }}
+
+      - name: "🏷️ Extract Version Information"
+        id: packages_extract_version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+            echo "Source: Manual dispatch"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+            echo "Source: Git tag"
+          fi
+          
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "FULL_VERSION=v$VERSION" >> $GITHUB_OUTPUT
+          echo "🏷️ Building version: $VERSION"
+
+      - name: "📦 Cache Dependencies"
+        id: packages_cache_deps
+        run: |
+          echo "🔄 Caching Deno dependencies..."
+          deno cache src/cli.ts
+
+      - name: "🔨 Compile Binary"
+        id: packages_compile
+        run: |
+          echo "🔨 Compiling ${{ matrix.platform.name }} binary..."
+          
+          deno compile \
+            --allow-read \
+            --allow-write \
+            --allow-net \
+            --target=${{ matrix.platform.target }} \
+            --output=./dist/${{ matrix.platform.output }} \
+            src/cli.ts
+          
+          echo "✅ Binary compiled successfully"
+
+      - name: "🧪 Test Binary (Linux/macOS only)"
+        id: packages_test_binary
+        if: runner.os != 'Windows'
+        run: |
+          echo "🧪 Testing compiled binary..."
+          chmod +x ./dist/${{ matrix.platform.output }}
+          
+          # Test basic functionality
+          ./dist/${{ matrix.platform.output }} --version
+          ./dist/${{ matrix.platform.output }} --help
+          
+          echo "✅ Binary tests passed"
+
+      - name: "📏 Binary Size Analysis"
+        id: packages_size_analysis
+        run: |
+          echo "📏 Analyzing binary size..."
+          
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            SIZE=$(stat -c%s "./dist/${{ matrix.platform.output }}" 2>/dev/null || echo "0")
+          else
+            SIZE=$(stat -f%z "./dist/${{ matrix.platform.output }}" 2>/dev/null || stat -c%s "./dist/${{ matrix.platform.output }}" 2>/dev/null || echo "0")
+          fi
+          
+          SIZE_MB=$((SIZE / 1024 / 1024))
+          echo "BINARY_SIZE_MB=$SIZE_MB" >> $GITHUB_OUTPUT
+          echo "📦 Binary size: ${SIZE_MB}MB"
+
+      - name: "📤 Upload Binary Artifact"
+        id: packages_upload_artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mikrus-${{ matrix.platform.artifact }}
+          path: ./dist/${{ matrix.platform.output }}
+          retention-days: 7
+          compression-level: 9
+
+      - name: "📊 Build Summary"
+        id: packages_build_summary
+        run: |
+          echo "## 🔨 ${{ matrix.platform.name }} Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target**: ${{ matrix.platform.target }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Binary**: ${{ matrix.platform.output }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Size**: ${{ steps.packages_size_analysis.outputs.BINARY_SIZE_MB }}MB" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.packages_extract_version.outputs.FULL_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
+
+  # Phase 2: Package Distribution - GitHub Packages
+  distribute-packages:
+    name: "🚀 Distribute to GitHub Packages"
+    runs-on: ubuntu-latest
+    needs: build-binaries
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: "📥 Checkout Repository"
+        id: packages_dist_checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+
+      - name: "🏷️ Extract Version Information"
+        id: packages_dist_version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "FULL_VERSION=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: "📥 Download All Artifacts"
+        id: packages_download_artifacts
+        uses: actions/download-artifact@87c55149d96e628cc2ef7e6fc2aab372015aec85 # v4.1.3
+        with:
+          path: ./artifacts
+
+      - name: "📦 Prepare Package Structure"
+        id: packages_prepare_structure
+        run: |
+          echo "📦 Preparing package structure..."
+          
+          # Create distribution directory
+          mkdir -p ./package/bin
+          
+          # Copy all binaries to package
+          find ./artifacts -type f -name "mikrus-*" -exec cp {} ./package/bin/ \;
+          
+          # List package contents
+          echo "📋 Package contents:"
+          ls -la ./package/bin/
+          
+          # Calculate total package size
+          TOTAL_SIZE=$(du -sm ./package | cut -f1)
+          echo "PACKAGE_SIZE_MB=$TOTAL_SIZE" >> $GITHUB_OUTPUT
+          echo "📦 Total package size: ${TOTAL_SIZE}MB"
+
+      - name: "🔍 Clean Previous Versions (Keep Latest Only)"
+        id: packages_cleanup_old
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔍 Cleaning previous package versions..."
+          
+          # List existing packages
+          REPO="${{ github.repository }}"
+          PACKAGE_NAME="mikrus-cli"
+          
+          # Get all versions except the current one
+          OLD_VERSIONS=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions" \
+            --jq '.[].id' 2>/dev/null || echo "")
+          
+          if [[ -n "$OLD_VERSIONS" ]]; then
+            echo "🗑️ Found old versions to cleanup:"
+            echo "$OLD_VERSIONS"
+            
+            # Delete old versions (keep only latest)
+            for version_id in $OLD_VERSIONS; do
+              echo "🗑️ Deleting version ID: $version_id"
+              gh api \
+                --method DELETE \
+                -H "Accept: application/vnd.github+json" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "/orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$version_id" \
+                2>/dev/null || echo "⚠️ Could not delete version $version_id"
+            done
+          else
+            echo "ℹ️ No previous versions found to cleanup"
+          fi
+
+      - name: "🔐 Login to GitHub Container Registry"
+        id: packages_login_registry
+        uses: docker/login-action@1f36f5b7a2d2f7bfd524795fc966e6d88c37baa9 # v3
+        with:
+          registry: ${{ env.REGISTRY_URL }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "🏗️ Build and Push Container"
+        id: packages_build_push
+        run: |
+          echo "🏗️ Building distribution container..."
+          
+          # Create optimized Dockerfile for distribution
+          cat > Dockerfile << 'EOF'
+          FROM scratch
+          
+          # Metadata
+          LABEL org.opencontainers.image.title="mikrus CLI"
+          LABEL org.opencontainers.image.description="Command-line interface for managing VPS servers on mikr.us platform"
+          LABEL org.opencontainers.image.version="${{ steps.packages_dist_version.outputs.VERSION }}"
+          LABEL org.opencontainers.image.source="${{ github.server_url }}/${{ github.repository }}"
+          LABEL org.opencontainers.image.licenses="MIT"
+          
+          # Copy all platform binaries
+          COPY package/bin/* /usr/local/bin/
+          
+          # Default to Linux binary
+          CMD ["/usr/local/bin/mikrus-linux-x64"]
+          EOF
+          
+          # Build and tag image
+          IMAGE_TAG="${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ steps.packages_dist_version.outputs.VERSION }}"
+          LATEST_TAG="${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}:latest"
+          
+          echo "🏷️ Building tags:"
+          echo "  - $IMAGE_TAG"
+          echo "  - $LATEST_TAG"
+          
+          docker build \
+            --tag "$IMAGE_TAG" \
+            --tag "$LATEST_TAG" \
+            --label "org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            --label "org.opencontainers.image.revision=${{ github.sha }}" \
+            .
+          
+          # Push both tags
+          docker push "$IMAGE_TAG"
+          docker push "$LATEST_TAG"
+          
+          echo "✅ Container pushed successfully"
+
+      - name: "📋 Generate Release Notes"
+        id: packages_release_notes
+        run: |
+          cat > release_notes.md << EOF
+          ## 📦 mikrus CLI ${{ steps.packages_dist_version.outputs.FULL_VERSION }}
+          
+          ### 🚀 Installation
+          
+          **Docker (Recommended):**
+          \`\`\`bash
+          docker pull ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ steps.packages_dist_version.outputs.VERSION }}
+          \`\`\`
+          
+          **Direct Download:**
+          \`\`\`bash
+          # Linux x86_64
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.packages_dist_version.outputs.FULL_VERSION }}/mikrus-linux-x64
+          chmod +x mikrus-linux-x64
+          sudo mv mikrus-linux-x64 /usr/local/bin/mikrus
+          
+          # Windows x86_64
+          curl -LO https://github.com/${{ github.repository }}/releases/download/${{ steps.packages_dist_version.outputs.FULL_VERSION }}/mikrus-windows-x64.exe
+          
+          # macOS x86_64
+          curl -LO https://github.com/${{ github.repository }}/releases/download/${{ steps.packages_dist_version.outputs.FULL_VERSION }}/mikrus-macos-x64
+          chmod +x mikrus-macos-x64
+          
+          # macOS ARM64 (M1/M2)
+          curl -LO https://github.com/${{ github.repository }}/releases/download/${{ steps.packages_dist_version.outputs.FULL_VERSION }}/mikrus-macos-arm64
+          chmod +x mikrus-macos-arm64
+          \`\`\`
+          
+          ### 📊 Package Information
+          
+          - **Total Size**: ${{ steps.packages_prepare_structure.outputs.PACKAGE_SIZE_MB }}MB
+          - **Platforms**: Linux, Windows, macOS (x86_64 + ARM64)
+          - **Runtime**: Deno ${{ env.DENO_VERSION }}+ (embedded)
+          - **Security**: Permission-based access control
+          
+          ### 🔧 Usage
+          
+          \`\`\`bash
+          # Show help
+          mikrus
+          mikrus --help
+          
+          # Generate model files
+          mikrus generate <name>
+          
+          # Check version
+          mikrus --version
+          \`\`\`
+          
+          ### 📚 Documentation
+          
+          - [README](https://github.com/${{ github.repository }}#readme)
+          - [Security Policy](https://github.com/${{ github.repository }}/security/policy)
+          - [Issues & Support](https://github.com/${{ github.repository }}/issues)
+          EOF
+
+      - name: "📊 Distribution Summary"
+        id: packages_dist_summary
+        run: |
+          echo "## 🚀 Package Distribution Complete" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.packages_dist_version.outputs.FULL_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry**: ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Package Size**: ${{ steps.packages_prepare_structure.outputs.PACKAGE_SIZE_MB }}MB" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platforms**: 4 (Linux, Windows, macOS x86_64/ARM64)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cleanup**: Previous versions removed (latest only)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🏷️ Available Tags" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ steps.packages_dist_version.outputs.VERSION }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
+
+  # Phase 3: GitHub Release (Optional)
+  create-github-release:
+    name: "🎉 Create GitHub Release"
+    runs-on: ubuntu-latest
+    needs: [build-binaries, distribute-packages]
+    permissions:
+      contents: write
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: "📥 Checkout Repository"
+        id: packages_release_checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+
+      - name: "🏷️ Extract Version Information"
+        id: packages_release_version
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "FULL_VERSION=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: "📥 Download All Artifacts"
+        id: packages_release_download
+        uses: actions/download-artifact@87c55149d96e628cc2ef7e6fc2aab372015aec85 # v4.1.3
+        with:
+          path: ./artifacts
+
+      - name: "🎉 Create GitHub Release"
+        id: packages_create_release
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
+        with:
+          tag_name: ${{ steps.packages_release_version.outputs.FULL_VERSION }}
+          name: "mikrus CLI ${{ steps.packages_release_version.outputs.FULL_VERSION }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            artifacts/mikrus-linux-x64/mikrus-linux-x64
+            artifacts/mikrus-windows-x64/mikrus-windows-x64.exe  
+            artifacts/mikrus-macos-x64/mikrus-macos-x64
+            artifacts/mikrus-macos-arm64/mikrus-macos-arm64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "🎉 Release Summary"
+        id: packages_release_summary
+        run: |
+          echo "## 🎉 GitHub Release Created" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release**: ${{ steps.packages_release_version.outputs.FULL_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: https://github.com/${{ github.repository }}/releases/tag/${{ steps.packages_release_version.outputs.FULL_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Assets**: 4 platform binaries" >> $GITHUB_STEP_SUMMARY
+          echo "- **Type**: Stable Release" >> $GITHUB_STEP_SUMMARY
