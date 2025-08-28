@@ -62,7 +62,6 @@ jobs:
         run: |
           VERSION="${{ steps.extract_version.outputs.VERSION }}"
           TAG="${{ steps.extract_version.outputs.TAG }}"
-          GIT_HASH="${{ github.sha }}"
           
           echo "🔍 Validating stability for version: $VERSION"
           
@@ -128,7 +127,6 @@ jobs:
           fi
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "git_hash=$GIT_HASH" >> $GITHUB_OUTPUT
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
   # Phase 2: Build Linux Binary
@@ -164,7 +162,7 @@ jobs:
           echo "🔨 Compiling Linux x86_64 binary..."
 
           VERSION="${{ needs.stability-check.outputs.version }}"
-          GIT_HASH="${{ needs.stability-check.outputs.git_hash }}"
+          GIT_HASH="${{ github.sha }}"
           
           sed -i "s/%VERSION%/$VERSION/g" ./src/version.ts
           sed -i "s/%GIT_HASH%/$GIT_HASH/g" ./src/version.ts
@@ -177,7 +175,6 @@ jobs:
             --allow-read \
             --allow-write \
             --allow-net \
-            --include=./deno.json \
             --target=x86_64-unknown-linux-gnu \
             --output=./dist/mikrus-linux-x64 \
             src/cli.ts
