@@ -49,7 +49,7 @@ commit-msg:
     conventional-commits:
       run: |
         commit_msg=$(cat {1})
-        if ! echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|build|ci|perf|revert)(\(.+\))?: .+"; then
+        if ! echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|build|ci|perf|revert)(\(.+\))?: .{1,100}$"; then
           echo "❌ Commit message must follow conventional commits format"
           echo "Examples: feat: add new feature | fix(api): resolve bug | docs: update README"
           exit 1
