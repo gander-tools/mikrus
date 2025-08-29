@@ -7,7 +7,7 @@ Deno and JSR (JavaScript Registry).
 
 - **Author**: Adam Gąsowski (GitHub: @gander)
 - **Organization**: Gander Tools (GitHub: @gander-tools)
-- **Package name**: `@gander/mikrus` (JSR scoped package)
+- **Package name**: `@gander-tools/mikrus` (JSR scoped package)
 - **Runtime**: Deno 2.0+
 - **CLI Framework**: Cliffy
 - **Repository**: https://github.com/gander-tools/mikrus
@@ -32,8 +32,8 @@ Pre-compiled binaries are built and distributed through GitHub Releases:
 JSR (JavaScript Registry) is the modern package registry for Deno:
 
 - **Registry**: https://jsr.io/
-- **Package name**: `@gander/mikrus`
-- **Scope**: `@gander`
+- **Package name**: `@gander-tools/mikrus`
+- **Scope**: `@gander-tools`
 - **Access**: public
 
 ## Current Release Process (GitHub Binaries)
@@ -79,11 +79,11 @@ When ready for JSR publishing, follow these steps:
 
 ### 1. JSR Configuration
 
-Ensure `jsr.json` is properly configured:
+Note: Currently no `jsr.json` file exists. When ready for JSR publishing, create one with:
 
 ```json
 {
-  "name": "@gander/mikrus",
+  "name": "@gander-tools/mikrus",
   "description": "Command-line interface tool for managing VPS servers on mikr.us platform",
   "license": "MIT",
   "exports": {
@@ -181,10 +181,10 @@ deno task dev
 ```bash
 # Install from JSR (when available)
 deno install --allow-read --allow-write --allow-net \
-  --name mikrus jsr:@gander/mikrus
+  --name mikrus jsr:@gander-tools/mikrus
 
 # Import in code (when available)
-import { mikrusCommand } from "jsr:@gander/mikrus";
+import { mikrusCommand } from "jsr:@gander-tools/mikrus";
 ```
 
 ## Migration Notes
