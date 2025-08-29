@@ -119,8 +119,13 @@ export const utils: MikrusUtils = {
   checkApiConnectivity: async (): Promise<boolean> => {
     try {
       // Use environment variable for API endpoint, fallback to default
-      const apiEndpoint = Deno.env.get("MIKRUS_API_URL") ??
-        DEFAULT_MIKRUS_API_URL;
+      let apiEndpoint = DEFAULT_MIKRUS_API_URL;
+      try {
+        apiEndpoint = Deno.env.get("MIKRUS_API_URL") ?? DEFAULT_MIKRUS_API_URL;
+      } catch {
+        // Env access not available (no --allow-env flag), use default
+        apiEndpoint = DEFAULT_MIKRUS_API_URL;
+      }
 
       const response = await fetch(apiEndpoint, {
         method: "HEAD",
