@@ -152,6 +152,11 @@ jobs:
             target: x86_64-pc-windows-msvc
             output: mikrus-windows-x64.exe
             artifact: windows-x64
+          - name: "macOS x86_64"
+            os: macos-latest
+            target: x86_64-apple-darwin
+            output: mikrus-macos-x64
+            artifact: macos-x64
     
     outputs:
       binary_size_linux: ${{ steps.analysis-unix.outputs.BINARY_SIZE_MB }}
@@ -190,13 +195,13 @@ jobs:
           $VERSION = "${{ needs.stability-check.outputs.version }}"
           $GIT_HASH = "${{ github.sha }}".Substring(0,7)
           
-          Write-Host "🔄 Replacing version placeholders on Windows..."
+          Write-Host "Replacing version placeholders on Windows..."
           
           # Replace version placeholders using PowerShell
           (Get-Content ./src/version.ts) -replace '%VERSION%', $VERSION | Set-Content ./src/version.ts
           (Get-Content ./src/version.ts) -replace '%GIT_HASH%', $GIT_HASH | Set-Content ./src/version.ts
           
-          Write-Host "✅ Version placeholders replaced (Windows)"
+          Write-Host "Version placeholders replaced (Windows)"
         shell: powershell
 
       - name: "🔄 Replace Version Placeholders (Unix)"
@@ -206,13 +211,18 @@ jobs:
           GIT_HASH="${{ github.sha }}"
           GIT_HASH="${GIT_HASH::7}"
           
-          echo "🔄 Replacing version placeholders on Unix..."
+          echo "Replacing version placeholders on Unix..."
           
-          # Replace version placeholders using sed
-          sed -i "s/%VERSION%/$VERSION/g" ./src/version.ts
-          sed -i "s/%GIT_HASH%/$GIT_HASH/g" ./src/version.ts
+          # Replace version placeholders using sed (macOS compatible)
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            sed -i '' "s/%VERSION%/$VERSION/g" ./src/version.ts
+            sed -i '' "s/%GIT_HASH%/$GIT_HASH/g" ./src/version.ts
+          else
+            sed -i "s/%VERSION%/$VERSION/g" ./src/version.ts
+            sed -i "s/%GIT_HASH%/$GIT_HASH/g" ./src/version.ts
+          fi
           
-          echo "✅ Version placeholders replaced (Unix)"
+          echo "Version placeholders replaced (Unix)"
         shell: bash
 
       - name: "📁 Create Distribution Directory"
@@ -274,10 +284,10 @@ jobs:
           Write-Host "📦 Binary size: ${SIZE_MB}MB"
           
           # Create SHA256 checksum
-          Write-Host "🔒 Creating checksum..."
+          Write-Host "Creating checksum..."
           certutil -hashfile $filePath SHA256 > "$filePath.sha256"
           
-          Write-Host "✅ Binary analysis completed for Windows"
+          Write-Host "Binary analysis completed for Windows"
         shell: powershell
 
       - name: "📊 Binary Analysis (Unix)"
@@ -294,10 +304,14 @@ jobs:
           echo "📦 Binary size: ${SIZE_MB}MB"
           
           # Create SHA256 checksum
-          echo "🔒 Creating checksum..."
-          sha256sum "./dist/${{ matrix.platform.output }}" > "./dist/${{ matrix.platform.output }}.sha256"
+          echo "Creating checksum..."
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            shasum -a 256 "./dist/${{ matrix.platform.output }}" > "./dist/${{ matrix.platform.output }}.sha256"
+          else
+            sha256sum "./dist/${{ matrix.platform.output }}" > "./dist/${{ matrix.platform.output }}.sha256"
+          fi
           
-          echo "✅ Binary analysis completed for Unix"
+          echo "Binary analysis completed for Unix"
         shell: bash
 
       - name: "📤 Upload Binary Artifact"
@@ -362,6 +376,7 @@ jobs:
           # Get binary sizes
           LINUX_SIZE=$(find ./release-assets -name "mikrus-linux-x64" -exec stat -c%s {} \; | awk '{print int($1/1024/1024)"MB"}' 2>/dev/null || echo "~MB")
           WINDOWS_SIZE=$(find ./release-assets -name "mikrus-windows-x64.exe" -exec stat -c%s {} \; | awk '{print int($1/1024/1024)"MB"}' 2>/dev/null || echo "~MB")
+          MACOS_SIZE=$(find ./release-assets -name "mikrus-macos-x64" -exec stat -c%s {} \; | awk '{print int($1/1024/1024)"MB"}' 2>/dev/null || echo "~MB")
           
           cat > release_notes.md << EOF
           ## 🚀 mikrus CLI ${{ env.TAG }}
@@ -372,6 +387,7 @@ jobs:
           |----------|-------------|------|------|
           | Linux | x86_64 | ${LINUX_SIZE} | \`mikrus-linux-x64\` |
           | Windows | x86_64 | ${WINDOWS_SIZE} | \`mikrus-windows-x64.exe\` |
+          | macOS | x86_64 | ${MACOS_SIZE} | \`mikrus-macos-x64\` |
           
           ### 🔧 Installation
           
@@ -402,6 +418,21 @@ jobs:
           .\mikrus.exe --version
           \`\`\`
           
+          #### macOS x86_64
+          \`\`\`bash
+          # Download binary
+          curl -L -o mikrus-macos-x64 "https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/mikrus-macos-x64"
+          
+          # Make executable
+          chmod +x mikrus-macos-x64
+          
+          # Move to PATH (optional)
+          sudo mv mikrus-macos-x64 /usr/local/bin/mikrus
+          
+          # Verify installation
+          mikrus --version
+          \`\`\`
+          
           ### 🔐 Verify Integrity
           
           #### Linux
@@ -422,6 +453,15 @@ jobs:
           \$hash = Get-FileHash -Path "mikrus.exe" -Algorithm SHA256
           \$expected = Get-Content "mikrus-windows-x64.exe.sha256"
           if (\$hash.Hash -eq \$expected.Split()[0]) { Write-Host "✅ Checksum verified" } else { Write-Host "❌ Checksum mismatch" }
+          \`\`\`
+          
+          #### macOS
+          \`\`\`bash
+          # Download checksum file
+          curl -L -o mikrus-macos-x64.sha256 "https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/mikrus-macos-x64.sha256"
+          
+          # Verify checksum
+          shasum -a 256 -c mikrus-macos-x64.sha256
           \`\`\`
           
           ### 📝 Changelog
@@ -449,6 +489,10 @@ jobs:
           
           **Windows x86_64:**
           - Windows 10/11 x86_64 (64-bit)
+          - No external dependencies (Deno runtime embedded)
+          
+          **macOS x86_64:**
+          - macOS 10.15+ x86_64 (64-bit)
           - No external dependencies (Deno runtime embedded)
           
           ### 📚 Documentation
@@ -486,7 +530,9 @@ jobs:
             ./release-assets/linux-x64/mikrus-linux-x64 \
             ./release-assets/linux-x64/mikrus-linux-x64.sha256 \
             ./release-assets/windows-x64/mikrus-windows-x64.exe \
-            ./release-assets/windows-x64/mikrus-windows-x64.exe.sha256
+            ./release-assets/windows-x64/mikrus-windows-x64.exe.sha256 \
+            ./release-assets/macos-x64/mikrus-macos-x64 \
+            ./release-assets/macos-x64/mikrus-macos-x64.sha256
           
           echo "✅ Draft release created successfully"
           echo "📌 Release URL: https://github.com/${{ github.repository }}/releases/tag/$TAG"
@@ -500,7 +546,7 @@ jobs:
           echo "### 📌 Release Information" >> $GITHUB_STEP_SUMMARY
           echo "- **Tag**: $TAG" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: Draft (not published)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Platforms**: Linux x86_64 + Windows x86_64" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platforms**: Linux x86_64 + Windows x86_64 + macOS x86_64" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📦 Included Assets" >> $GITHUB_STEP_SUMMARY
           echo "**Linux x86_64:**" >> $GITHUB_STEP_SUMMARY
@@ -510,6 +556,10 @@ jobs:
           echo "**Windows x86_64:**" >> $GITHUB_STEP_SUMMARY
           echo "- mikrus-windows-x64.exe (Windows binary)" >> $GITHUB_STEP_SUMMARY
           echo "- mikrus-windows-x64.exe.sha256 (SHA256 checksum)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**macOS x86_64:**" >> $GITHUB_STEP_SUMMARY
+          echo "- mikrus-macos-x64 (macOS binary)" >> $GITHUB_STEP_SUMMARY
+          echo "- mikrus-macos-x64.sha256 (SHA256 checksum)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### ⚠️ Next Steps" >> $GITHUB_STEP_SUMMARY
           echo "1. Review the draft release at [GitHub Releases](https://github.com/${{ github.repository }}/releases)" >> $GITHUB_STEP_SUMMARY
