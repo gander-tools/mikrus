@@ -5,7 +5,7 @@ import { utils, validateAndSanitizeInput } from "../utils.ts";
 
 // Embedded template content for compiled binary compatibility
 const MODEL_TEMPLATE = `export interface <%= name %>Model {
-  id: number;
+  id: string;
   name: string;
   createdAt: Date;
   updatedAt: Date;
@@ -16,7 +16,7 @@ export class <%= name %>Service {
 
   create(name: string): <%= name %>Model {
     const model: <%= name %>Model = {
-      id: Date.now(),
+      id: crypto.randomUUID(),
       name,
       createdAt: new Date(),
       updatedAt: new Date(),

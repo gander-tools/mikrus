@@ -76,18 +76,17 @@ export function validateAndSanitizeInput(input: string | undefined): string {
  */
 export const utils: MikrusUtils = {
   /**
-   * Validates that a string is a valid identifier for mikrus resources
+   * Validates that a string is a valid identifier using comprehensive security validation
    * @param name - The identifier to validate
    * @returns True if valid, false otherwise
    */
   validateIdentifier: (name: string): boolean => {
-    if (!name || typeof name !== "string") {
+    try {
+      validateAndSanitizeInput(name);
+      return true;
+    } catch {
       return false;
     }
-
-    // Valid identifier: letters, numbers, hyphens, underscores, 1-64 chars
-    const identifierRegex = /^[a-zA-Z0-9_-]{1,64}$/;
-    return identifierRegex.test(name);
   },
 
   /**
