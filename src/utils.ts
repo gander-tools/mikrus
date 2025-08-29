@@ -1,6 +1,11 @@
 import type { MikrusUtils } from "./types.ts";
 
 /**
+ * Default configuration constants
+ */
+const DEFAULT_MIKRUS_API_URL = "https://api.mikr.us";
+
+/**
  * Validates and sanitizes user input to prevent security vulnerabilities
  */
 export function validateAndSanitizeInput(input: string | undefined): string {
@@ -116,7 +121,7 @@ export const utils: MikrusUtils = {
     try {
       // Use environment variable for API endpoint, fallback to default
       const apiEndpoint = Deno.env.get("MIKRUS_API_URL") ??
-        "https://mikr.us/api/health";
+        DEFAULT_MIKRUS_API_URL;
 
       const response = await fetch(apiEndpoint, {
         method: "HEAD",
