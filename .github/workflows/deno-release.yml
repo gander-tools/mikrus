@@ -271,7 +271,7 @@ jobs:
         if: runner.os == 'Windows'
         id: analysis-windows
         run: |
-          Write-Host "📊 Analyzing binary on Windows..."
+          Write-Host "Analyzing binary on Windows..."
           
           # Get file size using PowerShell
           $filePath = "./dist/${{ matrix.platform.output }}"
@@ -281,7 +281,7 @@ jobs:
           
           # Set GitHub output
           echo "BINARY_SIZE_MB=$SIZE_MB" >> $env:GITHUB_OUTPUT
-          Write-Host "📦 Binary size: ${SIZE_MB}MB"
+          Write-Host "Binary size: ${SIZE_MB}MB"
           
           # Create SHA256 checksum
           Write-Host "Creating checksum..."
@@ -327,13 +327,13 @@ jobs:
       - name: "📊 Build Summary (Windows)"
         if: runner.os == 'Windows'
         run: |
-          echo "## 🔨 ${{ matrix.platform.name }} Build Complete" >> $env:GITHUB_STEP_SUMMARY
+          echo "## Build ${{ matrix.platform.name }} Complete" >> $env:GITHUB_STEP_SUMMARY
           echo "" >> $env:GITHUB_STEP_SUMMARY
           echo "- **Target**: ${{ matrix.platform.target }}" >> $env:GITHUB_STEP_SUMMARY
           echo "- **Binary**: ${{ matrix.platform.output }}" >> $env:GITHUB_STEP_SUMMARY
           echo "- **Size**: ${{ steps.analysis-windows.outputs.BINARY_SIZE_MB }}MB" >> $env:GITHUB_STEP_SUMMARY
           echo "- **Version**: ${{ needs.stability-check.outputs.tag }}" >> $env:GITHUB_STEP_SUMMARY
-          echo "- **Status**: ✅ Success" >> $env:GITHUB_STEP_SUMMARY
+          echo "- **Status**: Success" >> $env:GITHUB_STEP_SUMMARY
         shell: powershell
 
       - name: "📊 Build Summary (Unix)"
@@ -452,7 +452,7 @@ jobs:
           # Verify checksum (PowerShell)
           \$hash = Get-FileHash -Path "mikrus.exe" -Algorithm SHA256
           \$expected = Get-Content "mikrus-windows-x64.exe.sha256"
-          if (\$hash.Hash -eq \$expected.Split()[0]) { Write-Host "✅ Checksum verified" } else { Write-Host "❌ Checksum mismatch" }
+          if (\$hash.Hash -eq \$expected.Split()[0]) { Write-Host "Checksum verified" } else { Write-Host "Checksum mismatch" }
           \`\`\`
           
           #### macOS
