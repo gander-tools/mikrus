@@ -45,10 +45,10 @@ Deno.test("utils.validateIdentifier - Invalid identifiers", () => {
 });
 
 Deno.test("utils.validateIdentifier - Length limits", () => {
-  const longName = "a".repeat(101);
+  const longName = "a".repeat(65);
   assertEquals(utils.validateIdentifier(longName), false);
 
-  const maxLengthName = "a".repeat(100);
+  const maxLengthName = "a".repeat(64);
   assertEquals(utils.validateIdentifier(maxLengthName), true);
 });
 
