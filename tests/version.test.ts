@@ -1,26 +1,26 @@
 import { assertEquals } from "@std/testing/asserts";
 import { GIT_HASH, VERSION } from "../src/version.ts";
 
-Deno.test("VERSION - Development fallback", () => {
-  // In development, VERSION should fallback to 'dev' when placeholder is present
-  if (VERSION === "%VERSION%") {
-    assertEquals(VERSION, "%VERSION%");
-  } else {
-    // In production/compiled builds, should be actual version
-    assertEquals(typeof VERSION, "string");
-    assertEquals(VERSION.length > 0, true);
-  }
+Deno.test("VERSION - Type and content validation", () => {
+  // VERSION should always be a string
+  assertEquals(typeof VERSION, "string");
+  assertEquals(VERSION.length > 0, true);
+  
+  // Should be either placeholder or actual version
+  const isPlaceholder = VERSION === "%VERSION%";
+  const isActualVersion = !VERSION.includes("%") && VERSION.length > 0;
+  assertEquals(isPlaceholder || isActualVersion, true);
 });
 
-Deno.test("GIT_HASH - Development fallback", () => {
-  // In development, GIT_HASH should fallback to 'local' when placeholder is present
-  if (GIT_HASH === "%GIT_HASH%") {
-    assertEquals(GIT_HASH, "%GIT_HASH%");
-  } else {
-    // In production/compiled builds, should be actual git hash
-    assertEquals(typeof GIT_HASH, "string");
-    assertEquals(GIT_HASH.length > 0, true);
-  }
+Deno.test("GIT_HASH - Type and content validation", () => {
+  // GIT_HASH should always be a string
+  assertEquals(typeof GIT_HASH, "string");
+  assertEquals(GIT_HASH.length > 0, true);
+  
+  // Should be either placeholder or actual hash
+  const isPlaceholder = GIT_HASH === "%GIT_HASH%";
+  const isActualHash = !GIT_HASH.includes("%") && GIT_HASH.length > 0;
+  assertEquals(isPlaceholder || isActualHash, true);
 });
 
 Deno.test("VERSION - Type validation", () => {
