@@ -1,9 +1,9 @@
 version: 2
 updates:
-  # DISABLED: Deno uses URL-based imports, no package.json dependencies
-  # - package-ecosystem: "bun"
-  # Deno dependencies are managed via URL imports in deno.json
-  # No automatic updates needed - manual review preferred for security
+  # SECURITY NOTE: Deno dependencies disabled intentionally
+  # - Deno uses URL-based imports with version pinning and integrity hashes
+  # - Manual review prevents supply chain attacks
+  # - All dependencies locked in deno.lock with cryptographic verification
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"

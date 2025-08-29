@@ -55,8 +55,8 @@
   "tasks": {
     "dev": "deno run --allow-read --allow-write --allow-net src/cli.ts",
     "compile": "deno compile --allow-read --allow-write --allow-net --output=./build/mikrus src/cli.ts",
-    "test": "deno test --allow-read --allow-write",
-    "test:coverage": "deno test --allow-read --allow-write --coverage",
+    "test": "deno test --allow-read --allow-write --allow-env",
+    "test:coverage": "deno test --allow-read --allow-write --allow-env --coverage",
     "coverage": "deno coverage coverage/ --lcov --output=coverage.lcov",
     "coverage:html": "deno coverage coverage/ --html",
     "lint": "deno lint src/ tests/",

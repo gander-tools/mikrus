@@ -2,7 +2,7 @@
 name: 🔒 Security Vulnerability Report
 about: Report a security vulnerability in mikrus CLI (use GitHub Security Advisories for private disclosure)
 title: "[SECURITY] "
-labels: security, needs-triage
+labels: ["security", "needs-triage"]
 ---
 
 ## ⚠️ Security Notice
