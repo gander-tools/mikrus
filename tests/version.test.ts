@@ -6,10 +6,11 @@ Deno.test("VERSION - Type and content validation", () => {
   assertEquals(typeof VERSION, "string");
   assertEquals(VERSION.length > 0, true);
   
-  // Should be either placeholder or actual version
-  const isPlaceholder = VERSION === "%VERSION%";
-  const isActualVersion = !VERSION.includes("%") && VERSION.length > 0;
-  assertEquals(isPlaceholder || isActualVersion, true);
+  // Should be valid version (either "dev" for development or semantic version for production)
+  const versionString = VERSION as string;
+  const isDevelopment = versionString === "dev";
+  const isProduction = versionString !== "dev" && !versionString.includes("%");
+  assertEquals(isDevelopment || isProduction, true);
 });
 
 Deno.test("GIT_HASH - Type and content validation", () => {
@@ -17,10 +18,11 @@ Deno.test("GIT_HASH - Type and content validation", () => {
   assertEquals(typeof GIT_HASH, "string");
   assertEquals(GIT_HASH.length > 0, true);
   
-  // Should be either placeholder or actual hash
-  const isPlaceholder = GIT_HASH === "%GIT_HASH%";
-  const isActualHash = !GIT_HASH.includes("%") && GIT_HASH.length > 0;
-  assertEquals(isPlaceholder || isActualHash, true);
+  // Should be valid hash (either "local" for development or actual hash for production)
+  const hashString = GIT_HASH as string;
+  const isDevelopment = hashString === "local";
+  const isProduction = hashString !== "local" && !hashString.includes("%");
+  assertEquals(isDevelopment || isProduction, true);
 });
 
 Deno.test("VERSION - Type validation", () => {
