@@ -1,6 +1,7 @@
 import { Command } from "@cliffy/command";
 import { red, yellow } from "jsr:@std/fmt@1.0.8/colors";
 import { generateCommand } from "./commands/generate.ts";
+import { GIT_HASH, VERSION } from "./version.ts";
 
 /**
  * Creates and runs the mikrus CLI using Cliffy framework
@@ -23,6 +24,7 @@ async function run(args: string[] = Deno.args): Promise<void> {
       .description(
         "Command-line interface tool for managing VPS servers on mikr.us platform",
       )
+      .version(`${VERSION} (${GIT_HASH})`)
       // Enhanced help with examples
       .example(
         "Generate a model file",
