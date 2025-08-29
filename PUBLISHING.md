@@ -84,6 +84,7 @@ Note: Currently no `jsr.json` file exists. When ready for JSR publishing, create
 ```json
 {
   "name": "@gander-tools/mikrus",
+  "version": "0.0.1",
   "description": "Command-line interface tool for managing VPS servers on mikr.us platform",
   "license": "MIT",
   "exports": {

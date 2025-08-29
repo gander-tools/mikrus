@@ -9,7 +9,7 @@ import { GIT_HASH, VERSION } from "./version.ts";
  * This function initializes the Cliffy CLI with mikrus-specific configuration:
  * - Sets up the main command with name and description
  * - Registers the generate subcommand
- * - Provides automatic help commands
+ * - Provides automatic help and version commands
  * - Includes enhanced error handling and user experience
  * - Runs the CLI with provided arguments
  *
