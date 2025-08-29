@@ -38,12 +38,12 @@ jobs:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for comprehensive security analysis
         id: deno_security_checkout_deps
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis and security scanning
         id: deno_security_setup_deps
-        uses: denoland/setup-deno@61e7bbad6d2a9c6d9c69b6c2ca0ee4a44a7ccd2b # v2.0.0
+        uses: denoland/setup-deno@e95548e5c7fa3c35b6b63bf216b9f07f9a8c7f5f # v2.0.3
         with:
           deno-version: v2.4.5
 
@@ -115,12 +115,12 @@ jobs:
       - name: "📥 Repository: Checkout Code"
         id: deno_security_checkout_license
         # Downloads repository content for comprehensive security analysis
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis
         id: deno_security_setup_license
-        uses: denoland/setup-deno@61e7bbad6d2a9c6d9c69b6c2ca0ee4a44a7ccd2b # v2.0.0
+        uses: denoland/setup-deno@e95548e5c7fa3c35b6b63bf216b9f07f9a8c7f5f # v2.0.3
         with:
           deno-version: v2.4.5
 
@@ -152,7 +152,7 @@ jobs:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for comprehensive security analysis
         id: deno_security_checkout_secrets
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: "🔍 Security: Hardcoded Secrets Detection"
         # Searches source code for hardcoded passwords, API keys, and credentials
@@ -223,7 +223,7 @@ jobs:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for comprehensive security analysis
         id: deno_security_checkout_supply_chain
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: "🔍 Security: Package Integrity Verification"
         # Verifies package authenticity and checks for suspicious dependencies
@@ -268,12 +268,12 @@ jobs:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for CLI quality validation
         id: deno_security_checkout_cli_quality
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for CLI quality checks
         id: deno_security_setup_cli_quality
-        uses: denoland/setup-deno@61e7bbad6d2a9c6d9c69b6c2ca0ee4a44a7ccd2b # v2.0.0
+        uses: denoland/setup-deno@e95548e5c7fa3c35b6b63bf216b9f07f9a8c7f5f # v2.0.3
         with:
           deno-version: v2.4.5
 
@@ -326,12 +326,12 @@ jobs:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for vulnerability scanning
         id: deno_security_checkout_vulnerability
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis and security scanning
         id: deno_security_setup_vulnerability
-        uses: denoland/setup-deno@61e7bbad6d2a9c6d9c69b6c2ca0ee4a44a7ccd2b # v2.0.0
+        uses: denoland/setup-deno@e95548e5c7fa3c35b6b63bf216b9f07f9a8c7f5f # v2.0.3
         with:
           deno-version: v2.4.5
 
