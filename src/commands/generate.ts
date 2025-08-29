@@ -30,7 +30,7 @@ export class <%= name %>Service {
     return this.models;
   }
 
-  findById(id: number): <%= name %>Model | undefined {
+  findById(id: string): <%= name %>Model | undefined {
     return this.models.find(model => model.id === id);
   }
 }
