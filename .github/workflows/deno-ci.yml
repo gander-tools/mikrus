@@ -37,10 +37,9 @@ jobs:
 
       - name: "🦕 Runtime: Setup Deno Environment"
         id: deno_setup_lint
-        uses: denoland/setup-deno@0df5d9c641efdff149993c321fc27c11c5df8623 # v1
+        uses: denoland/setup-deno@61e7bbad6d2a9c6d9c69b6c2ca0ee4a44a7ccd2b # v2.0.0
         with:
-          deno-version: v2.4
-          cache-hash: ${{ hashFiles('**/deno.json') }}
+          deno-version: v2.4.5
 
       - name: "💾 Cache: Restore Deno Dependencies"
         id: deno_cache_dependencies_lint
@@ -84,7 +83,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        deno-version: ["v2.4.x", "v2.x"]
+        deno-version: ["v2.4.5", "v2.x"]
         include:
           # Primary testing with coverage
           - deno-version: "v2.4.x"
@@ -98,7 +97,7 @@ jobs:
 
       - name: "🦕 Runtime: Setup Deno ${{ matrix.deno-version }}"
         id: deno_setup_test
-        uses: denoland/setup-deno@0df5d9c641efdff149993c321fc27c11c5df8623 # v1
+        uses: denoland/setup-deno@61e7bbad6d2a9c6d9c69b6c2ca0ee4a44a7ccd2b # v2.0.0
         with:
           deno-version: ${{ matrix.deno-version }}
 
@@ -171,10 +170,9 @@ jobs:
 
       - name: "🦕 Runtime: Setup Deno Environment"
         id: deno_setup_build
-        uses: denoland/setup-deno@0df5d9c641efdff149993c321fc27c11c5df8623 # v1
+        uses: denoland/setup-deno@61e7bbad6d2a9c6d9c69b6c2ca0ee4a44a7ccd2b # v2.0.0
         with:
-          deno-version: v2.4
-          cache-hash: ${{ hashFiles('**/deno.json') }}
+          deno-version: v2.4.5
 
       - name: "📦 Dependencies: Cache and Download"
         id: deno_cache_download_build
@@ -187,6 +185,8 @@ jobs:
             --allow-read \
             --allow-write \
             --allow-net \
+            --allow-env \
+            --allow-run=git \
             --output=build/${{ matrix.output }} \
             --target=${{ matrix.target }} \
             src/cli.ts
@@ -223,10 +223,9 @@ jobs:
 
       - name: "🦕 Runtime: Setup Deno Environment"
         id: deno_setup_security
-        uses: denoland/setup-deno@0df5d9c641efdff149993c321fc27c11c5df8623 # v1
+        uses: denoland/setup-deno@61e7bbad6d2a9c6d9c69b6c2ca0ee4a44a7ccd2b # v2.0.0
         with:
-          deno-version: v2.4
-          cache-hash: ${{ hashFiles('**/deno.json') }}
+          deno-version: v2.4.5
 
       - name: "🔍 Security: Deno Dependency Audit"
         id: deno_dependency_audit
