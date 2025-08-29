@@ -23,7 +23,7 @@ Deno.test("validateAndSanitizeInput - Invalid inputs", () => {
 Deno.test("validateAndSanitizeInput - Length validation", () => {
   const longName = "a".repeat(101);
   assertThrows(() => validateAndSanitizeInput(longName));
-  
+
   const maxLengthName = "a".repeat(100);
   assertEquals(validateAndSanitizeInput(maxLengthName), maxLengthName);
 });
@@ -47,7 +47,7 @@ Deno.test("utils.validateIdentifier - Invalid identifiers", () => {
 Deno.test("utils.validateIdentifier - Length limits", () => {
   const longName = "a".repeat(65);
   assertEquals(utils.validateIdentifier(longName), false);
-  
+
   const maxLengthName = "a".repeat(64);
   assertEquals(utils.validateIdentifier(maxLengthName), true);
 });
@@ -55,12 +55,12 @@ Deno.test("utils.validateIdentifier - Length limits", () => {
 Deno.test("utils.checkApiConnectivity - Basic connectivity test", async () => {
   // Test with mock environment (can't test real API in CI)
   const originalEnv = Deno.env.get("MIKRUS_API_URL");
-  
+
   try {
     // Test with a mock URL that will fail (expected)
     Deno.env.set("MIKRUS_API_URL", "https://httpbin.org/status/200");
     const result = await utils.checkApiConnectivity();
-    
+
     // Either true (if network allows) or false (if blocked/failed)
     assertEquals(typeof result, "boolean");
   } finally {
@@ -78,7 +78,7 @@ Deno.test("validateAndSanitizeInput - Unicode attack vectors", () => {
   assertThrows(() => validateAndSanitizeInput("file\u0000null"));
   assertThrows(() => validateAndSanitizeInput("file\u202Ehidden"));
   assertThrows(() => validateAndSanitizeInput("file\uFEFFbom"));
-  
+
   // Test Unicode directory traversal attempts
   assertThrows(() => validateAndSanitizeInput("file\u002E\u002E/traversal"));
   assertThrows(() => validateAndSanitizeInput("file\uFF0E\uFF0E/unicode"));
@@ -90,7 +90,7 @@ Deno.test("validateAndSanitizeInput - Edge cases", () => {
   assertEquals(validateAndSanitizeInput("1"), "1");
   assertEquals(validateAndSanitizeInput("-"), "-");
   assertEquals(validateAndSanitizeInput("_"), "_");
-  
+
   // Test boundary conditions
   assertThrows(() => validateAndSanitizeInput("."));
   assertThrows(() => validateAndSanitizeInput(".."));

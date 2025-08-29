@@ -48,7 +48,7 @@ import { exampleCommand } from "./commands/example.ts";
 
 const cli = new Command()
   .name("mikrus")
-  .version("0.0.1")
+  .version(`${VERSION} (${GIT_HASH})`)
   .description(
     "Command-line interface tool for managing VPS servers on mikr.us platform",
   )

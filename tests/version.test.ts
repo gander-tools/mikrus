@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/testing/asserts";
-import { VERSION, GIT_HASH } from "../src/version.ts";
+import { GIT_HASH, VERSION } from "../src/version.ts";
 
 Deno.test("VERSION - Development fallback", () => {
   // In development, VERSION should fallback to 'dev' when placeholder is present

@@ -21,10 +21,10 @@ async function run(args: string[] = Deno.args): Promise<void> {
     // Create main CLI command with enhanced configuration
     const cli = new Command()
       .name("mikrus")
-      .version(`${VERSION} (${GIT_HASH})`)
       .description(
         "Command-line interface tool for managing VPS servers on mikr.us platform",
       )
+      .version(`${VERSION} (${GIT_HASH})`)
       // Enhanced help with examples
       .example(
         "Generate a model file",
