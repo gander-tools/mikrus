@@ -5,7 +5,7 @@ Deno.test("VERSION - Type and content validation", () => {
   // VERSION should always be a string
   assertEquals(typeof VERSION, "string");
   assertEquals(VERSION.length > 0, true);
-  
+
   // Should be valid version (either "dev" for development or semantic version for production)
   const versionString = VERSION as string;
   const isDevelopment = versionString === "dev";
@@ -17,7 +17,7 @@ Deno.test("GIT_HASH - Type and content validation", () => {
   // GIT_HASH should always be a string
   assertEquals(typeof GIT_HASH, "string");
   assertEquals(GIT_HASH.length > 0, true);
-  
+
   // Should be valid hash (either "local" for development or actual hash for production)
   const hashString = GIT_HASH as string;
   const isDevelopment = hashString === "local";
