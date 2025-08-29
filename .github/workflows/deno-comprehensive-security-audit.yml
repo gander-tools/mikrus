@@ -10,14 +10,13 @@ on:
     - cron: "0 2 * * *"
   push:
     branches: [
-      main-deno,
-      feature/deno-cliffy-experiment,
+      master,
       feature/*,
       fix/*,
       hotfix/*,
     ]
   pull_request:
-    branches: [main-deno]
+    branches: [master]
   workflow_call:
     secrets:
       SNYK_TOKEN:
