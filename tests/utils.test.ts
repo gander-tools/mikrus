@@ -53,23 +53,18 @@ Deno.test("utils.validateIdentifier - Length limits", () => {
 });
 
 Deno.test("utils.checkApiConnectivity - Basic connectivity test", async () => {
-  // Test with mock environment (can't test real API in CI)
-  const originalEnv = Deno.env.get("MIKRUS_API_URL");
-
   try {
-    // Test with a mock URL that will fail (expected)
-    Deno.env.set("MIKRUS_API_URL", "https://httpbin.org/status/200");
+    // Test API connectivity check - should use default API URL if no env var
     const result = await utils.checkApiConnectivity();
 
-    // Either true (if network allows) or false (if blocked/failed)
+    // Should return a boolean (true if API reachable, false if not)
     assertEquals(typeof result, "boolean");
-  } finally {
-    // Restore original environment
-    if (originalEnv) {
-      Deno.env.set("MIKRUS_API_URL", originalEnv);
-    } else {
-      Deno.env.delete("MIKRUS_API_URL");
-    }
+
+    // In CI/test environment, API may not be reachable, so both true/false are valid
+    // The important thing is that the function doesn't throw and returns a boolean
+  } catch (error) {
+    // If there's an unexpected error, fail the test
+    throw new Error(`checkApiConnectivity should not throw: ${error}`);
   }
 });
 
