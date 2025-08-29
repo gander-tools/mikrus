@@ -132,7 +132,7 @@ mikrus -v
 **Output:**
 
 ```
-0.0.1
+%VERSION% (development build)
 ```
 
 ---
