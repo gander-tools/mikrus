@@ -1,14 +1,14 @@
 name: "🦕 Deno CI/CD Pipeline"
 
-# Deno-specific continuous integration workflow for the experimental branch
-# Triggers: Push/PR to feature/deno-cliffy-experiment branch + manual dispatch
+# Deno-specific continuous integration workflow for master branch  
+# Triggers: Push/PR to master branch + manual dispatch
 # Jobs: lint-and-format → test → build → security-audit → integration-test → notify
 
 on:
   push:
-    branches: [main-deno, feature/deno-cliffy-experiment]
+    branches: [master]
   pull_request:
-    branches: [main-deno]
+    branches: [master]
     paths:
       - "deno.json"
       - "src/**"
