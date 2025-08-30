@@ -43,7 +43,7 @@ jobs:
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis and security scanning
         id: deno_security_setup_deps
-        uses: denoland/setup-deno@e95548e5c7fa3c35b6b63bf216b9f07f9a8c7f5f # v2.0.3
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
           deno-version: v2.4.5
 
@@ -120,7 +120,7 @@ jobs:
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis
         id: deno_security_setup_license
-        uses: denoland/setup-deno@e95548e5c7fa3c35b6b63bf216b9f07f9a8c7f5f # v2.0.3
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
           deno-version: v2.4.5
 
@@ -273,7 +273,7 @@ jobs:
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for CLI quality checks
         id: deno_security_setup_cli_quality
-        uses: denoland/setup-deno@e95548e5c7fa3c35b6b63bf216b9f07f9a8c7f5f # v2.0.3
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
           deno-version: v2.4.5
 
@@ -331,7 +331,7 @@ jobs:
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis and security scanning
         id: deno_security_setup_vulnerability
-        uses: denoland/setup-deno@e95548e5c7fa3c35b6b63bf216b9f07f9a8c7f5f # v2.0.3
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
           deno-version: v2.4.5
 
