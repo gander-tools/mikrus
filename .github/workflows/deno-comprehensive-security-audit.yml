@@ -6,22 +6,15 @@ name: "🔒 Deno Comprehensive Security Audit"
 
 on:
   schedule:
-    # Run daily at 2 AM UTC
+    # Run daily at 2 AM UTC for deep security scans
     - cron: "0 2 * * *"
-  push:
-    branches: [
-      master,
-      feature/*,
-      fix/*,
-      hotfix/*,
-    ]
-  pull_request:
-    branches: [master]
   workflow_call:
+    # Can be called by CI workflow when needed
     secrets:
       SNYK_TOKEN:
         required: false
   workflow_dispatch:
+    # Manual trigger for on-demand security audits
 
 permissions:
   contents: read
@@ -38,15 +31,14 @@ jobs:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for comprehensive security analysis
         id: deno_security_checkout_deps
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis and security scanning
         id: deno_security_setup_deps
-        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
-          deno-version: v2.4
-          cache-hash: ${{ hashFiles('**/deno.json') }}
+          deno-version: v2.4.5
 
       - name: "📦 Dependencies: Cache Deno Modules"
         # Cache Deno dependencies for faster security analysis
@@ -116,15 +108,14 @@ jobs:
       - name: "📥 Repository: Checkout Code"
         id: deno_security_checkout_license
         # Downloads repository content for comprehensive security analysis
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis
         id: deno_security_setup_license
-        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
-          deno-version: v2.4
-          cache-hash: ${{ hashFiles('**/deno.json') }}
+          deno-version: v2.4.5
 
       - name: "📦 Dependencies: Cache Deno Modules"
         # Cache Deno dependencies for analysis
@@ -154,7 +145,7 @@ jobs:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for comprehensive security analysis
         id: deno_security_checkout_secrets
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: "🔍 Security: Hardcoded Secrets Detection"
         # Searches source code for hardcoded passwords, API keys, and credentials
@@ -225,7 +216,7 @@ jobs:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for comprehensive security analysis
         id: deno_security_checkout_supply_chain
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: "🔍 Security: Package Integrity Verification"
         # Verifies package authenticity and checks for suspicious dependencies
@@ -270,43 +261,19 @@ jobs:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for CLI quality validation
         id: deno_security_checkout_cli_quality
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for CLI quality checks
         id: deno_security_setup_cli_quality
-        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
-          deno-version: v2.4
-          cache-hash: ${{ hashFiles('**/deno.json') }}
+          deno-version: v2.4.5
 
       - name: "📦 Dependencies: Cache Deno Modules"
-        # Cache Deno dependencies for faster quality checks
+        # Cache Deno dependencies for security checks
         id: deno_security_cache_cli_quality
         run: deno cache src/cli.ts tests/generate-security.test.ts
-
-      - name: "✨ Code Quality: Deno Lint & Format Check"
-        # Validates code style and formatting using Deno native tools
-        id: deno_security_lint_format_check
-        run: |
-          echo "🔍 Running Deno quality checks..."
-          deno lint src/ tests/
-          deno fmt --check src/ tests/
-
-      - name: "🔧 TypeScript: Compilation Check"
-        # Ensures TypeScript code compiles without errors using Deno check
-        id: deno_security_typescript_compilation
-        run: |
-          echo "🔍 Checking TypeScript compilation..."
-          deno check src/cli.ts tests/generate-security.test.ts
-
-      - name: "🧪 TDD Compliance: Test Coverage Check"
-        # Validates TDD methodology compliance and test coverage
-        id: deno_security_tdd_compliance
-        run: |
-          echo "🔍 Running Deno test coverage checks..."
-          deno test --coverage --allow-read --allow-write
-          echo "✅ TDD compliance verified"
 
       - name: "🚀 CLI Integration: Smoke Test"
         # Tests basic CLI functionality using Deno run
@@ -329,15 +296,14 @@ jobs:
       - name: "📥 Repository: Checkout Code"
         # Downloads repository content for vulnerability scanning
         id: deno_security_checkout_vulnerability
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: "🦕 Runtime: Setup Deno Environment"
         # Configures Deno runtime for dependency analysis and security scanning
         id: deno_security_setup_vulnerability
-        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
-          deno-version: v2.4
-          cache-hash: ${{ hashFiles('**/deno.json') }}
+          deno-version: v2.4.5
 
       - name: "📦 Dependencies: Cache Deno Modules"
         # Cache Deno dependencies for faster security analysis

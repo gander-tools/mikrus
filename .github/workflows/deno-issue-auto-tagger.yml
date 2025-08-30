@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: "🔍 Analyze Issue Content"
         id: deno_issue_analyze
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
             const issue = context.payload.issue;
@@ -125,7 +125,7 @@ jobs:
       - name: "🏷️ Apply Labels to Issue"
         id: deno_issue_apply_labels
         if: fromJSON(steps.deno_issue_analyze.outputs.result).shouldTag
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
             const result = JSON.parse('${{ steps.deno_issue_analyze.outputs.result }}');
@@ -204,7 +204,7 @@ jobs:
       - name: "📊 Issue Triage Summary"
         id: deno_issue_triage_summary
         if: always()
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
             const issue = context.payload.issue;
