@@ -1,7 +1,10 @@
 name: Claude Code Review
 
 on:
-  # Manual trigger only - run on demand for specific PRs
+  # Trigger after merges to master branch
+  push:
+    branches: [master]
+  # Manual trigger for specific PRs
   workflow_dispatch:
     inputs:
       pr_number:
@@ -23,6 +26,8 @@ jobs:
       contents: read
       pull-requests: write
       issues: read
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     steps:
       - name: Get PR Context
@@ -34,9 +39,20 @@ jobs:
           elif [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
             echo "Reviewing PR #${{ github.event.pull_request.number }}"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            # For push events, find the most recent merged PR
+            echo "Push to master detected - finding most recent merged PR..."
+            RECENT_PR=$(gh pr list --state merged --limit 1 --json number --jq '.[0].number')
+            if [ -n "$RECENT_PR" ]; then
+              echo "PR_NUMBER=$RECENT_PR" >> $GITHUB_OUTPUT
+              echo "Reviewing recently merged PR #$RECENT_PR"
+            else
+              echo "No recent merged PRs found. Skipping review."
+              exit 0
+            fi
           else
-            echo "No PR number provided. Please specify a PR number when triggering manually."
-            exit 1
+            echo "No PR context available. Skipping review."
+            exit 0
           fi
 
       - name: Checkout repository
