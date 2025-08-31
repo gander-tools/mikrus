@@ -297,12 +297,22 @@ jobs:
             exit 1
           fi
 
+          echo "✅ Help command test passed"
+
+      - name: "🔍 Integration: CLI Internal Help Command Test"
+        id: deno_test_internal_help_command
+        run: |
+          echo "🔍 Testing CLI internal help command..."
+          output=$(MIKRUS_INTERNAL=true ./build/mikrus-linux --help)
+          echo "$output"
+
+          # In internal mode, generate command should be visible
           if ! echo "$output" | grep -q "generate"; then
-            echo "❌ ERROR: Help output does not contain generate command"
+            echo "❌ ERROR: Help output does not contain generate command in internal mode"
             exit 1
           fi
 
-          echo "✅ Help command test passed"
+          echo "✅ Internal help command test passed"
 
       - name: "📋 Integration: CLI Version Command Test"
         id: deno_test_version_command
@@ -321,14 +331,14 @@ jobs:
       - name: "📄 Integration: CLI Generate Command Test"
         id: deno_test_generate_command
         run: |
-          echo "📄 Testing CLI generate command..."
+          echo "📄 Testing CLI generate command in internal mode..."
 
           # Create a temporary directory for testing
           mkdir -p test-output
           cd test-output
 
-          # Test generate command
-          output=$(../build/mikrus-linux generate test-integration-model)
+          # Test generate command with internal mode
+          output=$(MIKRUS_INTERNAL=true ../build/mikrus-linux generate test-integration-model)
           echo "$output"
 
           # Verify file was created
@@ -358,10 +368,10 @@ jobs:
       - name: "🛡️ Integration: Security Validation Test"
         id: deno_test_security_validation
         run: |
-          echo "🛡️ Testing security validation..."
+          echo "🛡️ Testing security validation in internal mode..."
 
           # Test path traversal protection
-          if ./build/mikrus-linux generate "../malicious-file" 2>&1 | grep -q "Path traversal detected"; then
+          if MIKRUS_INTERNAL=true ./build/mikrus-linux generate "../malicious-file" 2>&1 | grep -q "Path traversal detected"; then
             echo "✅ Path traversal protection working"
           else
             echo "❌ ERROR: Path traversal protection failed"
@@ -369,7 +379,7 @@ jobs:
           fi
 
           # Test command injection protection
-          if ./build/mikrus-linux generate "file; rm -rf /" 2>&1 | grep -q "Invalid characters detected"; then
+          if MIKRUS_INTERNAL=true ./build/mikrus-linux generate "file; rm -rf /" 2>&1 | grep -q "Invalid characters detected"; then
             echo "✅ Command injection protection working"
           else
             echo "❌ ERROR: Command injection protection failed"
