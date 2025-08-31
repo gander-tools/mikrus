@@ -1,16 +1,14 @@
 name: Claude Code Review
 
 on:
-  # Temporarily disabled until CLAUDE_CODE_OAUTH_TOKEN is configured
+  # Manual trigger only - run on demand for specific PRs
   workflow_dispatch:
-  pull_request:
-    types: [opened, synchronize]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+    inputs:
+      pr_number:
+        description: 'Pull Request number to review'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   claude-review:
@@ -26,6 +24,20 @@ jobs:
       issues: read
 
     steps:
+      - name: Get PR Context
+        id: pr_context
+        run: |
+          if [ -n "${{ github.event.inputs.pr_number }}" ]; then
+            echo "PR_NUMBER=${{ github.event.inputs.pr_number }}" >> $GITHUB_OUTPUT
+            echo "Reviewing PR #${{ github.event.inputs.pr_number }}"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "Reviewing PR #${{ github.event.pull_request.number }}"
+          else
+            echo "No PR number provided. Please specify a PR number when triggering manually."
+            exit 1
+          fi
+
       - name: Checkout repository
         id: deno_claude_checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -39,6 +51,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.CLAUDE_CODE_REVIEW_PAT }}
+          pr_number: ${{ steps.pr_context.outputs.PR_NUMBER }}
 
           # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4.1)
           # model: "claude-opus-4-1-20250805"
