@@ -1,6 +1,6 @@
 name: "🦕 Deno CI/CD Pipeline"
 
-# Deno-specific continuous integration workflow for master branch  
+# Deno-specific continuous integration workflow for master branch
 # Triggers: Push/PR to master branch + manual dispatch
 # Jobs: lint-and-format → test → build → security-audit → integration-test → notify
 
@@ -8,7 +8,7 @@ on:
   push:
     branches: [master]
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+' # Build binaries for releases
+      - "v[0-9]+.[0-9]+.[0-9]+" # Build binaries for releases
   pull_request:
     branches: [master]
     paths:

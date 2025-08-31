@@ -79,7 +79,8 @@ When ready for JSR publishing, follow these steps:
 
 ### 1. JSR Configuration
 
-Note: Currently no `jsr.json` file exists. When ready for JSR publishing, create one with:
+Note: Currently no `jsr.json` file exists. When ready for JSR publishing, create
+one with:
 
 ```json
 {

@@ -19,13 +19,12 @@ jobs:
     #   github.event.pull_request.user.login == 'external-contributor' ||
     #   github.event.pull_request.user.login == 'new-developer' ||
     #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
       issues: read
-    
+
     steps:
       - name: Checkout repository
         id: deno_claude_checkout
@@ -52,7 +51,7 @@ jobs:
             - Performance considerations
             - Security concerns
             - Test coverage
-            
+
             Be constructive and helpful in your feedback.
 
           # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
@@ -85,4 +84,3 @@ jobs:
 # - CLAUDE_CODE_OAUTH_TOKEN: OAuth token for Claude Code API access
 # - ANTHROPIC_API_KEY: Anthropic API key for Claude model access
 # Both secrets are configured at the organization level for security
-

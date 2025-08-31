@@ -14,7 +14,7 @@ on:
       SNYK_TOKEN:
         required: false
   workflow_dispatch:
-    # Manual trigger for on-demand security audits
+# Manual trigger for on-demand security audits
 
 permissions:
   contents: read

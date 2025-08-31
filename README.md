@@ -7,8 +7,8 @@
 [![JSR](https://jsr.io/badges/@gander-tools/mikrus)](https://jsr.io/@gander-tools/mikrus)
 
 Command-line interface tool for managing VPS servers on the **mikr.us**
-platform. Built with the modern Deno runtime and Cliffy CLI framework. Inspired by
-[mikrus-cli](https://github.com/unkn0w/noobs/blob/main/mikrus-cli/mikrus).
+platform. Built with the modern Deno runtime and Cliffy CLI framework. Inspired
+by [mikrus-cli](https://github.com/unkn0w/noobs/blob/main/mikrus-cli/mikrus).
 
 ## Installation
 
@@ -226,7 +226,8 @@ curl -fsSL https://deno.land/x/install/install.sh | sh
 ### Repository Health
 
 - 🛡️ **Security Status**: Permission-based security model, daily automated scans
-- 🧪 **Test Coverage**: Growing test suite with comprehensive security validation
+- 🧪 **Test Coverage**: Growing test suite with comprehensive security
+  validation
 - 🔄 **CI/CD Pipeline**: Deno-native testing and cross-platform compilation
 
 ---

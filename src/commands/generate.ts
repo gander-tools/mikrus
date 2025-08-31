@@ -78,7 +78,7 @@ async function generateFromTemplate(props: {
 /**
  * Generate command for Cliffy
  */
-export const generateCommand = new Command()
+export const generateCommand: Command = new Command()
   .description("Generate a new model file from template")
   .arguments("<name:string>")
   .alias("g")

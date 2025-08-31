@@ -18,6 +18,10 @@ import { GIT_HASH, VERSION } from "./version.ts";
  */
 async function run(args: string[] = Deno.args): Promise<void> {
   try {
+    // Check if internal mode is enabled (for hidden commands)
+    const internalMode = Deno.env.get("MIKRUS_INTERNAL") === "true" ||
+      args.includes("--internal");
+
     // Create main CLI command with enhanced configuration
     const cli = new Command()
       .name("mikrus")
@@ -25,15 +29,6 @@ async function run(args: string[] = Deno.args): Promise<void> {
         "Command-line interface tool for managing VPS servers on mikr.us platform",
       )
       .version(`${VERSION} (${GIT_HASH})`)
-      // Enhanced help with examples
-      .example(
-        "Generate a model file",
-        "mikrus generate user",
-      )
-      .example(
-        "Show help for generate command",
-        "mikrus generate --help",
-      )
       // Global options
       .globalOption(
         "--verbose, -v",
@@ -43,26 +38,30 @@ async function run(args: string[] = Deno.args): Promise<void> {
         "--quiet, -q",
         "Suppress non-essential output",
       )
-      .globalOption("--config <path>", "Path to configuration file")
-      // Register generate command
-      .command("generate", generateCommand)
-      // Custom error handling
-      .error((error, _cmd) => {
-        if (error instanceof Error) {
-          console.error(red("✗ Error:"), error.message);
+      .globalOption("--config <path>", "Path to configuration file");
 
-          // Provide helpful suggestions for common errors
-          if (error.message.includes("Unknown command")) {
-            console.log(yellow("\n💡 Available commands:"));
-            console.log("  generate  Generate a new model file from template");
-            console.log("\nTry: mikrus --help");
-          }
-        } else {
-          console.error(red("✗ An unexpected error occurred"));
+    // Only register generate command in internal mode
+    if (internalMode) {
+      cli
+        .command("generate", generateCommand)
+        .hidden(); // Mark as hidden command
+    }
+
+    // Custom error handling
+    cli.error((error, _cmd) => {
+      if (error instanceof Error) {
+        console.error(red("✗ Error:"), error.message);
+
+        // Provide helpful suggestions for common errors
+        if (error.message.includes("Unknown command")) {
+          console.log(yellow("\n💡 Try: mikrus --help"));
         }
+      } else {
+        console.error(red("✗ An unexpected error occurred"));
+      }
 
-        Deno.exit(1);
-      });
+      Deno.exit(1);
+    });
 
     // Execute the CLI with provided arguments
     // Show help if no arguments provided
@@ -73,6 +72,11 @@ async function run(args: string[] = Deno.args): Promise<void> {
 
     await cli.parse(args);
   } catch (error) {
+    // Check if it's a help request (Cliffy throws an error for help)
+    if (error instanceof Error && error.message.includes("HELP")) {
+      return; // Help was shown, exit normally
+    }
+
     // Global error handler for unhandled exceptions
     console.error(
       red("✗ Fatal error:"),
