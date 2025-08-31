@@ -4,14 +4,8 @@ on:
   # Trigger on push to master (after PR is merged)
   push:
     branches: [master]
-  # Manual trigger for specific PRs
+  # Manual trigger for full project review
   workflow_dispatch:
-    inputs:
-      pr_number:
-        description: 'Pull Request number to review'
-        required: false
-        type: string
-        default: ''
 
 jobs:
   claude-review:
@@ -44,17 +38,19 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.CLAUDE_CODE_REVIEW_PAT }}
 
-          # Direct prompt for post-merge review
+          # Direct prompt for project review
           prompt: |
-            Please review the latest changes merged to master and provide feedback on:
-            - Code quality and best practices
+            Please perform a comprehensive code review of the entire project and provide feedback on:
+            - Overall code quality and architecture
+            - Best practices adherence
             - Potential bugs or issues
             - Performance considerations
-            - Security concerns
-            - Test coverage
-            - Suggestions for improvements in future iterations
+            - Security vulnerabilities
+            - Test coverage and quality
+            - Code maintainability and documentation
+            - Suggestions for improvements
             
-            Note: These changes have already been merged. Focus on educational feedback and suggestions for future improvements.
+            Focus on providing constructive feedback that will help improve the codebase.
 
           # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
           use_sticky_comment: true
