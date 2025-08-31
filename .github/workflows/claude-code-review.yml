@@ -1,10 +1,9 @@
 name: Claude Code Review
 
 on:
-  # Trigger on pull requests to master
-  pull_request:
+  # Trigger when code is pushed to master (after merge)
+  push:
     branches: [master]
-    types: [opened, synchronize, reopened]
   # Manual trigger for full project review
   workflow_dispatch:
 
@@ -39,29 +38,52 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.CLAUDE_CODE_REVIEW_PAT }}
 
-          # Direct prompt for project review with validation checks
+          # Direct prompt for comprehensive code review (no test execution)
           prompt: |
-            Please perform a comprehensive code review of the entire project. 
+            Please perform a comprehensive code review of the entire project on the master branch.
             
-            FIRST, run these validation checks:
-            1. Run all tests: `deno task test`
-            2. Check types: `deno task check`
-            3. Run linter: `deno task lint`
-            4. Check formatting: `deno task fmt:check`
-            5. Validate GitHub Actions workflows syntax in .github/workflows/
+            DO NOT run any tests, linters, or Deno commands. Focus solely on code review and analysis.
             
-            THEN provide detailed feedback on:
-            - Test results: Are all tests passing? Any failures or issues?
-            - Type checking: Any TypeScript type errors or warnings?
-            - Linting issues: Any code style or quality problems?
-            - Workflow validation: Are all GitHub Actions workflows syntactically correct?
-            - Overall code quality and architecture
-            - Security vulnerabilities or concerns
-            - Performance considerations
-            - Code maintainability and documentation
-            - Suggestions for improvements
+            Review the following aspects:
             
-            Report any failures or issues found during the validation checks first, then provide general code review feedback.
+            ## Code Quality & Architecture
+            - Overall project structure and organization
+            - Design patterns and architectural decisions
+            - Code consistency and adherence to TypeScript/Deno best practices
+            - Proper use of Cliffy framework patterns
+            - Error handling and edge cases coverage
+            
+            ## Security
+            - Input validation and sanitization
+            - Path traversal and injection vulnerabilities
+            - Proper permission usage (--allow-read, --allow-write, --allow-net)
+            - Sensitive data handling
+            - Dependency security (check for known vulnerable packages)
+            
+            ## Performance
+            - Potential performance bottlenecks
+            - Efficient use of async/await patterns
+            - Memory usage considerations
+            - Binary compilation optimization opportunities
+            
+            ## Maintainability
+            - Code readability and clarity
+            - Documentation quality (comments, JSDoc, README)
+            - Test coverage adequacy (review test files, don't run them)
+            - Technical debt and refactoring opportunities
+            
+            ## GitHub Workflows
+            - Review all workflows in .github/workflows/ for correctness
+            - Check for workflow best practices and efficiency
+            - Validate workflow syntax and job dependencies
+            - Security of workflow permissions and secrets usage
+            
+            ## Suggestions for Improvement
+            - Prioritized list of improvements (critical, high, medium, low)
+            - Specific code examples where applicable
+            - Recommendations for next development steps
+            
+            Focus on providing actionable feedback that improves code quality, security, and maintainability.
 
           # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
           use_sticky_comment: true
