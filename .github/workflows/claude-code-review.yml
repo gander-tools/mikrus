@@ -1,14 +1,9 @@
 name: Claude Code Review
 
 on:
-  # Trigger after merges to master branch
-  push:
-    branches: [master]
-  # Trigger on PRs for testing workflow changes
+  # Trigger on PRs for code review
   pull_request:
     branches: [master]
-    paths:
-      - '.github/workflows/claude-code-review.yml'
   # Manual trigger for specific PRs
   workflow_dispatch:
     inputs:
