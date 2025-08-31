@@ -38,19 +38,29 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.CLAUDE_CODE_REVIEW_PAT }}
 
-          # Direct prompt for project review
+          # Direct prompt for project review with validation checks
           prompt: |
-            Please perform a comprehensive code review of the entire project and provide feedback on:
+            Please perform a comprehensive code review of the entire project. 
+            
+            FIRST, run these validation checks:
+            1. Run all tests: `deno task test`
+            2. Check types: `deno task check`
+            3. Run linter: `deno task lint`
+            4. Check formatting: `deno task fmt:check`
+            5. Validate GitHub Actions workflows syntax in .github/workflows/
+            
+            THEN provide detailed feedback on:
+            - Test results: Are all tests passing? Any failures or issues?
+            - Type checking: Any TypeScript type errors or warnings?
+            - Linting issues: Any code style or quality problems?
+            - Workflow validation: Are all GitHub Actions workflows syntactically correct?
             - Overall code quality and architecture
-            - Best practices adherence
-            - Potential bugs or issues
+            - Security vulnerabilities or concerns
             - Performance considerations
-            - Security vulnerabilities
-            - Test coverage and quality
             - Code maintainability and documentation
             - Suggestions for improvements
             
-            Focus on providing constructive feedback that will help improve the codebase.
+            Report any failures or issues found during the validation checks first, then provide general code review feedback.
 
           # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
           use_sticky_comment: true
@@ -69,8 +79,8 @@ jobs:
           #   'Welcome! Please review this PR from a first-time contributor. Be encouraging and provide detailed explanations for any suggestions.' ||
           #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
 
-          # Optional: Add specific tools for running tests or linting
-          # allowed_tools: "Bash(npm run test),Bash(npm run lint),Bash(npm run typecheck)"
+          # Enable tools for running validation checks
+          allowed_tools: "Bash(deno task test),Bash(deno task check),Bash(deno task lint),Bash(deno task fmt:check),Bash(gh workflow list),Read,Grep"
 
           # Optional: Skip review for certain conditions
           # if: |
