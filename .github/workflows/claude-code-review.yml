@@ -41,31 +41,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Get PR Context
-        id: pr_context
-        run: |
-          if [ -n "${{ github.event.inputs.pr_number }}" ]; then
-            echo "PR_NUMBER=${{ github.event.inputs.pr_number }}" >> $GITHUB_OUTPUT
-            echo "Reviewing PR #${{ github.event.inputs.pr_number }}"
-          elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-            echo "Reviewing PR #${{ github.event.pull_request.number }}"
-          elif [ "${{ github.event_name }}" = "push" ]; then
-            # For push events, find the most recent merged PR
-            echo "Push to master detected - finding most recent merged PR..."
-            RECENT_PR=$(gh pr list --state merged --limit 1 --json number --jq '.[0].number')
-            if [ -n "$RECENT_PR" ]; then
-              echo "PR_NUMBER=$RECENT_PR" >> $GITHUB_OUTPUT
-              echo "Reviewing recently merged PR #$RECENT_PR"
-            else
-              echo "No recent merged PRs found. Skipping review."
-              exit 0
-            fi
-          else
-            echo "No PR context available. Skipping review."
-            exit 0
-          fi
-
       - name: Run Claude Code Review
         id: deno_claude_review
         uses: anthropics/claude-code-action@a6888c03f22170d00d2a92fa2317584ca7d5e108 # v1.0
@@ -73,10 +48,6 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.CLAUDE_CODE_REVIEW_PAT }}
-          pr_number: ${{ steps.pr_context.outputs.PR_NUMBER }}
-
-          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4.1)
-          # model: "claude-opus-4-1-20250805"
 
           # Direct prompt for automated review (no @claude mention needed)
           prompt: |
