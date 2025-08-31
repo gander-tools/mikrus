@@ -30,6 +30,12 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     steps:
+      - name: Checkout repository
+        id: deno_claude_checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 1
+
       - name: Get PR Context
         id: pr_context
         run: |
@@ -54,12 +60,6 @@ jobs:
             echo "No PR context available. Skipping review."
             exit 0
           fi
-
-      - name: Checkout repository
-        id: deno_claude_checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          fetch-depth: 1
 
       - name: Run Claude Code Review
         id: deno_claude_review
