@@ -1,8 +1,8 @@
 name: Claude Code Review
 
 on:
-  # Trigger on PRs for code review
-  pull_request:
+  # Trigger on push to master (after PR is merged)
+  push:
     branches: [master]
   # Manual trigger for specific PRs
   workflow_dispatch:
@@ -44,16 +44,17 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.CLAUDE_CODE_REVIEW_PAT }}
 
-          # Direct prompt for automated review (no @claude mention needed)
+          # Direct prompt for post-merge review
           prompt: |
-            Please review this pull request and provide feedback on:
+            Please review the latest changes merged to master and provide feedback on:
             - Code quality and best practices
             - Potential bugs or issues
             - Performance considerations
             - Security concerns
             - Test coverage
+            - Suggestions for improvements in future iterations
             
-            Be constructive and helpful in your feedback.
+            Note: These changes have already been merged. Focus on educational feedback and suggestions for future improvements.
 
           # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
           use_sticky_comment: true
