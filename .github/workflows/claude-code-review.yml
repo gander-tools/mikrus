@@ -7,7 +7,6 @@ on:
 
 jobs:
   claude-review:
-    # Run only when PR is created by user 'gander'
     if: github.event.pull_request.user.login == 'gander'
 
     runs-on: ubuntu-latest
@@ -15,9 +14,7 @@ jobs:
       contents: read
       pull-requests: write
       issues: read
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
+
     steps:
       - name: Checkout repository
         id: deno_claude_checkout
@@ -30,14 +27,9 @@ jobs:
         uses: anthropics/claude-code-action@a6888c03f22170d00d2a92fa2317584ca7d5e108 # v1.0
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.CLAUDE_CODE_REVIEW_PAT }}
 
           prompt: |
-            Please perform a comprehensive code review of the entire project on the master branch.
-            
-            DO NOT run any tests, linters, or Deno commands. Focus solely on code review and analysis.
-            
             Review the following aspects:
             
             ## Code Quality & Architecture
