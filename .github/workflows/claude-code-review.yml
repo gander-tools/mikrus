@@ -1,8 +1,8 @@
 name: Claude Code Review
 
 on:
-  # Trigger after merges to master branch
-  push:
+  # Trigger on PRs for code review
+  pull_request:
     branches: [master]
   # Trigger on PRs for testing workflow changes
   pull_request:
