@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/testing/asserts";
+import { assertEquals } from "jsr:@std/assert@1.0.8";
 import { describe, it } from "jsr:@std/testing@1.0.8/bdd";
 import { GIT_HASH, VERSION } from "../src/version.ts";
 

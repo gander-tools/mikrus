@@ -125,7 +125,7 @@ jobs:
 
       - name: "🧪 Quality: Execute Deno Test Suite"
         id: deno_execute_tests
-        run: deno test --allow-read --allow-write --allow-net --coverage
+        run: deno test --allow-read --allow-write --allow-net --allow-env --allow-run --coverage
 
       - name: "📊 Quality: Generate Coverage Report"
         id: deno_generate_coverage

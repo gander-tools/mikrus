@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "@std/testing/asserts";
+import { assertEquals, assertThrows } from "jsr:@std/assert@1.0.8";
 import {
   afterEach,
   beforeEach,
