@@ -7,11 +7,8 @@ on:
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    # Run only when PR is created by user 'gander'
+    if: github.event.pull_request.user.login == 'gander'
 
     runs-on: ubuntu-latest
     permissions:
@@ -36,7 +33,6 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.CLAUDE_CODE_REVIEW_PAT }}
 
-          # Direct prompt for comprehensive code review (no test execution)
           prompt: |
             Please perform a comprehensive code review of the entire project on the master branch.
             
@@ -83,33 +79,4 @@ jobs:
             
             Focus on providing actionable feedback that improves code quality, security, and maintainability.
 
-          # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
           use_sticky_comment: true
-
-          # Optional: Customize review based on file types
-          # direct_prompt: |
-          #   Review this PR focusing on:
-          #   - For TypeScript files: Type safety and proper interface usage
-          #   - For API endpoints: Security, input validation, and error handling
-          #   - For React components: Performance, accessibility, and best practices
-          #   - For tests: Coverage, edge cases, and test quality
-
-          # Optional: Different prompts for different authors
-          # direct_prompt: |
-          #   ${{ github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' &&
-          #   'Welcome! Please review this PR from a first-time contributor. Be encouraging and provide detailed explanations for any suggestions.' ||
-          #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
-
-          # Note: Claude Code Action will have access to standard tools for validation checks
-
-          # Optional: Skip review for certain conditions
-          # if: |
-          #   !contains(github.event.pull_request.title, '[skip-review]') &&
-          #   !contains(github.event.pull_request.title, '[WIP]')
-
-# ORGANIZATION SECRETS:
-# Uses organization-level secrets for Claude Code integration:
-# - CLAUDE_CODE_OAUTH_TOKEN: OAuth token for Claude Code API access
-# - ANTHROPIC_API_KEY: Anthropic API key for Claude model access
-# Both secrets are configured at the organization level for security
-
