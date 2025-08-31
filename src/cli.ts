@@ -19,8 +19,8 @@ import { GIT_HASH, VERSION } from "./version.ts";
 async function run(args: string[] = Deno.args): Promise<void> {
   try {
     // Check for internal mode for generate command visibility
-    const internalMode = Deno.env.get("MIKRUS_INTERNAL") === "true" || 
-                        args.includes("--internal");
+    const internalMode = Deno.env.get("MIKRUS_INTERNAL") === "true" ||
+      args.includes("--internal");
 
     // Create main CLI command with enhanced configuration
     const cli = new Command()
@@ -31,7 +31,7 @@ async function run(args: string[] = Deno.args): Promise<void> {
       .version(`${VERSION} (${GIT_HASH})`)
       // Enhanced help with examples (conditional on internal mode)
       .example(
-        internalMode ? "Generate a model file" : "Show version", 
+        internalMode ? "Generate a model file" : "Show version",
         internalMode ? "mikrus generate user" : "mikrus --version",
       )
       .example(
@@ -64,7 +64,9 @@ async function run(args: string[] = Deno.args): Promise<void> {
           if (error.message.includes("Unknown command")) {
             console.log(yellow("\n💡 Available commands:"));
             if (internalMode) {
-              console.log("  generate  Generate a new model file from template");
+              console.log(
+                "  generate  Generate a new model file from template",
+              );
             }
             console.log("\nTry: mikrus --help");
           }
