@@ -1,9 +1,10 @@
 name: Claude Code Review
 
 on:
-  # Trigger on push to master (after PR is merged)
-  push:
+  # Trigger on pull requests to master
+  pull_request:
     branches: [master]
+    types: [opened, synchronize, reopened]
   # Manual trigger for full project review
   workflow_dispatch:
 
@@ -79,8 +80,7 @@ jobs:
           #   'Welcome! Please review this PR from a first-time contributor. Be encouraging and provide detailed explanations for any suggestions.' ||
           #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
 
-          # Enable tools for running validation checks
-          allowed_tools: "Bash(deno task test),Bash(deno task check),Bash(deno task lint),Bash(deno task fmt:check),Bash(gh workflow list),Read,Grep"
+          # Note: Claude Code Action will have access to standard tools for validation checks
 
           # Optional: Skip review for certain conditions
           # if: |
