@@ -4,6 +4,11 @@ on:
   # Trigger on PRs for code review
   pull_request:
     branches: [master]
+  # Trigger on PRs for testing workflow changes
+  pull_request:
+    branches: [master]
+    paths:
+      - '.github/workflows/claude-code-review.yml'
   # Manual trigger for specific PRs
   workflow_dispatch:
     inputs:
