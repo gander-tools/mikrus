@@ -77,31 +77,33 @@ jobs:
         run: deno check src/cli.ts tests/generate-security.test.ts
 
   deno-test:
-    name: "🦕 Test Suite: Deno ${{ matrix.deno-version }}"
-    # Runs Deno native tests across different Deno versions
-    runs-on: ubuntu-latest
+    name: "🦕 Test Suite: ${{ matrix.os }}"
+    # Runs Deno native tests across different operating systems
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
-        deno-version: ["v2.4.5", "v2.x"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         include:
-          # Primary testing with coverage
-          - deno-version: "v2.4.5"
+          # Primary testing with coverage on Linux
+          - os: ubuntu-latest
             coverage: true
-          - deno-version: "v2.x"
+          - os: windows-latest
+            coverage: false
+          - os: macos-latest
             coverage: false
     steps:
       - name: "📥 Repository: Checkout Code"
         id: deno_checkout_test
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: "🦕 Runtime: Setup Deno ${{ matrix.deno-version }}"
+      - name: "🦕 Runtime: Setup Deno Environment"
         id: deno_setup_test
         uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
-          deno-version: ${{ matrix.deno-version }}
+          deno-version: v2.4.5
 
       - name: "💾 Cache: Restore Deno Dependencies"
         id: deno_cache_dependencies_test
@@ -110,9 +112,9 @@ jobs:
           path: |
             ~/.cache/deno
             ~/.deno
-          key: ${{ runner.os }}-deno-${{ matrix.deno-version }}-${{ hashFiles('**/deno.lock') }}
+          key: ${{ runner.os }}-deno-v2.4.5-${{ hashFiles('**/deno.lock') }}
           restore-keys: |
-            ${{ runner.os }}-deno-${{ matrix.deno-version }}-
+            ${{ runner.os }}-deno-v2.4.5-
             ${{ runner.os }}-deno-
 
       - name: "📦 Dependencies: Cache and Download"
@@ -123,7 +125,7 @@ jobs:
 
       - name: "🧪 Quality: Execute Deno Test Suite"
         id: deno_execute_tests
-        run: deno test --allow-read --allow-write --coverage
+        run: deno test --allow-read --allow-write --allow-net --allow-env --allow-run --coverage
 
       - name: "📊 Quality: Generate Coverage Report"
         id: deno_generate_coverage
