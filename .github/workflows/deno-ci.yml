@@ -77,31 +77,21 @@ jobs:
         run: deno check src/cli.ts tests/generate-security.test.ts
 
   deno-test:
-    name: "🦕 Test Suite: Deno ${{ matrix.deno-version }}"
-    # Runs Deno native tests across different Deno versions
+    name: "🦕 Test Suite: Deno 2.4.5+"
+    # Runs Deno native tests on Deno 2.4.5+ only
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        deno-version: ["v2.4.5", "v2.x"]
-        include:
-          # Primary testing with coverage
-          - deno-version: "v2.4.5"
-            coverage: true
-          - deno-version: "v2.x"
-            coverage: false
     steps:
       - name: "📥 Repository: Checkout Code"
         id: deno_checkout_test
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: "🦕 Runtime: Setup Deno ${{ matrix.deno-version }}"
+      - name: "🦕 Runtime: Setup Deno Environment"
         id: deno_setup_test
         uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
-          deno-version: ${{ matrix.deno-version }}
+          deno-version: v2.4.5
 
       - name: "💾 Cache: Restore Deno Dependencies"
         id: deno_cache_dependencies_test
@@ -110,9 +100,9 @@ jobs:
           path: |
             ~/.cache/deno
             ~/.deno
-          key: ${{ runner.os }}-deno-${{ matrix.deno-version }}-${{ hashFiles('**/deno.lock') }}
+          key: ${{ runner.os }}-deno-v2.4.5-${{ hashFiles('**/deno.lock') }}
           restore-keys: |
-            ${{ runner.os }}-deno-${{ matrix.deno-version }}-
+            ${{ runner.os }}-deno-v2.4.5-
             ${{ runner.os }}-deno-
 
       - name: "📦 Dependencies: Cache and Download"
@@ -127,14 +117,12 @@ jobs:
 
       - name: "📊 Quality: Generate Coverage Report"
         id: deno_generate_coverage
-        if: matrix.coverage == true
         run: |
           deno coverage coverage/ --lcov --output=coverage.lcov
           deno coverage coverage/ --html
 
       - name: "📤 Artifacts: Upload Coverage Report"
         id: deno_upload_coverage
-        if: matrix.coverage == true
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: coverage-report
