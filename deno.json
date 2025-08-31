@@ -1,7 +1,11 @@
 {
   "name": "@gander-tools/mikrus",
+  "version": "0.1.0",
   "description": "Command-line interface tool for managing VPS servers on mikr.us platform (Deno + Cliffy)",
   "license": "MIT",
+  "engines": {
+    "deno": ">=2.4.0"
+  },
   "keywords": [
     "cli",
     "vps",
