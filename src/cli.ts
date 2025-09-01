@@ -18,10 +18,6 @@ import { GIT_HASH, VERSION } from "./version.ts";
  */
 async function run(args: string[] = Deno.args): Promise<void> {
   try {
-    // Check for internal mode for generate command visibility
-    const internalMode = Deno.env.get("MIKRUS_INTERNAL") === "true" ||
-      args.includes("--internal");
-
     // Create main CLI command with enhanced configuration
     const cli = new Command()
       .name("mikrus")
@@ -29,14 +25,14 @@ async function run(args: string[] = Deno.args): Promise<void> {
         "Command-line interface tool for managing VPS servers on mikr.us platform",
       )
       .version(`${VERSION} (${GIT_HASH})`)
-      // Enhanced help with examples (conditional on internal mode)
+      // Enhanced help with examples
       .example(
-        internalMode ? "Generate a model file" : "Show version",
-        internalMode ? "mikrus generate user" : "mikrus --version",
+        "Show version",
+        "mikrus --version",
       )
       .example(
-        internalMode ? "Show help for generate command" : "Show help",
-        internalMode ? "mikrus generate --help" : "mikrus --help",
+        "Show help",
+        "mikrus --help",
       )
       // Global options
       .globalOption(
@@ -47,14 +43,9 @@ async function run(args: string[] = Deno.args): Promise<void> {
         "--quiet, -q",
         "Suppress non-essential output",
       )
-      .globalOption("--config <path>", "Path to configuration file");
-
-    // Register generate command only in internal mode
-    if (internalMode) {
-      cli.command("generate", generateCommand);
-    }
-
-    cli
+      .globalOption("--config <path>", "Path to configuration file")
+      // Register generate command as hidden - it can be called but won't show in help
+      .command("generate", generateCommand.hidden())
       // Custom error handling
       .error((error, _cmd) => {
         if (error instanceof Error) {
@@ -63,11 +54,6 @@ async function run(args: string[] = Deno.args): Promise<void> {
           // Provide helpful suggestions for common errors
           if (error.message.includes("Unknown command")) {
             console.log(yellow("\n💡 Available commands:"));
-            if (internalMode) {
-              console.log(
-                "  generate  Generate a new model file from template",
-              );
-            }
             console.log("\nTry: mikrus --help");
           }
         } else {
