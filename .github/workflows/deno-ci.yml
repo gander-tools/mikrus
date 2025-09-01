@@ -185,11 +185,15 @@ jobs:
       - name: "🔄 Build: Replace Version Placeholders"
         id: deno_replace_version_placeholders
         run: |
-          # Get version from git tags or use development version
+          # Get version from git tags or generate random semver for development
           if [[ "${{ github.ref }}" =~ refs/tags/v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
             VERSION=${GITHUB_REF#refs/tags/v}
           else
-            VERSION="dev-$(date +%Y%m%d)"
+            # Generate random semver version for CI builds
+            MAJOR=$((RANDOM % 10 + 1))
+            MINOR=$((RANDOM % 20))
+            PATCH=$((RANDOM % 100))
+            VERSION="${MAJOR}.${MINOR}.${PATCH}"
           fi
           
           # Get git hash
@@ -333,17 +337,18 @@ jobs:
           output=$(./build/mikrus-linux --version)
           echo "Version output: $output"
 
-          # Validate version format - should now contain real version and git hash
-          if echo "$output" | grep -E "[0-9]+\.[0-9]+\.[0-9]+|dev-[0-9]+"; then
-            echo "✅ Found version in expected format"
+          # Validate version format - should now contain real semver and git hash
+          if echo "$output" | grep -E "[0-9]+\.[0-9]+\.[0-9]+"; then
+            echo "✅ Found semver format version"
             if echo "$output" | grep -E "\([a-f0-9]{7,}\)"; then
               echo "✅ Found git hash in expected format"
             else
               echo "⚠️ WARNING: Git hash not found in expected format"
             fi
           else
-            echo "❌ ERROR: Version output does not contain expected version format"
-            echo "Expected: semver (1.2.3) or dev version (dev-20240901) with git hash"
+            echo "❌ ERROR: Version output does not contain expected semver format"
+            echo "Expected: semver format (X.Y.Z) with git hash (abc1234)"
+            echo "Actual output: $output"
             exit 1
           fi
 
