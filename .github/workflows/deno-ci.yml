@@ -182,6 +182,31 @@ jobs:
         id: deno_cache_download_build
         run: deno cache src/cli.ts
 
+      - name: "🔄 Build: Replace Version Placeholders"
+        id: deno_replace_version_placeholders
+        run: |
+          # Get version from git tags or use development version
+          if [[ "${{ github.ref }}" =~ refs/tags/v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            VERSION="dev-$(date +%Y%m%d)"
+          fi
+          
+          # Get git hash
+          GIT_HASH=$(git rev-parse --short HEAD)
+          
+          echo "Version: $VERSION"
+          echo "Git Hash: $GIT_HASH"
+          
+          # Replace version placeholders (cross-platform compatible)
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            sed -i '' "s/%VERSION%/$VERSION/g" ./src/version.ts
+            sed -i '' "s/%GIT_HASH%/$GIT_HASH/g" ./src/version.ts
+          else
+            sed -i "s/%VERSION%/$VERSION/g" ./src/version.ts
+            sed -i "s/%GIT_HASH%/$GIT_HASH/g" ./src/version.ts
+          fi
+
       - name: "🔨 Build: Compile to Single Binary"
         id: deno_compile_binary
         run: |
@@ -308,15 +333,17 @@ jobs:
           output=$(./build/mikrus-linux --version)
           echo "Version output: $output"
 
-          # Accept both semver format and placeholder format (including GIT_HASH)
-          if echo "$output" | grep -E "[0-9]+\.[0-9]+\.[0-9]+"; then
-            echo "✅ Found semver format version"
-          elif echo "$output" | grep -q "%VERSION%"; then
-            echo "✅ Found placeholder format version (build-time replacement expected)"
-          elif echo "$output" | grep -q "%GIT_HASH%"; then
-            echo "✅ Found placeholder format with git hash (build-time replacement expected)"
+          # Validate version format - should now contain real version and git hash
+          if echo "$output" | grep -E "[0-9]+\.[0-9]+\.[0-9]+|dev-[0-9]+"; then
+            echo "✅ Found version in expected format"
+            if echo "$output" | grep -E "\([a-f0-9]{7,}\)"; then
+              echo "✅ Found git hash in expected format"
+            else
+              echo "⚠️ WARNING: Git hash not found in expected format"
+            fi
           else
-            echo "❌ ERROR: Version output does not contain version info or placeholders"
+            echo "❌ ERROR: Version output does not contain expected version format"
+            echo "Expected: semver (1.2.3) or dev version (dev-20240901) with git hash"
             exit 1
           fi
 
