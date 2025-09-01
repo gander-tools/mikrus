@@ -301,20 +301,21 @@ jobs:
 
           echo "✅ Help command test passed"
 
-      - name: "🔍 Integration: CLI Internal Help Command Test"
-        id: deno_test_internal_help_command
+      - name: "🔍 Integration: CLI Generate Command Test"
+        id: deno_test_generate_command
         run: |
-          echo "🔍 Testing CLI internal help command..."
-          output=$(MIKRUS_INTERNAL=true ./build/mikrus-linux --help)
+          echo "🔍 Testing CLI generate command (hidden but callable)..."
+          
+          # Generate command should work when called directly even though it's hidden
+          output=$(./build/mikrus-linux generate test-model --dry-run)
           echo "$output"
 
-          # In internal mode, generate command should be visible
-          if ! echo "$output" | grep -q "generate"; then
-            echo "❌ ERROR: Help output does not contain generate command in internal mode"
+          if ! echo "$output" | grep -q "Dry-run completed successfully"; then
+            echo "❌ ERROR: Generate command should work when called directly"
             exit 1
           fi
 
-          echo "✅ Internal help command test passed"
+          echo "✅ Generate command test passed"
 
       - name: "📋 Integration: CLI Version Command Test"
         id: deno_test_version_command
@@ -333,14 +334,14 @@ jobs:
       - name: "📄 Integration: CLI Generate Command Test"
         id: deno_test_generate_command
         run: |
-          echo "📄 Testing CLI generate command in internal mode..."
+          echo "📄 Testing CLI generate command..."
 
           # Create a temporary directory for testing
           mkdir -p test-output
           cd test-output
 
-          # Test generate command with internal mode
-          output=$(MIKRUS_INTERNAL=true ../build/mikrus-linux generate test-integration-model)
+          # Test generate command (hidden but callable)
+          output=$(../build/mikrus-linux generate test-integration-model)
           echo "$output"
 
           # Verify file was created
@@ -370,10 +371,10 @@ jobs:
       - name: "🛡️ Integration: Security Validation Test"
         id: deno_test_security_validation
         run: |
-          echo "🛡️ Testing security validation in internal mode..."
+          echo "🛡️ Testing security validation..."
 
           # Test path traversal protection
-          if MIKRUS_INTERNAL=true ./build/mikrus-linux generate "../malicious-file" 2>&1 | grep -q "Path traversal detected"; then
+          if ./build/mikrus-linux generate "../malicious-file" 2>&1 | grep -q "Path traversal detected"; then
             echo "✅ Path traversal protection working"
           else
             echo "❌ ERROR: Path traversal protection failed"
@@ -381,7 +382,7 @@ jobs:
           fi
 
           # Test command injection protection
-          if MIKRUS_INTERNAL=true ./build/mikrus-linux generate "file; rm -rf /" 2>&1 | grep -q "Invalid characters detected"; then
+          if ./build/mikrus-linux generate "file; rm -rf /" 2>&1 | grep -q "Invalid characters detected"; then
             echo "✅ Command injection protection working"
           else
             echo "❌ ERROR: Command injection protection failed"
