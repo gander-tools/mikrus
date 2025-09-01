@@ -308,11 +308,13 @@ jobs:
           output=$(./build/mikrus-linux --version)
           echo "Version output: $output"
 
-          # Accept both semver format and placeholder format
+          # Accept both semver format and placeholder format (including GIT_HASH)
           if echo "$output" | grep -E "[0-9]+\.[0-9]+\.[0-9]+"; then
             echo "✅ Found semver format version"
           elif echo "$output" | grep -q "%VERSION%"; then
             echo "✅ Found placeholder format version (build-time replacement expected)"
+          elif echo "$output" | grep -q "%GIT_HASH%"; then
+            echo "✅ Found placeholder format with git hash (build-time replacement expected)"
           else
             echo "❌ ERROR: Version output does not contain version info or placeholders"
             exit 1
