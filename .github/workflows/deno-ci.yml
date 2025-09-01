@@ -301,22 +301,6 @@ jobs:
 
           echo "✅ Help command test passed"
 
-      - name: "🔍 Integration: CLI Generate Command Test"
-        id: deno_test_generate_command
-        run: |
-          echo "🔍 Testing CLI generate command (hidden but callable)..."
-          
-          # Generate command should work when called directly even though it's hidden
-          output=$(./build/mikrus-linux generate test-model --dry-run)
-          echo "$output"
-
-          if ! echo "$output" | grep -q "Dry-run completed successfully"; then
-            echo "❌ ERROR: Generate command should work when called directly"
-            exit 1
-          fi
-
-          echo "✅ Generate command test passed"
-
       - name: "📋 Integration: CLI Version Command Test"
         id: deno_test_version_command
         run: |
@@ -331,8 +315,8 @@ jobs:
 
           echo "✅ Version command test passed"
 
-      - name: "📄 Integration: CLI Generate Command Test"
-        id: deno_test_generate_command
+      - name: "📄 Integration: CLI Generate File Creation Test"
+        id: deno_test_generate_file_creation
         run: |
           echo "📄 Testing CLI generate command..."
 
