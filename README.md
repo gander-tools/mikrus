@@ -2,7 +2,7 @@
 
 [![Deno CI](https://github.com/gander-tools/mikrus/actions/workflows/deno-ci.yml/badge.svg)](https://github.com/gander-tools/mikrus/actions/workflows/deno-ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/gander-tools/mikrus/blob/main/LICENSE)
-[![Deno](https://img.shields.io/badge/deno-%3E%3D2.4.0-green.svg)](https://deno.land/)
+[![Deno](https://img.shields.io/badge/deno-%3E%3D2.5.0-green.svg)](https://deno.land/)
 [![Cliffy](https://img.shields.io/badge/cliffy-%5E1.0.0--rc.8-orange.svg)](https://github.com/c4spar/deno-cliffy)
 [![JSR](https://jsr.io/badges/@gander-tools/mikrus)](https://jsr.io/@gander-tools/mikrus)
 
@@ -42,7 +42,7 @@ deno task compile
 
 ### Prerequisites
 
-- **Deno**: >=2.4.0 (required)
+- **Deno**: >=2.5.0 (required)
   ([Install Deno](https://deno.land/manual/getting_started/installation))
 - **Operating System**: Linux, macOS, or Windows
 - **Permissions**: `--allow-read`, `--allow-write`, `--allow-net` for full
@@ -155,7 +155,7 @@ deno run --allow-read --allow-write src/cli.ts generate example
 
 ### Deno + Cliffy Stack
 
-- **Runtime**: Deno 2.4+ (native TypeScript, secure by default)
+- **Runtime**: Deno 2.5+ (native TypeScript, secure by default)
 - **CLI Framework**: Cliffy 1.0.0-rc.8 (modern, typed CLI commands)
 - **Dependencies**: URL-based imports (no package.json dependencies)
 - **Testing**: Deno native testing (no external frameworks)
@@ -194,7 +194,7 @@ deno run --allow-read --allow-write --allow-net src/cli.ts
 ```shell
 # Check your Deno version
 deno --version
-# Upgrade to Deno 2.4+ if needed
+# Upgrade to Deno 2.5+ if needed
 curl -fsSL https://deno.land/x/install/install.sh | sh
 ```
 
@@ -233,5 +233,5 @@ curl -fsSL https://deno.land/x/install/install.sh | sh
 
 **Last Updated**: 2025-08-26\
 **License**: [MIT](./LICENSE)\
-**Runtime**: Deno 2.4+\
+**Runtime**: Deno 2.5+\
 **Framework**: Cliffy 1.0.0-rc.8
