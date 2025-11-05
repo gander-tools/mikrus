@@ -51,4 +51,4 @@ screenshots if applicable.
       before
 - [ ] This issue is related to the mikrus CLI tool
 - [ ] I have provided enough information to reproduce the bug
-- [ ] I am using a supported version of Deno (2.0+)
+- [ ] I am using a supported version of Deno (2.5+)

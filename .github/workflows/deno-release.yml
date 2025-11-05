@@ -24,7 +24,7 @@ permissions:
   pull-requests: read
 
 env:
-  DENO_VERSION: '2.4'
+  DENO_VERSION: '2.5'
 
 jobs:
   # Phase 1: Stability Check

@@ -8,7 +8,7 @@ Deno and JSR (JavaScript Registry).
 - **Author**: Adam Gąsowski (GitHub: @gander)
 - **Organization**: Gander Tools (GitHub: @gander-tools)
 - **Package name**: `@gander-tools/mikrus` (JSR scoped package)
-- **Runtime**: Deno 2.0+
+- **Runtime**: Deno 2.5+
 - **CLI Framework**: Cliffy
 - **Repository**: https://github.com/gander-tools/mikrus
 

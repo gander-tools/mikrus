@@ -41,7 +41,7 @@ jobs:
         id: deno_setup_lint
         uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
-          deno-version: v2.4.5
+          deno-version: v2.5.0
 
       - name: "💾 Cache: Restore Deno Dependencies"
         id: deno_cache_dependencies_lint
@@ -103,7 +103,7 @@ jobs:
         id: deno_setup_test
         uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
-          deno-version: v2.4.5
+          deno-version: v2.5.0
 
       - name: "💾 Cache: Restore Deno Dependencies"
         id: deno_cache_dependencies_test
@@ -112,9 +112,9 @@ jobs:
           path: |
             ~/.cache/deno
             ~/.deno
-          key: ${{ runner.os }}-deno-v2.4.5-${{ hashFiles('**/deno.lock') }}
+          key: ${{ runner.os }}-deno-v2.5.0-${{ hashFiles('**/deno.lock') }}
           restore-keys: |
-            ${{ runner.os }}-deno-v2.4.5-
+            ${{ runner.os }}-deno-v2.5.0-
             ${{ runner.os }}-deno-
 
       - name: "📦 Dependencies: Cache and Download"
@@ -176,7 +176,7 @@ jobs:
         id: deno_setup_build
         uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
-          deno-version: v2.4.5
+          deno-version: v2.5.0
 
       - name: "📦 Dependencies: Cache and Download"
         id: deno_cache_download_build
@@ -258,7 +258,7 @@ jobs:
         id: deno_setup_security
         uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
-          deno-version: v2.4.5
+          deno-version: v2.5.0
 
       - name: "🔍 Security: Deno Dependency Audit"
         id: deno_dependency_audit

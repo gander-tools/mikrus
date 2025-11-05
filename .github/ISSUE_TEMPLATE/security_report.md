@@ -54,7 +54,7 @@ This public template should only be used for:
 
 **Environment:**
 
-- Deno version: [e.g., 2.4.0]
+- Deno version: [e.g., 2.5.0]
 - mikrus version: [e.g., 0.0.1]
 - Operating System: [e.g., Ubuntu 22.04, Windows 11, macOS 14]
 - Installation method: [binary download/JSR/source compilation]
